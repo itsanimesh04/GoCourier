@@ -517,4 +517,3 @@ Recommended build sequence:
 ```
 
 This order proves the operational system before investing too much in polish.
-
