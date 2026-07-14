@@ -1,40 +1,63 @@
-# Go Courier Service Backend
+# Campus Food Delivery MVP (Go Courier Service)
 
-Week 1 backend implementation for the campus food delivery MVP.
+This repository is organized into distinct frontend and backend directories:
 
-## Setup
+- `backend/`: Express, TypeScript, and PostgreSQL backend service.
+- `frontend/`: React, Vite, and Tailwind CSS frontend application.
 
-1. Copy `.env.example` to `.env`.
-2. Set `DATABASE_URL` to a reachable Postgres database.
-3. Set `JWT_SECRET` to a long random value.
-4. Install dependencies:
+---
 
+## Getting Started
+
+You can run commands directly from the root of the workspace using the helper scripts in the root `package.json`.
+
+### 1. Installation
+
+To install dependencies for both the backend and frontend at once:
 ```bash
-npm install
+npm run install:all
 ```
 
-## Database
-
-The migration script applies `Instructions/01-database-schema.sql` directly. It does not use a copied or renamed schema file.
-
+Or install them individually:
 ```bash
-npm run db:migrate
+npm run install:backend
+npm run install:frontend
 ```
 
-## Run
+### 2. Configuration
 
+#### Backend Configuration
+1. Navigate to the `backend/` directory.
+2. Copy `.env.example` to `.env`.
+3. Configure your local PostgreSQL `DATABASE_URL` and `JWT_SECRET`.
+
+#### Frontend Configuration
+1. Navigate to the `frontend/` directory.
+2. Copy `.env.example` to `.env`.
+
+---
+
+## Development
+
+You can run the development servers from the root of the project:
+
+### Run Backend
 ```bash
-npm run dev
+npm run dev:backend
 ```
 
-The API is mounted at `/api/v1`.
-
-## Verify
-
+### Run Frontend
 ```bash
-npm run build
-npm audit
-npm test
+npm run dev:frontend
 ```
 
-`npm test` starts an embedded Postgres instance, resets the public schema, applies `Instructions/01-database-schema.sql`, and exercises OTP login, JWT role context, role blocking, and admin create/update endpoints.
+---
+
+## Build & Test
+
+### Backend
+- Run backend tests: `npm run test:backend`
+- Build backend: `npm run build:backend`
+
+### Frontend
+- Build frontend: `npm run build:frontend`

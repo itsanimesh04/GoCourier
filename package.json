@@ -1,32 +1,16 @@
 {
-  "name": "go-courier-service",
+  "name": "go-courier-service-root",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "cutoff:run": "tsx src/jobs/runCutoffJob.ts",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1",
-    "zod": "^3.24.1"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.10.2",
-    "@types/pg": "^8.11.10",
-    "@types/supertest": "^6.0.2",
-    "embedded-postgres": "^18.4.0-beta.17",
-    "supertest": "^7.0.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vitest": "^4.1.9"
+    "install:backend": "npm install --prefix backend",
+    "install:frontend": "npm install --prefix frontend",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test:backend": "npm run test --prefix backend",
+    "test:frontend": "npm run test --prefix frontend"
   }
 }
