@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import { menuItemRepository, type MenuItemRow } from '../../repositories/menu-item.repository';
 import { orderRepository, type CartHeaderRow, type CartItemDetailRow } from '../../repositories/order.repository';
 import { paymentRepository } from '../../repositories/payment.repository';
@@ -26,7 +27,6 @@ function requireSelectedCampus(campusId: string | null) {
   if (!campusId) {
     throw new BadRequestError('Campus must be selected');
   }
-
   return campusId;
 }
 
@@ -91,12 +91,10 @@ export const cartService = {
       throw new NotFoundError('Restaurant not found');
     }
 
-    await orderRepository.withTransaction(async (client) => {
-      // Fetch menu items *inside* the transaction under FOR SHARE locks.
-      // This closes the TOCTOU window: a concurrent admin toggle of is_available
-      // must wait for this transaction to commit before it can write.
+    await orderRepository.withTransaction(async (session: ClientSession) => {
+      // Fetch menu items inside the transaction
       const menuItems = await menuItemRepository.findByIdsForRestaurantForShare(
-        client,
+        session,
         data.restaurant_id,
         data.items.map((item) => item.menu_item_id)
       );
@@ -135,67 +133,103 @@ export const cartService = {
       const fee = zeroFee;
       const totalAmount = centsToDecimal(subtotalCents + decimalToCents(fee));
 
-      const currentCart = await orderRepository.findOpenCartForStudentForUpdate(client, studentId);
+      // Find existing cart
+      const existingCarts = await orderRepository.findOpenCartForStudent(studentId);
+      let currentCart = existingCarts;
 
-      const switchingRestaurant = Boolean(currentCart && currentCart.restaurant_id !== data.restaurant_id);
+      if (!currentCart) {
+        // Create new cart
+        const cart = await orderRepository.createCart(session, {
+          student_id: studentId,
+          campus_id: campusId,
+          restaurant_id: data.restaurant_id,
+          subtotal,
+          fee,
+          total_amount: totalAmount
+        });
 
-      if (switchingRestaurant && !data.force_replace) {
-        throw new ConflictError('clear cart to switch restaurants');
-      }
+        await orderRepository.replaceCartItems(session, cart.id, orderItems);
+        
+        await orderRepository.insertAudit(session, {
+          order_id: cart.id,
+          actor_id: studentId,
+          action: 'cart.created',
+          details: {
+            restaurant_id: data.restaurant_id,
+            item_count: orderItems.length,
+            subtotal,
+            fee,
+            total_amount: totalAmount
+          }
+        });
 
-      if (currentCart) {
-        const existingSession = await paymentRepository.findPendingRazorpaySessionForOrderForUpdate(
-          client,
-          currentCart.id
-        );
+        await orderRepository.insertAudit(session, {
+          order_id: cart.id,
+          actor_id: studentId,
+          action: 'cart.items_replaced',
+          details: {
+            items: orderItems.map((item) => ({
+              menu_item_id: item.menu_item_id,
+              quantity: item.quantity,
+              price_snapshot: item.price_snapshot
+            }))
+          }
+        });
+      } else {
+        const switchingRestaurant = currentCart.restaurant_id !== data.restaurant_id;
+
+        if (switchingRestaurant && !data.force_replace) {
+          throw new ConflictError('clear cart to switch restaurants');
+        }
+
+        // Check for pending payment session
+        const existingSession = await paymentRepository.findPendingRazorpaySessionForOrder(currentCart.id);
 
         if (existingSession) {
           throw new ConflictError('Payment has already been initiated for this cart');
         }
-      }
 
-      const cart = currentCart
-        ? await orderRepository.updateCartTotals(client, currentCart.id, {
-            subtotal,
-            fee,
-            total_amount: totalAmount,
-            restaurant_id: switchingRestaurant ? data.restaurant_id : undefined
-          })
-        : await orderRepository.createCart(client, {
-            student_id: studentId,
-            campus_id: campusId,
+        const cart = switchingRestaurant
+          ? await orderRepository.updateCartTotals(session, currentCart.id, {
+              subtotal,
+              fee,
+              total_amount: totalAmount,
+              restaurant_id: data.restaurant_id
+            })
+          : await orderRepository.updateCartTotals(session, currentCart.id, {
+              subtotal,
+              fee,
+              total_amount: totalAmount
+            });
+
+        await orderRepository.replaceCartItems(session, cart.id, orderItems);
+        
+        await orderRepository.insertAudit(session, {
+          order_id: cart.id,
+          actor_id: studentId,
+          action: switchingRestaurant ? 'cart.switched' : 'cart.updated',
+          details: {
             restaurant_id: data.restaurant_id,
+            item_count: orderItems.length,
             subtotal,
             fee,
             total_amount: totalAmount
-          });
+          }
+        });
 
-      await orderRepository.replaceCartItems(client, cart.id, orderItems);
-      await orderRepository.insertAudit(client, {
-        order_id: cart.id,
-        actor_id: studentId,
-        action: switchingRestaurant ? 'cart.switched' : currentCart ? 'cart.updated' : 'cart.created',
-        details: {
-          restaurant_id: data.restaurant_id,
-          previous_restaurant_id: switchingRestaurant ? currentCart?.restaurant_id : undefined,
-          item_count: orderItems.length,
-          subtotal,
-          fee,
-          total_amount: totalAmount
-        }
-      });
-      await orderRepository.insertAudit(client, {
-        order_id: cart.id,
-        actor_id: studentId,
-        action: 'cart.items_replaced',
-        details: {
-          items: orderItems.map((item) => ({
-            menu_item_id: item.menu_item_id,
-            quantity: item.quantity,
-            price_snapshot: item.price_snapshot
-          }))
-        }
-      });
+        await orderRepository.insertAudit(session, {
+          order_id: cart.id,
+          actor_id: studentId,
+          action: 'cart.items_replaced',
+          details: {
+            items: orderItems.map((item) => ({
+              menu_item_id: item.menu_item_id,
+              quantity: item.quantity,
+              price_snapshot: item.price_snapshot
+            }))
+          }
+        });
+      }
     });
 
     return cartService.getCart(studentId);

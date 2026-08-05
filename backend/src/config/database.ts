@@ -1,3 +1,4 @@
-import { pool } from '../db/pool';
+import { connectDatabase, disconnectDatabase } from '../db/connection';
 
-export { pool };
+export { connectDatabase, disconnectDatabase };
+export { mongoose } from '../db/connection';

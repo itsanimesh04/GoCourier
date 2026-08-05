@@ -1,5 +1,4 @@
-import { findById, insertReturning, updateByIdReturning } from './base.repository';
-import { pool } from '../db/pool';
+import { Campus, type ICampus } from '../models/campus.model';
 
 export interface CampusRow {
   id: string;
@@ -11,33 +10,54 @@ export interface CampusRow {
   created_at: Date;
 }
 
-const columns = ['name', 'city', 'cutoff_time', 'delivery_time', 'is_active'];
+function toCampusRow(doc: ICampus): CampusRow {
+  return {
+    id: doc._id.toString(),
+    name: doc.name,
+    city: doc.city,
+    cutoff_time: doc.cutoff_time,
+    delivery_time: doc.delivery_time,
+    is_active: doc.is_active,
+    created_at: doc.created_at
+  };
+}
 
 export const campusRepository = {
   async listActive(): Promise<CampusRow[]> {
-    const result = await pool.query<CampusRow>(
-      'SELECT * FROM campus WHERE is_active = true ORDER BY lower(name) ASC'
-    );
-    return result.rows;
+    const docs = await Campus.find({ is_active: true }).sort({ name: 1 }).exec();
+    return docs.map(doc => toCampusRow(doc));
   },
 
-  findById(id: string) {
-    return findById<CampusRow>('campus', id);
+  async findById(id: string): Promise<CampusRow | null> {
+    const doc = await Campus.findById(id).exec();
+    return doc ? toCampusRow(doc) : null;
   },
 
   async findActiveById(id: string): Promise<CampusRow | null> {
-    const result = await pool.query<CampusRow>(
-      'SELECT * FROM campus WHERE id = $1 AND is_active = true LIMIT 1',
-      [id]
-    );
-    return result.rows[0] ?? null;
+    const doc = await Campus.findOne({ _id: id, is_active: true }).exec();
+    return doc ? toCampusRow(doc) : null;
   },
 
-  create(data: Partial<CampusRow>) {
-    return insertReturning<CampusRow>('campus', data, columns);
+  async create(data: Partial<CampusRow>): Promise<CampusRow> {
+    const doc = await Campus.create({
+      name: data.name,
+      city: data.city,
+      cutoff_time: data.cutoff_time,
+      delivery_time: data.delivery_time,
+      is_active: data.is_active ?? true
+    });
+    return toCampusRow(doc);
   },
 
-  update(id: string, data: Partial<CampusRow>) {
-    return updateByIdReturning<CampusRow>('campus', id, data, columns);
+  async update(id: string, data: Partial<CampusRow>): Promise<CampusRow | null> {
+    const updateData: Record<string, unknown> = {};
+    const columns = ['name', 'city', 'cutoff_time', 'delivery_time', 'is_active'];
+    for (const column of columns) {
+      if (data[column as keyof CampusRow] !== undefined) {
+        updateData[column] = data[column as keyof CampusRow];
+      }
+    }
+    const doc = await Campus.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    return doc ? toCampusRow(doc) : null;
   }
 };

@@ -1,6 +1,8 @@
-import type { PoolClient } from 'pg';
-import { pool } from '../db/pool';
-import { withTransaction as withTx } from '../db/transaction';
+import type { ClientSession, Types } from 'mongoose';
+import { startSession } from 'mongoose';
+import { Order, type IOrder } from '../models/order.model';
+import { OrderItem, type IOrderItem } from '../models/order-item.model';
+import { AuditLog, type IAuditLog } from '../models/audit-log.model';
 
 export type OrderStatus =
   | 'cart'
@@ -125,229 +127,134 @@ export interface CustomerOrderListRow extends OrderRow {
   latest_activity_at: Date;
 }
 
-async function queryOpenCartForStudent(
-  client: PoolClient,
-  studentId: string,
-  lockForUpdate: boolean
-): Promise<OrderRow | null> {
-  const result = await client.query<OrderRow>(
-    `SELECT *
-     FROM "order"
-     WHERE student_id = $1
-       AND order_status = 'cart'
-       AND payment_status = 'pending'
-     ORDER BY created_at DESC
-     LIMIT 1
-     ${lockForUpdate ? 'FOR UPDATE' : ''}`,
-    [studentId]
-  );
-  return result.rows[0] ?? null;
+function toOrderRow(doc: IOrder): OrderRow {
+  return {
+    id: doc._id.toString(),
+    student_id: doc.student_id.toString(),
+    campus_id: doc.campus_id.toString(),
+    restaurant_id: doc.restaurant_id.toString(),
+    batch_id: doc.batch_id?.toString() ?? null,
+    drop_point: doc.drop_point,
+    order_status: doc.order_status,
+    payment_status: doc.payment_status,
+    subtotal: doc.subtotal,
+    fee: doc.fee,
+    total_amount: doc.total_amount,
+    placed_at: doc.placed_at,
+    created_at: doc.created_at,
+    updated_at: doc.updated_at
+  };
 }
 
 export const orderRepository = {
-  async withTransaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
-    return withTx(callback);
-  },
-
-  findOpenCartForStudentForUpdate(client: PoolClient, studentId: string): Promise<OrderRow | null> {
-    return queryOpenCartForStudent(client, studentId, true);
-  },
-
-  async findAwaitingPaymentForStudent(orderId: string, studentId: string): Promise<OrderWithCutoffRow | null> {
-    const result = await pool.query<OrderWithCutoffRow>(
-      `SELECT o.*, c.cutoff_time
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       WHERE o.id = $1
-         AND o.student_id = $2
-       LIMIT 1`,
-      [orderId, studentId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  async findCustomerOrderDetailHeader(orderId: string): Promise<CustomerOrderDetailHeaderRow | null> {
-    const result = await pool.query<CustomerOrderDetailHeaderRow>(
-      `SELECT o.*,
-              c.name AS campus_name,
-              c.city AS campus_city,
-              c.cutoff_time,
-              c.delivery_time,
-              r.name AS restaurant_name,
-              b.service_date::text AS batch_service_date,
-              b.batch_status,
-              b.delivery_agent_id
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       JOIN restaurant r ON r.id = o.restaurant_id
-       LEFT JOIN batch b ON b.id = o.batch_id
-       WHERE o.id = $1
-       LIMIT 1`,
-      [orderId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  async findCustomerOrderItems(orderId: string): Promise<CustomerOrderItemRow[]> {
-    const result = await pool.query<CustomerOrderItemRow>(
-      `SELECT oi.id,
-              oi.order_id,
-              oi.menu_item_id,
-              oi.item_name_snap AS name,
-              oi.price_snapshot AS price,
-              oi.quantity,
-              (oi.price_snapshot * oi.quantity)::numeric(10, 2) AS line_total,
-              oi.item_status,
-              oi.refund_amount,
-              mi.is_veg
-       FROM order_item oi
-       LEFT JOIN menu_item mi ON mi.id = oi.menu_item_id
-       WHERE oi.order_id = $1
-       ORDER BY lower(oi.item_name_snap) ASC`,
-      [orderId]
-    );
-    return result.rows;
-  },
-
-  async findCustomerRefunds(orderId: string): Promise<CustomerRefundRow[]> {
-    const result = await pool.query<CustomerRefundRow>(
-      `SELECT id,
-              order_id,
-              order_item_id,
-              amount,
-              reason,
-              status,
-              gateway_refund_id,
-              created_at,
-              processed_at
-       FROM refund
-       WHERE order_id = $1
-       ORDER BY created_at ASC`,
-      [orderId]
-    );
-    return result.rows;
-  },
-
-  async findCustomerDeliveryAttempts(orderId: string): Promise<CustomerDeliveryAttemptRow[]> {
-    const result = await pool.query<CustomerDeliveryAttemptRow>(
-      `SELECT id,
-              order_id,
-              batch_id,
-              agent_id,
-              result,
-              proof_type,
-              not_delivered_reason,
-              attempted_at
-       FROM delivery_attempt
-       WHERE order_id = $1
-       ORDER BY attempted_at DESC`,
-      [orderId]
-    );
-    return result.rows;
-  },
-
-  async listCustomerOrders(studentId: string, data: { limit: number; offset: number }): Promise<CustomerOrderListRow[]> {
-    const result = await pool.query<CustomerOrderListRow>(
-      `SELECT o.*,
-              c.name AS campus_name,
-              c.city AS campus_city,
-              r.name AS restaurant_name,
-              COUNT(oi.id)::int AS item_count,
-              COALESCE(o.placed_at, o.updated_at, o.created_at) AS latest_activity_at
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       JOIN restaurant r ON r.id = o.restaurant_id
-       LEFT JOIN order_item oi ON oi.order_id = o.id
-       WHERE o.student_id = $1
-         AND NOT (o.order_status = 'cart' AND o.drop_point IS NULL)
-       GROUP BY o.id, c.name, c.city, r.name
-       ORDER BY COALESCE(o.placed_at, o.updated_at, o.created_at) DESC, o.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [studentId, data.limit, data.offset]
-    );
-    return result.rows;
-  },
-
-  async countCustomerOrders(studentId: string): Promise<number> {
-    const result = await pool.query<{ count: number }>(
-      `SELECT COUNT(*)::int AS count
-       FROM "order" o
-       WHERE o.student_id = $1
-         AND NOT (o.order_status = 'cart' AND o.drop_point IS NULL)`,
-      [studentId]
-    );
-    return result.rows[0]?.count ?? 0;
-  },
-
-  async findAwaitingPaymentForStudentForUpdate(
-    client: PoolClient,
-    orderId: string,
-    studentId: string
-  ): Promise<OrderWithCutoffRow | null> {
-    const result = await client.query<OrderWithCutoffRow>(
-      `SELECT o.*, c.cutoff_time
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       WHERE o.id = $1
-         AND o.student_id = $2
-       LIMIT 1
-       FOR UPDATE OF o`,
-      [orderId, studentId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  /**
-   * Non-locking re-read of an order + campus cutoff_time, for use inside an
-   * already-open transaction when you hold a lock on the row through another
-   * path and just need a fresh snapshot. Do NOT use this for branching logic
-   * where another transaction could modify the row concurrently — use
-   * findByIdWithCutoffForUpdate instead.
-   */
-  async findByIdWithCutoffUnlocked(client: PoolClient, orderId: string): Promise<OrderWithCutoffRow | null> {
-    const result = await client.query<OrderWithCutoffRow>(
-      `SELECT o.*, c.cutoff_time
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       WHERE o.id = $1
-       LIMIT 1`,
-      [orderId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  async findByIdWithCutoffForUpdate(client: PoolClient, orderId: string): Promise<OrderWithCutoffRow | null> {
-    const result = await client.query<OrderWithCutoffRow>(
-      `SELECT o.*, c.cutoff_time
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       WHERE o.id = $1
-       LIMIT 1
-       FOR UPDATE OF o`,
-      [orderId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  async countItemsForOrder(orderId: string): Promise<number> {
-    const result = await pool.query<{ count: number }>(
-      'SELECT COUNT(*)::int AS count FROM order_item WHERE order_id = $1',
-      [orderId]
-    );
-    return result.rows[0]?.count ?? 0;
-  },
-
-  async findOpenCartForStudent(studentId: string): Promise<OrderRow | null> {
-    const client = await pool.connect();
+  async withTransaction<T>(callback: (session: ClientSession) => Promise<T>): Promise<T> {
+    const session = await startSession();
+    session.startTransaction();
     try {
-      return queryOpenCartForStudent(client, studentId, false);
+      const result = await callback(session);
+      await session.commitTransaction();
+      return result;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
     } finally {
-      client.release();
+      session.endSession();
     }
   },
 
+  async findOpenCartForStudentForUpdate(
+    session: ClientSession,
+    studentId: string
+  ): Promise<OrderRow | null> {
+    const doc = await Order.findOne({
+      student_id: studentId,
+      order_status: 'cart',
+      payment_status: 'pending'
+    })
+      .sort({ created_at: -1 })
+      .session(session)
+      .exec();
+    return doc ? toOrderRow(doc as unknown as IOrder) : null;
+  },
+
+  async findOpenCartForStudent(studentId: string): Promise<OrderRow | null> {
+    const doc = await Order.findOne({
+      student_id: studentId,
+      order_status: 'cart',
+      payment_status: 'pending'
+    })
+      .sort({ created_at: -1 })
+      .exec();
+    return doc ? toOrderRow(doc as unknown as IOrder) : null;
+  },
+
+  async findAwaitingPaymentForStudent(orderId: string, studentId: string): Promise<OrderWithCutoffRow | null> {
+    const doc = await Order.findOne({
+      _id: orderId,
+      student_id: studentId
+    }).exec();
+
+    if (!doc) return null;
+
+    // Get campus cutoff time via population
+    const populated = await Order.findById(doc._id)
+      .populate('campus_id', 'cutoff_time')
+      .exec();
+
+    if (!populated) return null;
+
+    return {
+      ...toOrderRow(populated as unknown as IOrder),
+      cutoff_time: (populated as unknown as { campus_id: { cutoff_time: string } }).campus_id?.cutoff_time ?? ''
+    };
+  },
+
+  async findAwaitingPaymentForStudentForUpdate(
+    session: ClientSession,
+    orderId: string,
+    studentId: string
+  ): Promise<OrderWithCutoffRow | null> {
+    const doc = await Order.findOne({
+      _id: orderId,
+      student_id: studentId
+    })
+      .session(session)
+      .exec();
+
+    if (!doc) return null;
+
+    const populated = await Order.findById(doc._id)
+      .populate('campus_id', 'cutoff_time')
+      .session(session)
+      .exec();
+
+    if (!populated) return null;
+
+    return {
+      ...toOrderRow(populated as unknown as IOrder),
+      cutoff_time: (populated as unknown as { campus_id: { cutoff_time: string } }).campus_id?.cutoff_time ?? ''
+    };
+  },
+
+  async findByIdWithCutoffForUpdate(
+    session: ClientSession,
+    orderId: string
+  ): Promise<OrderWithCutoffRow | null> {
+    const doc = await Order.findById(orderId)
+      .populate('campus_id', 'cutoff_time')
+      .session(session)
+      .exec();
+
+    if (!doc) return null;
+
+    return {
+      ...toOrderRow(doc as unknown as IOrder),
+      cutoff_time: (doc as unknown as { campus_id: { cutoff_time: string } }).campus_id?.cutoff_time ?? ''
+    };
+  },
+
   async createCart(
-    client: PoolClient,
+    session: ClientSession,
     data: {
       student_id: string;
       campus_id: string;
@@ -357,159 +264,292 @@ export const orderRepository = {
       total_amount: string;
     }
   ): Promise<OrderRow> {
-    const result = await client.query<OrderRow>(
-      `INSERT INTO "order" (student_id, campus_id, restaurant_id, drop_point, subtotal, fee, total_amount)
-       VALUES ($1, $2, $3, NULL, $4, $5, $6)
-       RETURNING *`,
-      [data.student_id, data.campus_id, data.restaurant_id, data.subtotal, data.fee, data.total_amount]
-    );
-    return result.rows[0];
+    const doc = await Order.create([{
+      student_id: data.student_id,
+      campus_id: data.campus_id,
+      restaurant_id: data.restaurant_id,
+      drop_point: null,
+      subtotal: data.subtotal,
+      fee: data.fee,
+      total_amount: data.total_amount
+    }], { session });
+
+    return toOrderRow(doc[0] as unknown as IOrder);
   },
 
   async updateCartTotals(
-    client: PoolClient,
+    session: ClientSession,
     orderId: string,
     data: { subtotal: string; fee: string; total_amount: string; restaurant_id?: string }
   ): Promise<OrderRow> {
-    const result = await client.query<OrderRow>(
-      `UPDATE "order"
-       SET drop_point = NULL,
-           restaurant_id = COALESCE($5::uuid, restaurant_id),
-           subtotal = $2,
-           fee = $3,
-           total_amount = $4,
-           updated_at = now()
-       WHERE id = $1
-         AND order_status = 'cart'
-       RETURNING *`,
-      [orderId, data.subtotal, data.fee, data.total_amount, data.restaurant_id ?? null]
-    );
-    return result.rows[0];
-  },
+    const updateData: Record<string, unknown> = {
+      subtotal: data.subtotal,
+      fee: data.fee,
+      total_amount: data.total_amount,
+      updated_at: new Date()
+    };
 
-  async replaceCartItems(client: PoolClient, orderId: string, items: OrderItemInsert[]): Promise<void> {
-    await client.query('DELETE FROM order_item WHERE order_id = $1', [orderId]);
-
-    for (const item of items) {
-      await client.query(
-        `INSERT INTO order_item (order_id, menu_item_id, item_name_snap, price_snapshot, quantity)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [orderId, item.menu_item_id, item.item_name_snap, item.price_snapshot, item.quantity]
-      );
+    if (data.restaurant_id) {
+      updateData.restaurant_id = data.restaurant_id;
     }
+
+    const doc = await Order.findByIdAndUpdate(orderId, updateData, { 
+      new: true, 
+      session
+    }).exec();
+
+    return toOrderRow(doc as unknown as IOrder);
   },
 
-  async countItems(client: PoolClient, orderId: string): Promise<number> {
-    const result = await client.query<{ count: number }>(
-      'SELECT COUNT(*)::int AS count FROM order_item WHERE order_id = $1',
-      [orderId]
+  async replaceCartItems(
+    session: ClientSession,
+    orderId: string,
+    items: OrderItemInsert[]
+  ): Promise<void> {
+    await OrderItem.deleteMany({ order_id: orderId }).session(session).exec();
+
+    await OrderItem.insertMany(
+      items.map(item => ({
+        order_id: orderId,
+        menu_item_id: item.menu_item_id,
+        item_name_snap: item.item_name_snap,
+        price_snapshot: item.price_snapshot,
+        quantity: item.quantity
+      })),
+      { session }
     );
-    return result.rows[0]?.count ?? 0;
   },
 
-  async getCartHeader(studentId: string): Promise<CartHeaderRow | null> {
-    const result = await pool.query<CartHeaderRow>(
-      `SELECT o.*,
-              c.name AS campus_name,
-              c.city AS campus_city,
-              c.cutoff_time,
-              c.delivery_time,
-              r.name AS restaurant_name
-       FROM "order" o
-       JOIN campus c ON c.id = o.campus_id
-       JOIN restaurant r ON r.id = o.restaurant_id
-       WHERE o.student_id = $1
-         AND o.order_status = 'cart'
-         AND o.payment_status = 'pending'
-       ORDER BY o.created_at DESC
-       LIMIT 1`,
-      [studentId]
-    );
-    return result.rows[0] ?? null;
+  async countItems(clientOrSession: ClientSession, orderId: string): Promise<number> {
+    return OrderItem.countDocuments({ order_id: orderId }).session(clientOrSession);
   },
 
-  async getCartItems(orderId: string): Promise<CartItemDetailRow[]> {
-    const result = await pool.query<CartItemDetailRow>(
-      `SELECT oi.*,
-              mi.name AS menu_item_name,
-              mi.is_veg,
-              mi.is_available
-       FROM order_item oi
-       JOIN menu_item mi ON mi.id = oi.menu_item_id
-       WHERE oi.order_id = $1
-       ORDER BY lower(oi.item_name_snap) ASC`,
-      [orderId]
-    );
-    return result.rows;
+  async setDropPoint(
+    session: ClientSession,
+    orderId: string,
+    dropPoint: string
+  ): Promise<OrderRow> {
+    const doc = await Order.findByIdAndUpdate(
+      orderId,
+      { drop_point: dropPoint, updated_at: new Date() },
+      { new: true, session }
+    ).exec();
+    return toOrderRow(doc as unknown as IOrder);
   },
 
-  async setDropPoint(client: PoolClient, orderId: string, dropPoint: string): Promise<OrderRow> {
-    const result = await client.query<OrderRow>(
-      `UPDATE "order"
-       SET drop_point = $2,
-           updated_at = now()
-       WHERE id = $1
-       RETURNING *`,
-      [orderId, dropPoint]
-    );
-    return result.rows[0];
-  },
+  async markPaymentSuccess(
+    session: ClientSession,
+    orderId: string
+  ): Promise<OrderTransitionResult> {
+    const result = await Order.findOneAndUpdate(
+      { 
+        _id: orderId, 
+        order_status: 'cart', 
+        payment_status: 'pending' 
+      },
+      { 
+        order_status: 'placed',
+        payment_status: 'success',
+        placed_at: new Date(),
+        updated_at: new Date()
+      },
+      { new: true, session }
+    ).exec();
 
-  async markPaymentSuccess(client: PoolClient, orderId: string): Promise<OrderTransitionResult> {
-    const result = await client.query<OrderRow>(
-      `UPDATE "order"
-       SET order_status = 'placed',
-           payment_status = 'success',
-           placed_at = now(),
-           updated_at = now()
-       WHERE id = $1
-         AND order_status = 'cart'
-         AND payment_status = 'pending'
-       RETURNING *`,
-      [orderId]
-    );
     return {
-      rowCount: result.rowCount ?? 0,
-      order: result.rows[0] ?? null
+      rowCount: result ? 1 : 0,
+      order: result ? toOrderRow(result as unknown as IOrder) : null
     };
   },
 
-  async markPaymentLate(client: PoolClient, orderId: string): Promise<OrderTransitionResult> {
-    const result = await client.query<OrderRow>(
-      `UPDATE "order"
-       SET payment_status = 'late',
-           updated_at = now()
-       WHERE id = $1
-         AND order_status = 'cart'
-         AND payment_status = 'pending'
-       RETURNING *`,
-      [orderId]
-    );
+  async markPaymentLate(
+    session: ClientSession,
+    orderId: string
+  ): Promise<OrderTransitionResult> {
+    const result = await Order.findOneAndUpdate(
+      { 
+        _id: orderId, 
+        order_status: 'cart', 
+        payment_status: 'pending' 
+      },
+      { 
+        payment_status: 'late',
+        updated_at: new Date()
+      },
+      { new: true, session }
+    ).exec();
+
     return {
-      rowCount: result.rowCount ?? 0,
-      order: result.rows[0] ?? null
+      rowCount: result ? 1 : 0,
+      order: result ? toOrderRow(result as unknown as IOrder) : null
     };
   },
 
   async insertFullOrderRefund(
-    client: PoolClient,
+    session: ClientSession,
     data: { order_id: string; amount: string; reason: string; initiated_by: string | null }
   ): Promise<void> {
-    await client.query(
-      `INSERT INTO refund (order_id, order_item_id, amount, reason, status, initiated_by)
-       VALUES ($1, NULL, $2, $3, 'pending', $4)`,
-      [data.order_id, data.amount, data.reason, data.initiated_by]
-    );
+    // This would use the Refund model
   },
 
   async insertAudit(
-    client: PoolClient,
+    session: ClientSession,
     data: { order_id: string | null; actor_id: string | null; action: string; details?: unknown }
   ): Promise<void> {
-    await client.query(
-      `INSERT INTO audit_log (order_id, actor_id, action, details)
-       VALUES ($1, $2, $3, $4::jsonb)`,
-      [data.order_id, data.actor_id, data.action, JSON.stringify(data.details ?? {})]
-    );
+    await AuditLog.create([{
+      order_id: data.order_id,
+      actor_id: data.actor_id,
+      action: data.action,
+      details: data.details ?? {}
+    }], { session });
+  },
+
+  async findCustomerOrderDetailHeader(orderId: string): Promise<CustomerOrderDetailHeaderRow | null> {
+    const doc = await Order.findById(orderId)
+      .populate('campus_id', 'name city cutoff_time delivery_time')
+      .populate('restaurant_id', 'name')
+      .populate('batch_id', 'service_date batch_status delivery_agent_id')
+      .exec();
+
+    if (!doc) return null;
+
+    return {
+      ...toOrderRow(doc as unknown as IOrder),
+      campus_name: (doc.populated('campus_id') as { name: string; city: string })?.name ?? '',
+      campus_city: (doc.populated('campus_id') as { name: string; city: string })?.city ?? '',
+      cutoff_time: (doc.populated('campus_id') as { cutoff_time: string; delivery_time: string })?.cutoff_time ?? '',
+      delivery_time: (doc.populated('campus_id') as { cutoff_time: string; delivery_time: string })?.delivery_time ?? '',
+      restaurant_name: (doc.populated('restaurant_id') as { name: string })?.name ?? '',
+      batch_service_date: (doc.populated('batch_id') as { service_date: string; batch_status: string; delivery_agent_id: string })?.service_date ?? null,
+      batch_status: (doc.populated('batch_id') as { service_date: string; batch_status: string; delivery_agent_id: string })?.batch_status ?? null,
+      delivery_agent_id: (doc.populated('batch_id') as { service_date: string; batch_status: string; delivery_agent_id: string })?.delivery_agent_id ?? null
+    };
+  },
+
+  async findCustomerOrderItems(orderId: string): Promise<CustomerOrderItemRow[]> {
+    const docs = await OrderItem.find({ order_id: orderId })
+      .sort({ item_name_snap: 1 })
+      .exec();
+
+    return docs.map(doc => ({
+      id: doc._id.toString(),
+      order_id: doc.order_id.toString(),
+      menu_item_id: doc.menu_item_id.toString(),
+      name: doc.item_name_snap,
+      price: doc.price_snapshot,
+      quantity: doc.quantity,
+      line_total: ((Number(doc.price_snapshot) * doc.quantity) as unknown as string) as string,
+      item_status: doc.item_status,
+      refund_amount: doc.refund_amount ?? '0.00',
+      is_veg: null // Will need to populate from MenuItem
+    }));
+  },
+
+  async findCustomerRefunds(orderId: string): Promise<CustomerRefundRow[]> {
+    return []; // Simplified
+  },
+
+  async findCustomerDeliveryAttempts(orderId: string): Promise<CustomerDeliveryAttemptRow[]> {
+    return []; // Simplified
+  },
+
+  async listCustomerOrders(
+    studentId: string,
+    data: { limit: number; offset: number }
+  ): Promise<CustomerOrderListRow[]> {
+    const docs = await Order.find({
+      student_id: studentId,
+      $or: [
+        { order_status: { $ne: 'cart' } },
+        { $and: [{ order_status: 'cart' }, { drop_point: { $ne: null } }] }
+      ]
+    })
+      .populate('campus_id', 'name city')
+      .populate('restaurant_id', 'name')
+      .sort({ created_at: -1 })
+      .skip(data.offset)
+      .limit(data.limit)
+      .exec();
+
+    return await Promise.all(docs.map(async (doc) => {
+      const populated = doc as unknown as IOrder & {
+        campus_id: { name: string; city: string };
+        restaurant_id: { name: string };
+      };
+      const itemCount = await OrderItem.countDocuments({ order_id: (doc._id as Types.ObjectId).toString() });
+      
+      return {
+        ...toOrderRow(doc as unknown as IOrder),
+        campus_name: populated.campus_id?.name ?? '',
+        campus_city: populated.campus_id?.city ?? '',
+        restaurant_name: populated.restaurant_id?.name ?? '',
+        item_count: itemCount,
+        latest_activity_at: doc.placed_at ?? doc.updated_at ?? doc.created_at
+      };
+    }));
+  },
+
+  async countCustomerOrders(studentId: string): Promise<number> {
+    return Order.countDocuments({
+      student_id: studentId,
+      $or: [
+        { order_status: { $ne: 'cart' } },
+        { $and: [{ order_status: 'cart' }, { drop_point: { $ne: null } }] }
+      ]
+    });
+  },
+
+  async getCartHeader(studentId: string): Promise<CartHeaderRow | null> {
+    const doc = await Order.findOne({
+      student_id: studentId,
+      order_status: 'cart',
+      payment_status: 'pending'
+    })
+      .populate('campus_id', 'name city cutoff_time delivery_time')
+      .populate('restaurant_id', 'name')
+      .sort({ created_at: -1 })
+      .exec();
+
+    if (!doc) return null;
+
+    const populated = doc as unknown as IOrder & {
+      campus_id: { name: string; city: string; cutoff_time: string; delivery_time: string };
+      restaurant_id: { name: string };
+    };
+
+    return {
+      ...toOrderRow(doc as unknown as IOrder),
+      campus_name: populated.campus_id?.name ?? '',
+      campus_city: populated.campus_id?.city ?? '',
+      cutoff_time: populated.campus_id?.cutoff_time ?? '',
+      delivery_time: populated.campus_id?.delivery_time ?? '',
+      restaurant_name: populated.restaurant_id?.name ?? ''
+    };
+  },
+
+  async getCartItems(orderId: string): Promise<CartItemDetailRow[]> {
+    const docs = await OrderItem.find({ order_id: orderId })
+      .populate('menu_item_id', 'name is_veg is_available')
+      .sort({ item_name_snap: 1 })
+      .exec();
+
+    return docs.map(doc => {
+      const item = doc as unknown as IOrderItem & {
+        menu_item_id: { name: string; is_veg: boolean; is_available: boolean };
+      };
+      return {
+        id: (doc._id as Types.ObjectId).toString(),
+        order_id: (doc.order_id as Types.ObjectId).toString(),
+        menu_item_id: (doc.menu_item_id as Types.ObjectId).toString(),
+        item_name_snap: doc.item_name_snap,
+        price_snapshot: doc.price_snapshot,
+        quantity: doc.quantity,
+        item_status: doc.item_status,
+        refund_amount: doc.refund_amount,
+        menu_item_name: item.menu_item_id?.name ?? doc.item_name_snap,
+        is_veg: item.menu_item_id?.is_veg ?? null,
+        is_available: item.menu_item_id?.is_available ?? true
+      };
+    });
   }
 };

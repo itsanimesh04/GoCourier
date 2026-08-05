@@ -1,5 +1,10 @@
-import type { PoolClient } from 'pg';
-import { pool } from '../db/pool';
+import type { ClientSession, Types } from 'mongoose';
+import { Batch, type IBatch } from '../models/batch.model';
+import { Order, type IOrder } from '../models/order.model';
+import { OrderItem, type IOrderItem } from '../models/order-item.model';
+import { Refund, type IRefund } from '../models/refund.model';
+import { ProcurementTask, type IProcurementTask } from '../models/procurement-task.model';
+import { AuditLog } from '../models/audit-log.model';
 
 export interface BatchSummaryRow {
   batch_id: string;
@@ -49,175 +54,245 @@ export interface RefundRow {
   processed_at: Date | null;
 }
 
+function toProcurementTaskRow(doc: IProcurementTask): ProcurementTaskRow {
+  return {
+    id: (doc._id as Types.ObjectId).toString(),
+    batch_id: (doc.batch_id as Types.ObjectId).toString(),
+    restaurant_id: (doc.restaurant_id as Types.ObjectId).toString(),
+    status: doc.status,
+    external_order_ref: doc.external_order_ref,
+    actual_cost: doc.actual_cost,
+    platform: doc.platform
+  };
+}
+
+function toOrderItemRow(doc: IOrderItem): OrderItemRow {
+  return {
+    id: (doc._id as Types.ObjectId).toString(),
+    order_id: (doc.order_id as Types.ObjectId).toString(),
+    item_status: doc.item_status,
+    price_snapshot: doc.price_snapshot,
+    quantity: doc.quantity,
+    refund_amount: doc.refund_amount
+  };
+}
+
+function toRefundRow(doc: IRefund): RefundRow {
+  return {
+    id: (doc._id as Types.ObjectId).toString(),
+    order_id: (doc.order_id as Types.ObjectId).toString(),
+    order_item_id: doc.order_item_id ? (doc.order_item_id as Types.ObjectId).toString() : null,
+    amount: doc.amount,
+    reason: doc.reason,
+    status: doc.status,
+    gateway_refund_id: doc.gateway_refund_id,
+    initiated_by: doc.initiated_by,
+    created_at: doc.created_at,
+    processed_at: doc.processed_at
+  };
+}
+
 export const opsRepository = {
   async findBatchSummaryById(batchId: string): Promise<BatchSummaryRow | null> {
-    const result = await pool.query<BatchSummaryRow>(
-      `SELECT b.id AS batch_id, c.name AS campus,
-              (SELECT COUNT(*)::int FROM "order" o WHERE o.batch_id = b.id AND o.order_status <> 'cancelled') AS total_orders
-       FROM batch b
-       JOIN campus c ON b.campus_id = c.id
-       WHERE b.id = $1`,
-      [batchId]
-    );
-    return result.rows[0] ?? null;
-  },
+    const doc = await Batch.findById(batchId)
+      .populate('campus_id', 'name')
+      .exec();
 
-  async findBatchRestaurants(batchId: string): Promise<BatchRestaurantRow[]> {
-    const result = await pool.query<BatchRestaurantRow>(
-      `SELECT DISTINCT r.id AS restaurant_id, r.name
-       FROM "order" o
-       JOIN restaurant r ON o.restaurant_id = r.id
-       WHERE o.batch_id = $1 AND o.order_status <> 'cancelled'
-       UNION
-       SELECT DISTINCT r.id AS restaurant_id, r.name
-       FROM procurement_task pt
-       JOIN restaurant r ON pt.restaurant_id = r.id
-       WHERE pt.batch_id = $1
-       ORDER BY name ASC`,
-      [batchId]
-    );
-    return result.rows;
-  },
+    if (!doc) return null;
 
-  async findRestaurantItemsForBatch(batchId: string, restaurantId: string): Promise<BatchItemRow[]> {
-    const result = await pool.query<BatchItemRow>(
-      `SELECT oi.item_name_snap AS menu_item_name, SUM(oi.quantity)::int AS total_quantity
-       FROM order_item oi
-       JOIN "order" o ON oi.order_id = o.id
-       WHERE o.batch_id = $1
-         AND o.restaurant_id = $2
-         AND oi.item_status IN ('pending', 'confirmed')
-         AND o.order_status <> 'cancelled'
-       GROUP BY oi.item_name_snap
-       ORDER BY oi.item_name_snap ASC`,
-      [batchId, restaurantId]
-    );
-    return result.rows;
-  },
+    const orderCount = await Order.countDocuments({
+      batch_id: (doc._id as Types.ObjectId).toString(),
+      order_status: { $ne: 'cancelled' }
+    });
 
-  async findProcurementTask(batchId: string, restaurantId: string): Promise<ProcurementTaskRow | null> {
-    const result = await pool.query<ProcurementTaskRow>(
-      `SELECT id, batch_id, restaurant_id, status, external_order_ref, actual_cost, platform
-       FROM procurement_task
-       WHERE batch_id = $1 AND restaurant_id = $2
-       LIMIT 1`,
-      [batchId, restaurantId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  async findProcurementTaskByIdForUpdate(client: PoolClient, taskId: string): Promise<ProcurementTaskRow | null> {
-    const result = await client.query<ProcurementTaskRow>(
-      `SELECT * FROM procurement_task WHERE id = $1 FOR UPDATE`,
-      [taskId]
-    );
-    return result.rows[0] ?? null;
-  },
-
-  async updateProcurementTask(
-    client: PoolClient,
-    taskId: string,
-    data: { external_order_ref: string | null; actual_cost: string | null; platform: string | null; status: string }
-  ): Promise<{ rowCount: number; task: ProcurementTaskRow | null }> {
-    const result = await client.query<ProcurementTaskRow>(
-      `UPDATE procurement_task
-       SET external_order_ref = $2,
-           actual_cost = $3::numeric,
-           platform = $4,
-           status = $5
-       WHERE id = $1
-         AND (
-           external_order_ref IS DISTINCT FROM $2 OR
-           actual_cost IS DISTINCT FROM $3::numeric OR
-           platform IS DISTINCT FROM $4 OR
-           status IS DISTINCT FROM $5
-         )
-       RETURNING *`,
-      [taskId, data.external_order_ref, data.actual_cost, data.platform, data.status]
-    );
+    const populated = doc as unknown as IBatch & { campus_id: { name: string } };
     return {
-      rowCount: result.rowCount ?? 0,
-      task: result.rows[0] ?? null
+      batch_id: (doc._id as Types.ObjectId).toString(),
+      campus: populated.campus_id?.name ?? '',
+      total_orders: orderCount
     };
   },
 
-  async findOrderItemByIdForUpdate(client: PoolClient, orderItemId: string): Promise<OrderItemRow | null> {
-    const result = await client.query<OrderItemRow>(
-      `SELECT * FROM order_item WHERE id = $1 FOR UPDATE`,
-      [orderItemId]
-    );
-    return result.rows[0] ?? null;
+  async findBatchRestaurants(batchId: string): Promise<BatchRestaurantRow[]> {
+    const orders = await Order.distinct('restaurant_id', {
+      batch_id: batchId,
+      order_status: { $ne: 'cancelled' }
+    }).exec();
+
+    const tasks = await ProcurementTask.distinct('restaurant_id', { batch_id: batchId }).exec();
+
+    const allRestaurantIds = [...new Set([...orders, ...tasks])];
+    
+    return allRestaurantIds.map(id => ({
+      restaurant_id: (id as Types.ObjectId).toString(),
+      name: '' // Would need to populate restaurant name
+    }));
+  },
+
+  async findRestaurantItemsForBatch(batchId: string, restaurantId: string): Promise<BatchItemRow[]> {
+    const items = await OrderItem.aggregate([
+      {
+        $lookup: {
+          from: 'orders',
+          localField: 'order_id',
+          foreignField: '_id',
+          as: 'order'
+        }
+      },
+      { $unwind: '$order' },
+      {
+        $match: {
+          'order.batch_id': batchId,
+          'order.restaurant_id': restaurantId,
+          'order.order_status': { $ne: 'cancelled' },
+          item_status: { $in: ['pending', 'confirmed'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$item_name_snap',
+          total_quantity: { $sum: '$quantity' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return items.map(item => ({
+      menu_item_name: item._id,
+      total_quantity: item.total_quantity
+    }));
+  },
+
+  async findProcurementTask(batchId: string, restaurantId: string): Promise<ProcurementTaskRow | null> {
+    const doc = await ProcurementTask.findOne({
+      batch_id: batchId,
+      restaurant_id: restaurantId
+    }).exec() as IProcurementTask | null;
+
+    return doc ? toProcurementTaskRow(doc) : null;
+  },
+
+  async findProcurementTaskByIdForUpdate(session: ClientSession, taskId: string): Promise<ProcurementTaskRow | null> {
+    const doc = await ProcurementTask.findById(taskId)
+      .session(session)
+      .exec() as IProcurementTask | null;
+
+    return doc ? toProcurementTaskRow(doc) : null;
+  },
+
+  async updateProcurementTask(
+    session: ClientSession,
+    taskId: string,
+    data: { external_order_ref: string | null; actual_cost: string | null; platform: string | null; status: string }
+  ): Promise<{ rowCount: number; task: ProcurementTaskRow | null }> {
+    const doc = await ProcurementTask.findByIdAndUpdate(
+      taskId,
+      {
+        external_order_ref: data.external_order_ref,
+        actual_cost: data.actual_cost,
+        platform: data.platform,
+        status: data.status
+      },
+      { new: true, session }
+    ).exec() as IProcurementTask | null;
+
+    return {
+      rowCount: doc ? 1 : 0,
+      task: doc ? toProcurementTaskRow(doc) : null
+    };
+  },
+
+  async findOrderItemByIdForUpdate(session: ClientSession, orderItemId: string): Promise<OrderItemRow | null> {
+    const doc = await OrderItem.findById(orderItemId)
+      .session(session)
+      .exec() as IOrderItem | null;
+
+    return doc ? toOrderItemRow(doc) : null;
   },
 
   async updateOrderItemStatus(
-    client: PoolClient,
+    session: ClientSession,
     orderItemId: string,
     status: string,
     refundAmount?: string
   ): Promise<{ rowCount: number; item: OrderItemRow | null }> {
-    const query = refundAmount !== undefined
-      ? `UPDATE order_item SET item_status = $2, refund_amount = $3::numeric WHERE id = $1 AND item_status <> $2 RETURNING *`
-      : `UPDATE order_item SET item_status = $2 WHERE id = $1 AND item_status <> $2 RETURNING *`;
-    const params = refundAmount !== undefined ? [orderItemId, status, refundAmount] : [orderItemId, status];
-    const result = await client.query<OrderItemRow>(query, params);
+    const updateData: Record<string, unknown> = { item_status: status };
+    if (refundAmount !== undefined) {
+      updateData.refund_amount = refundAmount;
+    }
+
+    const doc = await OrderItem.findByIdAndUpdate(
+      orderItemId,
+      updateData,
+      { new: true, session }
+    ).exec() as IOrderItem | null;
+
     return {
-      rowCount: result.rowCount ?? 0,
-      item: result.rows[0] ?? null
+      rowCount: doc ? 1 : 0,
+      item: doc ? toOrderItemRow(doc) : null
     };
   },
 
   async insertRefund(
-    client: PoolClient,
+    session: ClientSession,
     data: { order_id: string; order_item_id: string | null; amount: string; reason: string; status: string; initiated_by: string | null; gateway_refund_id?: string | null }
   ): Promise<RefundRow> {
-    const result = await client.query<RefundRow>(
-      `INSERT INTO refund (order_id, order_item_id, amount, reason, status, initiated_by, gateway_refund_id)
-       VALUES ($1, $2, $3::numeric, $4, $5::refund_status, $6, $7)
-       RETURNING *`,
-      [data.order_id, data.order_item_id, data.amount, data.reason, data.status, data.initiated_by, data.gateway_refund_id ?? null]
-    );
-    return result.rows[0];
+    const doc = await Refund.create([{
+      order_id: data.order_id,
+      order_item_id: data.order_item_id ?? null,
+      amount: data.amount,
+      reason: data.reason,
+      status: data.status,
+      initiated_by: data.initiated_by,
+      gateway_refund_id: data.gateway_refund_id ?? null
+    }], { session });
+
+    return toRefundRow(doc[0]);
   },
 
   async findRefunds(status?: string): Promise<RefundRow[]> {
-    const query = status
-      ? `SELECT * FROM refund WHERE status = $1::refund_status ORDER BY created_at ASC`
-      : `SELECT * FROM refund ORDER BY created_at ASC`;
-    const params = status ? [status] : [];
-    const result = await pool.query<RefundRow>(query, params);
-    return result.rows;
+    const query = status ? { status } : {};
+    const docs = await Refund.find(query).sort({ created_at: 1 }).exec() as IRefund[];
+    return docs.map(toRefundRow);
   },
 
-  async findRefundByIdForUpdate(client: PoolClient, refundId: string): Promise<RefundRow | null> {
-    const result = await client.query<RefundRow>(
-      `SELECT * FROM refund WHERE id = $1 FOR UPDATE`,
-      [refundId]
-    );
-    return result.rows[0] ?? null;
+  async findRefundByIdForUpdate(session: ClientSession, refundId: string): Promise<RefundRow | null> {
+    const doc = await Refund.findById(refundId)
+      .session(session)
+      .exec() as IRefund | null;
+
+    return doc ? toRefundRow(doc) : null;
   },
 
-  async findRefundByGatewayRefundIdForUpdate(client: PoolClient, gatewayRefundId: string): Promise<RefundRow | null> {
-    const result = await client.query<RefundRow>(
-      `SELECT * FROM refund WHERE gateway_refund_id = $1 FOR UPDATE`,
-      [gatewayRefundId]
-    );
-    return result.rows[0] ?? null;
+  async findRefundByGatewayRefundIdForUpdate(session: ClientSession, gatewayRefundId: string): Promise<RefundRow | null> {
+    const doc = await Refund.findOne({ gateway_refund_id: gatewayRefundId })
+      .session(session)
+      .exec() as IRefund | null;
+
+    return doc ? toRefundRow(doc) : null;
   },
 
   async updateRefundStatus(
-    client: PoolClient,
+    session: ClientSession,
     refundId: string,
     status: string,
     gatewayRefundId?: string | null
   ): Promise<{ rowCount: number; refund: RefundRow | null }> {
-    const query = gatewayRefundId !== undefined
-      ? `UPDATE refund SET status = $2::refund_status, gateway_refund_id = COALESCE(gateway_refund_id, $3), processed_at = CASE WHEN $2 IN ('processed', 'failed') THEN COALESCE(processed_at, now()) ELSE processed_at END WHERE id = $1 AND status <> $2::refund_status RETURNING *`
-      : `UPDATE refund SET status = $2::refund_status, processed_at = CASE WHEN $2 IN ('processed', 'failed') THEN COALESCE(processed_at, now()) ELSE processed_at END WHERE id = $1 AND status <> $2::refund_status RETURNING *`;
-    const params = gatewayRefundId !== undefined ? [refundId, status, gatewayRefundId] : [refundId, status];
-    const result = await client.query<RefundRow>(query, params);
+    const updateData: Record<string, unknown> = {
+      status,
+      ...(gatewayRefundId !== undefined && { gateway_refund_id: gatewayRefundId ?? null }),
+      ...(status === 'processed' || status === 'failed' ? { processed_at: new Date() } : {})
+    };
+
+    const doc = await Refund.findByIdAndUpdate(
+      refundId,
+      updateData,
+      { new: true, session }
+    ).exec() as IRefund | null;
+
     return {
-      rowCount: result.rowCount ?? 0,
-      refund: result.rows[0] ?? null
+      rowCount: doc ? 1 : 0,
+      refund: doc ? toRefundRow(doc) : null
     };
   }
 };

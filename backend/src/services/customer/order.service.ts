@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import { orderRepository } from '../../repositories/order.repository';
 import { paymentService } from '../payment/payment.service';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
@@ -7,7 +8,9 @@ interface OrderListOptions {
   limit: number;
 }
 
-function groupRefundsByItemId(refunds: Awaited<ReturnType<typeof orderRepository.findCustomerRefunds>>) {
+function groupRefundsByItemId(
+  refunds: Awaited<ReturnType<typeof orderRepository.findCustomerRefunds>>
+) {
   const grouped = new Map<string, typeof refunds>();
 
   for (const refund of refunds) {
@@ -25,22 +28,24 @@ function groupRefundsByItemId(refunds: Awaited<ReturnType<typeof orderRepository
 
 export const customerOrderService = {
   async createFromCart(studentId: string, dropPoint: string) {
-    return orderRepository.withTransaction(async (client) => {
-      const cart = await orderRepository.findOpenCartForStudentForUpdate(client, studentId);
+    return orderRepository.withTransaction(async (session: ClientSession) => {
+      // For MongoDB, we need to find the cart differently
+      // This simplifies the logic
+      const cart = await orderRepository.findOpenCartForStudentForUpdate(session, studentId);
 
       if (!cart) {
         throw new NotFoundError('Cart not found');
       }
 
-      const itemCount = await orderRepository.countItems(client, cart.id);
+      const itemCount = await orderRepository.countItems(session, cart.id);
 
       if (itemCount === 0) {
         throw new BadRequestError('Cart is empty');
       }
 
-      const order = await orderRepository.setDropPoint(client, cart.id, dropPoint);
+      const order = await orderRepository.setDropPoint(session, cart.id, dropPoint);
 
-      await orderRepository.insertAudit(client, {
+      await orderRepository.insertAudit(session, {
         order_id: order.id,
         actor_id: studentId,
         action: 'order.awaiting_payment',

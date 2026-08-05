@@ -1,4 +1,4 @@
-import { pool } from '../db/pool';
+import { disconnectDatabase } from '../config/database';
 import { cutoffJobService } from '../services/cutoffJob.service';
 
 async function main() {
@@ -13,5 +13,5 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await pool.end();
+    await disconnectDatabase();
   });

@@ -1,18 +1,41 @@
-import { campusRepository } from '../../repositories/campus.repository';
+import { Campus } from '../../models/campus.model';
 import { NotFoundError } from '../../utils/errors';
 
 export const campusService = {
-  create(data: Parameters<typeof campusRepository.create>[0]) {
-    return campusRepository.create(data);
+  async create(data: {
+    name: string;
+    city: string;
+    cutoff_time: string;
+    delivery_time: string;
+    is_active?: boolean;
+  }) {
+    const doc = await Campus.create({
+      name: data.name,
+      city: data.city,
+      cutoff_time: data.cutoff_time,
+      delivery_time: data.delivery_time,
+      is_active: data.is_active ?? true
+    });
+    return doc;
   },
 
-  async update(id: string, data: Parameters<typeof campusRepository.update>[1]) {
-    const campus = await campusRepository.update(id, data);
+  async update(id: string, data: {
+    name?: string;
+    city?: string;
+    cutoff_time?: string;
+    delivery_time?: string;
+    is_active?: boolean;
+  }) {
+    const doc = await Campus.findByIdAndUpdate(
+      id,
+      data,
+      { new: true }
+    ).exec();
 
-    if (!campus) {
+    if (!doc) {
       throw new NotFoundError('Campus not found');
     }
 
-    return campus;
+    return doc;
   }
 };

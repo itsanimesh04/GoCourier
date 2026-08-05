@@ -1,5 +1,4 @@
-import { pool } from '../db/pool';
-import type { PoolClient } from 'pg';
+import { OtpRequest, type IOtpRequest } from '../models/otp.model';
 
 export interface OtpRequestRow {
   id: string;
@@ -10,67 +9,60 @@ export interface OtpRequestRow {
   created_at: Date;
 }
 
+function toOtpRow(doc: IOtpRequest): OtpRequestRow {
+  return {
+    id: doc._id.toString(),
+    phone: doc.phone,
+    otp_code: doc.otp_code,
+    expires_at: doc.expires_at,
+    verified_at: doc.verified_at,
+    created_at: doc.created_at
+  };
+}
+
 export const otpRepository = {
   async countRecentByPhone(phone: string, since: Date): Promise<number> {
-    const result = await pool.query<{ count: string }>(
-      'SELECT COUNT(*)::text AS count FROM otp_request WHERE phone = $1 AND created_at >= $2',
-      [phone, since]
-    );
-    return Number(result.rows[0]?.count ?? 0);
+    const count = await OtpRequest.countDocuments({
+      phone,
+      created_at: { $gte: since }
+    });
+    return count;
   },
 
   async create(phone: string, otpCode: string, expiresAt: Date): Promise<OtpRequestRow> {
-    const result = await pool.query<OtpRequestRow>(
-      'INSERT INTO otp_request (phone, otp_code, expires_at) VALUES ($1, $2, $3) RETURNING *',
-      [phone, otpCode, expiresAt]
-    );
-    return result.rows[0];
+    const doc = await OtpRequest.create({
+      phone,
+      otp_code: otpCode,
+      expires_at: expiresAt
+    }) as IOtpRequest;
+    return toOtpRow(doc);
   },
 
   async findLatestValid(phone: string, otpCode: string, now: Date): Promise<OtpRequestRow | null> {
-    const result = await pool.query<OtpRequestRow>(
-      `SELECT *
-       FROM otp_request
-       WHERE phone = $1
-         AND otp_code = $2
-         AND verified_at IS NULL
-         AND expires_at > $3
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [phone, otpCode, now]
-    );
-    return result.rows[0] ?? null;
+    const doc = await OtpRequest.findOne({
+      phone,
+      otp_code: otpCode,
+      verified_at: null,
+      expires_at: { $gt: now }
+    }).sort({ created_at: -1 }).lean() as IOtpRequest | null;
+    return doc ? toOtpRow(doc) : null;
   },
 
   async consumeLatestValidForUpdate(
-    client: PoolClient,
+    client: unknown,
     phone: string,
     otpCode: string,
     now: Date
   ): Promise<OtpRequestRow | null> {
-    const result = await client.query<OtpRequestRow>(
-      `WITH candidate AS (
-         SELECT id
-         FROM otp_request
-         WHERE phone = $1
-           AND otp_code = $2
-           AND verified_at IS NULL
-           AND expires_at > $3
-         ORDER BY created_at DESC
-         LIMIT 1
-         FOR UPDATE
-       )
-       UPDATE otp_request o
-       SET verified_at = now()
-       FROM candidate c
-       WHERE o.id = c.id
-       RETURNING o.*`,
-      [phone, otpCode, now]
-    );
-    return result.rows[0] ?? null;
+    const doc = await OtpRequest.findOneAndUpdate(
+      { phone, otp_code: otpCode, verified_at: null, expires_at: { $gt: now } },
+      { verified_at: new Date() },
+      { new: true }
+    ).lean() as IOtpRequest | null;
+    return doc ? toOtpRow(doc) : null;
   },
 
   async markVerified(id: string): Promise<void> {
-    await pool.query('UPDATE otp_request SET verified_at = now() WHERE id = $1', [id]);
+    await OtpRequest.findByIdAndUpdate(id, { verified_at: new Date() });
   }
 };

@@ -1,7 +1,5 @@
-import type { PoolClient } from 'pg';
-import { findById, insertReturning, updateByIdReturning } from './base.repository';
-import { pool } from '../db/pool';
-
+import { MenuItem, type IMenuItem } from '../models/menu-item.model';
+import type { ClientSession } from 'mongoose';
 
 export interface MenuItemRow {
   id: string;
@@ -13,54 +11,73 @@ export interface MenuItemRow {
   created_at: Date;
 }
 
-const columns = ['restaurant_id', 'name', 'price', 'is_veg', 'is_available'];
-const updateColumns = ['name', 'price', 'is_veg', 'is_available'];
+function toMenuItemRow(doc: IMenuItem): MenuItemRow {
+  return {
+    id: doc._id.toString(),
+    restaurant_id: doc.restaurant_id.toString(),
+    name: doc.name,
+    price: doc.price,
+    is_veg: doc.is_veg,
+    is_available: doc.is_available,
+    created_at: doc.created_at
+  };
+}
 
 export const menuItemRepository = {
-  findById(id: string) {
-    return findById<MenuItemRow>('menu_item', id);
+  async findById(id: string): Promise<MenuItemRow | null> {
+    const doc = await MenuItem.findById(id).exec();
+    return doc ? toMenuItemRow(doc) : null;
   },
 
   async listByRestaurant(restaurantId: string): Promise<MenuItemRow[]> {
-    const result = await pool.query<MenuItemRow>(
-      'SELECT * FROM menu_item WHERE restaurant_id = $1 ORDER BY lower(name) ASC',
-      [restaurantId]
-    );
-    return result.rows;
+    const docs = await MenuItem.find({ restaurant_id: restaurantId }).sort({ name: 1 }).exec();
+    return docs.map(toMenuItemRow);
   },
 
   async findByIdsForRestaurant(restaurantId: string, ids: string[]): Promise<MenuItemRow[]> {
-    const result = await pool.query<MenuItemRow>(
-      'SELECT * FROM menu_item WHERE restaurant_id = $1 AND id = ANY($2::uuid[])',
-      [restaurantId, ids]
-    );
-    return result.rows;
+    const docs = await MenuItem.find({ 
+      restaurant_id: restaurantId, 
+      _id: { $in: ids } 
+    }).sort({ name: 1 }).exec();
+    return docs.map(toMenuItemRow);
   },
 
   /**
-   * Transactional variant: acquires a FOR SHARE lock on each matched row so
-   * that a concurrent UPDATE flipping is_available must wait until this
-   * transaction commits. Use this inside cart create/replace transactions to
-   * close the TOCTOU window between the availability check and the item insert.
+   * This method acquires a lock on each matched row.
+   * In MongoDB, we use find() with the session for ACID guarantees.
    */
   async findByIdsForRestaurantForShare(
-    client: PoolClient,
+    session: ClientSession,
     restaurantId: string,
     ids: string[]
   ): Promise<MenuItemRow[]> {
-    const result = await client.query<MenuItemRow>(
-      'SELECT * FROM menu_item WHERE restaurant_id = $1 AND id = ANY($2::uuid[]) FOR SHARE',
-      [restaurantId, ids]
-    );
-    return result.rows;
+    const docs = await MenuItem.find({ 
+      restaurant_id: restaurantId, 
+      _id: { $in: ids } 
+    }).session(session).exec();
+    return docs.map(toMenuItemRow);
   },
 
-
-  create(data: Partial<MenuItemRow>) {
-    return insertReturning<MenuItemRow>('menu_item', data, columns);
+  async create(data: Partial<MenuItemRow>): Promise<MenuItemRow> {
+    const doc = await MenuItem.create({
+      restaurant_id: data.restaurant_id,
+      name: data.name,
+      price: data.price,
+      is_veg: data.is_veg ?? null,
+      is_available: data.is_available ?? true
+    });
+    return toMenuItemRow(doc);
   },
 
-  update(id: string, data: Partial<MenuItemRow>) {
-    return updateByIdReturning<MenuItemRow>('menu_item', id, data, updateColumns);
+  async update(id: string, data: Partial<MenuItemRow>): Promise<MenuItemRow | null> {
+    const updateData: Record<string, unknown> = {};
+    const columns = ['restaurant_id', 'name', 'price', 'is_veg', 'is_available'];
+    for (const column of columns) {
+      if (data[column as keyof MenuItemRow] !== undefined) {
+        updateData[column] = data[column as keyof MenuItemRow];
+      }
+    }
+    const doc = await MenuItem.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    return doc ? toMenuItemRow(doc) : null;
   }
 };

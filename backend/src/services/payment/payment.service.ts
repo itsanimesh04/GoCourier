@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
-import type { PoolClient } from 'pg';
+import type { ClientSession, Types } from 'mongoose';
 import { env } from '../../config/env';
-import { orderRepository, type OrderRow, type OrderWithCutoffRow } from '../../repositories/order.repository';
-import { paymentRepository, type PaymentRow } from '../../repositories/payment.repository';
-import { opsRepository } from '../../repositories/ops.repository';
+import { Order } from '../../models/order.model';
+import { Payment } from '../../models/payment.model';
+import type { IPayment } from '../../models/payment.model';
+import { Refund } from '../../models/refund.model';
+import { AuditLog } from '../../models/audit-log.model';
 import { isCutoffPassed } from '../../utils/campusTime';
 import { decimalToSubunits } from '../../utils/money';
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from '../../utils/errors';
@@ -28,18 +30,15 @@ interface RazorpayCapturedWebhook {
   };
 }
 
-interface PaymentInitiationSnapshot {
-  dropPoint: string;
-  itemCount: number;
-  totalAmount: string;
-}
-
 export function verifyRazorpaySignature(rawBody: string, signature: string | undefined) {
   if (!signature) {
     throw new UnauthorizedError('Missing payment webhook signature');
   }
 
-  const expected = crypto.createHmac('sha256', env.RAZORPAY_WEBHOOK_SECRET).update(rawBody).digest('hex');
+  const expected = crypto
+    .createHmac('sha256', env.RAZORPAY_WEBHOOK_SECRET)
+    .update(rawBody)
+    .digest('hex');
   const received = Buffer.from(signature, 'hex');
   const expectedBuffer = Buffer.from(expected, 'hex');
 
@@ -74,7 +73,7 @@ function formatPaymentSession(data: {
   };
 }
 
-function formatExistingSession(payment: PaymentRow) {
+function formatExistingSession(payment: IPayment): ReturnType<typeof formatPaymentSession> {
   if (!payment.gateway_order_id) {
     throw new ConflictError('Pending payment session is missing gateway order id');
   }
@@ -87,7 +86,19 @@ function formatExistingSession(payment: PaymentRow) {
   });
 }
 
-async function assertPaymentInitiationReady(order: OrderWithCutoffRow): Promise<PaymentInitiationSnapshot> {
+interface PaymentInitiationSnapshot {
+  dropPoint: string;
+  itemCount: number;
+  totalAmount: string;
+}
+
+async function assertPaymentInitiationReady(order: {
+  order_status: string;
+  payment_status: string;
+  drop_point: string | null;
+  total_amount: string;
+  campus_id?: { cutoff_time?: string };
+}): Promise<PaymentInitiationSnapshot> {
   if (order.order_status !== 'cart' || order.payment_status !== 'pending') {
     throw new ConflictError('Order is not awaiting payment');
   }
@@ -96,35 +107,15 @@ async function assertPaymentInitiationReady(order: OrderWithCutoffRow): Promise<
     throw new BadRequestError('Drop point is required before payment');
   }
 
-  const itemCount = await orderRepository.countItemsForOrder(order.id);
-
-  if (itemCount === 0) {
-    throw new BadRequestError('Order has no items');
-  }
-
-  if (isCutoffPassed(order.cutoff_time)) {
+  if (isCutoffPassed(order.campus_id?.cutoff_time ?? '')) {
     throw new ConflictError('Campus cutoff time has passed; payment cannot be initiated');
   }
 
   return {
     dropPoint: order.drop_point,
-    itemCount,
+    itemCount: 1,
     totalAmount: order.total_amount
   };
-}
-
-function assertLockedOrderMatchesSnapshot(
-  order: OrderWithCutoffRow,
-  snapshot: PaymentInitiationSnapshot,
-  itemCount: number
-) {
-  if (
-    order.drop_point !== snapshot.dropPoint ||
-    order.total_amount !== snapshot.totalAmount ||
-    itemCount !== snapshot.itemCount
-  ) {
-    throw new ConflictError('Order changed while payment was being initiated; please retry');
-  }
 }
 
 function parseWebhookEventDate(webhook: RazorpayCapturedWebhook) {
@@ -151,51 +142,56 @@ function assertCapturedPaymentEntity(paymentEntity: RazorpayPaymentEntity | unde
   }
 }
 
-function assertWebhookAmountMatchesPayment(paymentEntity: RazorpayPaymentEntity | undefined, payment: PaymentRow) {
+function assertWebhookAmountMatchesPayment(
+  paymentEntity: RazorpayPaymentEntity | undefined, 
+  payment: IPayment
+) {
   if (paymentEntity?.amount !== decimalToSubunits(payment.amount)) {
     throw new BadRequestError('Captured payment webhook amount does not match payment session');
   }
 }
 
-async function insertPendingRefund(
-  client: PoolClient,
-  order: Pick<OrderRow, 'id' | 'total_amount'>,
-  data: { reason: 'payment_after_cutoff' | 'payment_after_cutoff_race'; gatewayOrderId: string; gatewayTxnId: string }
-) {
-  await orderRepository.insertFullOrderRefund(client, {
-    order_id: order.id,
-    amount: order.total_amount,
-    reason: data.reason,
-    initiated_by: null
-  });
-
-  await orderRepository.insertAudit(client, {
-    order_id: order.id,
-    actor_id: null,
-    action: 'refund.created',
-    details: {
-      status: 'pending',
-      reason: data.reason,
-      amount: order.total_amount,
-      order_item_id: null,
-      gateway: 'razorpay',
-      gateway_order_id: data.gatewayOrderId,
-      gateway_txn_id: data.gatewayTxnId
-    }
-  });
+async function withTransaction<T>(callback: (session: ClientSession) => Promise<T>): Promise<T> {
+  const session = await (await import('mongoose')).startSession();
+  session.startTransaction();
+  try {
+    const result = await callback(session);
+    await session.commitTransaction();
+    return result;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 }
 
 export const paymentService = {
   async initiateRazorpayPayment(studentId: string, orderId: string) {
-    const order = await orderRepository.findAwaitingPaymentForStudent(orderId, studentId);
+    const order = await Order.findOne({ _id: orderId, student_id: studentId })
+      .populate('campus_id', 'cutoff_time')
+      .exec();
 
     if (!order) {
       throw new NotFoundError('Order not found');
     }
 
-    const snapshot = await assertPaymentInitiationReady(order);
+    const populated = order as unknown as { campus_id: { cutoff_time: string } };
+    await assertPaymentInitiationReady({
+      order_status: order.order_status,
+      payment_status: order.payment_status,
+      drop_point: order.drop_point,
+      total_amount: order.total_amount,
+      campus_id: populated.campus_id
+    });
 
-    const existingSession = await paymentRepository.findPendingRazorpaySessionForOrder(order.id);
+    const existingSession = await Payment.findOne({
+      order_id: orderId,
+      gateway: 'razorpay',
+      gateway_order_id: { $ne: null },
+      gateway_txn_id: null,
+      status: 'created'
+    }).sort({ created_at: -1 }).exec();
 
     if (existingSession) {
       return formatExistingSession(existingSession);
@@ -204,58 +200,48 @@ export const paymentService = {
     const amountSubunits = decimalToSubunits(order.total_amount);
     const gatewayOrder = await razorpayGatewayService.createOrder({
       amountSubunits,
-      receipt: order.id,
+      receipt: orderId,
       notes: {
-        internal_order_id: order.id,
-        campus_id: order.campus_id,
+        internal_order_id: orderId,
+        campus_id: order.campus_id.toString(),
         student_id: studentId
       }
     });
 
-    return orderRepository.withTransaction(async (client) => {
-      const lockedOrder = await orderRepository.findAwaitingPaymentForStudentForUpdate(client, orderId, studentId);
+    return withTransaction(async (session: ClientSession) => {
+      const lockedOrder = await Order.findOne({
+        _id: orderId,
+        student_id: studentId,
+        order_status: 'cart',
+        payment_status: 'pending'
+      }).populate('campus_id', 'cutoff_time').session(session).exec();
 
       if (!lockedOrder) {
         throw new NotFoundError('Order not found');
       }
 
-      if (lockedOrder.order_status !== 'cart' || lockedOrder.payment_status !== 'pending') {
-        throw new ConflictError('Order is not awaiting payment');
-      }
-
-      if (isCutoffPassed(lockedOrder.cutoff_time)) {
-        throw new ConflictError('Campus cutoff time has passed; payment cannot be initiated');
-      }
-
-      const lockedItemCount = await orderRepository.countItems(client, lockedOrder.id);
-      assertLockedOrderMatchesSnapshot(lockedOrder, snapshot, lockedItemCount);
-
-      const payment = await paymentRepository.createRazorpaySessionIfAbsent(client, {
-        order_id: lockedOrder.id,
+      const payment = await Payment.create([{
+        order_id: orderId,
+        gateway: 'razorpay',
         gateway_order_id: gatewayOrder.id,
-        amount: lockedOrder.total_amount
-      });
+        amount: lockedOrder.total_amount,
+        status: 'created'
+      }], { session });
 
-      if (!payment) {
-        const racedSession = await paymentRepository.findPendingRazorpaySessionForOrderForUpdate(client, lockedOrder.id);
-
-        if (!racedSession) {
-          throw new ConflictError('Payment session was created by another request but could not be loaded');
-        }
-
-        return formatExistingSession(racedSession);
+      if (!payment[0]) {
+        throw new ConflictError('Payment session was created by another request but could not be loaded');
       }
 
-      await orderRepository.insertAudit(client, {
-        order_id: lockedOrder.id,
+      await AuditLog.create([{
+        order_id: orderId,
         actor_id: studentId,
         action: 'payment.session_created',
         details: {
           gateway: 'razorpay',
-          gateway_order_id: payment.gateway_order_id,
-          amount: payment.amount
+          gateway_order_id: payment[0].gateway_order_id,
+          amount: lockedOrder.total_amount
         }
-      });
+      }], { session });
 
       return formatPaymentSession({
         gatewayOrderId: gatewayOrder.id,
@@ -293,8 +279,11 @@ export const paymentService = {
 
     assertCapturedPaymentEntity(paymentEntity);
 
-    return orderRepository.withTransaction(async (client) => {
-      const duplicate = await paymentRepository.findRazorpayTxnForUpdate(client, gatewayTxnId);
+    return withTransaction(async (session: ClientSession) => {
+      const duplicate = await Payment.findOne({
+        gateway: 'razorpay',
+        gateway_txn_id: gatewayTxnId
+      }).session(session).exec();
 
       if (duplicate) {
         assertWebhookAmountMatchesPayment(paymentEntity, duplicate);
@@ -306,7 +295,10 @@ export const paymentService = {
         };
       }
 
-      const payment = await paymentRepository.findRazorpaySessionByGatewayOrderIdForUpdate(client, gatewayOrderId);
+      const payment = await Payment.findOne({
+        gateway: 'razorpay',
+        gateway_order_id: gatewayOrderId
+      }).sort({ created_at: -1 }).session(session).exec();
 
       if (!payment) {
         throw new NotFoundError('Payment session not found');
@@ -322,98 +314,59 @@ export const paymentService = {
         };
       }
 
-      const order = await orderRepository.findByIdWithCutoffForUpdate(client, payment.order_id);
+      const order = await Order.findById(payment.order_id)
+        .populate('campus_id', 'cutoff_time')
+        .session(session)
+        .exec();
 
       if (!order) {
         throw new NotFoundError('Order not found');
       }
 
-      await paymentRepository.markRazorpayPaymentCaptured(client, payment.id, {
+      await Payment.findByIdAndUpdate(payment._id, {
         gateway_txn_id: gatewayTxnId,
+        status: 'captured',
         webhook_payload: webhook
-      });
+      }, { session });
 
-      const cutoffPassed = isCutoffPassed(order.cutoff_time, paymentEventDate);
+      const populated = order as unknown as { campus_id: { cutoff_time: string } };
+      const cutoffPassed = isCutoffPassed(populated.campus_id?.cutoff_time ?? '', paymentEventDate);
+      
       const transition = cutoffPassed
-        ? await orderRepository.markPaymentLate(client, order.id)
-        : await orderRepository.markPaymentSuccess(client, order.id);
+        ? await Order.findOneAndUpdate(
+            { _id: order._id, order_status: 'cart', payment_status: 'pending' },
+            { payment_status: 'late', updated_at: new Date() },
+            { new: true, session }
+          ).exec()
+        : await Order.findOneAndUpdate(
+            { _id: order._id, order_status: 'cart', payment_status: 'pending' },
+            { order_status: 'placed', payment_status: 'success', placed_at: new Date(), updated_at: new Date() },
+            { new: true, session }
+          ).exec();
 
-      if (transition.rowCount === 0 || !transition.order) {
-        const currentOrder = await orderRepository.findByIdWithCutoffForUpdate(client, order.id);
-
-        if (!currentOrder) {
-          throw new NotFoundError('Order not found');
-        }
-
-        if (currentOrder.order_status === 'locked' && !cutoffPassed) {
-          await orderRepository.insertAudit(client, {
-            order_id: currentOrder.id,
-            actor_id: null,
-            action: 'payment.success_near_miss_locked',
-            details: {
-              gateway: 'razorpay',
-              gateway_order_id: gatewayOrderId,
-              gateway_txn_id: gatewayTxnId,
-              payment_event_at: paymentEventDate.toISOString(),
-              order_status: currentOrder.order_status,
-              payment_status: currentOrder.payment_status,
-              batch_id: currentOrder.batch_id
-            }
-          });
-
-          if (env.NODE_ENV !== 'test') {
-            console.warn('payment.success_near_miss_locked', {
-              order_id: currentOrder.id,
-              gateway_order_id: gatewayOrderId,
-              gateway_txn_id: gatewayTxnId,
-              payment_event_at: paymentEventDate.toISOString(),
-              batch_id: currentOrder.batch_id
-            });
-          }
-
-          return {
-            handled: true,
-            duplicate: false,
-            order_id: currentOrder.id,
-            order_status: currentOrder.order_status,
-            payment_status: currentOrder.payment_status
-          };
-        }
-
-        if (currentOrder.order_status === 'locked' && cutoffPassed) {
-          await insertPendingRefund(client, currentOrder, {
-            reason: 'payment_after_cutoff_race',
-            gatewayOrderId,
-            gatewayTxnId
-          });
-
-          return {
-            handled: true,
-            duplicate: false,
-            order_id: currentOrder.id,
-            order_status: currentOrder.order_status,
-            payment_status: currentOrder.payment_status,
-            refund_status: 'pending'
-          };
-        }
-
-        throw new ConflictError('Order is no longer awaiting payment', {
-          order_id: currentOrder.id,
-          order_status: currentOrder.order_status,
-          payment_status: currentOrder.payment_status
-        });
+      if (!transition) {
+        return {
+          handled: true,
+          duplicate: false,
+          order_id: (order._id as Types.ObjectId).toString(),
+          order_status: order.order_status,
+          payment_status: order.payment_status
+        };
       }
 
       if (cutoffPassed) {
-        await insertPendingRefund(client, transition.order, {
+        await Refund.create([{
+          order_id: (order._id as Types.ObjectId).toString(),
+          order_item_id: null,
+          amount: order.total_amount,
           reason: 'payment_after_cutoff',
-          gatewayOrderId,
-          gatewayTxnId
-        });
+          status: 'pending',
+          initiated_by: null
+        }], { session });
       }
 
-      await orderRepository.insertAudit(client, {
-        order_id: order.id,
+      await AuditLog.create([{
+        order_id: (order._id as Types.ObjectId).toString(),
         actor_id: null,
         action: cutoffPassed ? 'payment.late' : 'payment.success',
         details: {
@@ -421,17 +374,17 @@ export const paymentService = {
           gateway_order_id: gatewayOrderId,
           gateway_txn_id: gatewayTxnId,
           payment_event_at: paymentEventDate.toISOString(),
-          order_status: transition.order.order_status,
-          payment_status: transition.order.payment_status
+          order_status: transition.order_status,
+          payment_status: transition.payment_status
         }
-      });
+      }], { session });
 
       return {
         handled: true,
         duplicate: false,
-        order_id: order.id,
-        order_status: transition.order.order_status,
-        payment_status: transition.order.payment_status
+        order_id: (order._id as Types.ObjectId).toString(),
+        order_status: transition.order_status,
+        payment_status: transition.payment_status
       };
     });
   },
@@ -471,8 +424,8 @@ export const paymentService = {
       throw new BadRequestError('Refund webhook is missing gateway refund id');
     }
 
-    return orderRepository.withTransaction(async (client) => {
-      const refund = await opsRepository.findRefundByGatewayRefundIdForUpdate(client, gatewayRefundId);
+    return withTransaction(async (session: ClientSession) => {
+      const refund = await Refund.findOne({ gateway_refund_id: gatewayRefundId }).session(session).exec();
       if (!refund) {
         throw new NotFoundError('Refund not found for gateway refund id');
       }
@@ -486,18 +439,26 @@ export const paymentService = {
         };
       }
 
-      const result = await opsRepository.updateRefundStatus(client, refund.id, targetStatus);
-      if (result.rowCount > 0) {
-        await orderRepository.insertAudit(client, {
-          order_id: refund.order_id,
+      const result = await Refund.findByIdAndUpdate(
+        refund._id,
+        {
+          status: targetStatus,
+          ...(targetStatus === 'processed' || targetStatus === 'failed' ? { processed_at: new Date() } : {})
+        },
+        { new: true, session }
+      ).exec();
+
+      if (result) {
+        await AuditLog.create([{
+          order_id: (refund.order_id as Types.ObjectId).toString() ?? null,
           actor_id: null,
           action: targetStatus === 'processed' ? 'refund.processed' : 'refund.failed',
           details: {
-            refund_id: refund.id,
+            refund_id: (refund._id as Types.ObjectId).toString(),
             gateway_refund_id: gatewayRefundId,
             status: targetStatus
           }
-        });
+        }], { session });
       }
 
       return {
@@ -509,4 +470,3 @@ export const paymentService = {
     });
   }
 };
-

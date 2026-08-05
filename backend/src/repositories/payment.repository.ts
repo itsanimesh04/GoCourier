@@ -1,5 +1,5 @@
-import type { PoolClient } from 'pg';
-import { pool } from '../db/pool';
+import type { ClientSession, Types } from 'mongoose';
+import { Payment, type IPayment } from '../models/payment.model';
 
 export interface PaymentRow {
   id: string;
@@ -13,121 +13,130 @@ export interface PaymentRow {
   created_at: Date;
 }
 
+function toPaymentRow(doc: IPayment): PaymentRow {
+  return {
+    id: (doc._id as Types.ObjectId).toString(),
+    order_id: (doc.order_id as Types.ObjectId).toString(),
+    gateway: doc.gateway,
+    gateway_order_id: doc.gateway_order_id,
+    gateway_txn_id: doc.gateway_txn_id,
+    amount: doc.amount,
+    status: doc.status,
+    webhook_payload: doc.webhook_payload,
+    created_at: doc.created_at
+  };
+}
+
 export const paymentRepository = {
   async findPendingRazorpaySessionForOrder(orderId: string): Promise<PaymentRow | null> {
-    const result = await pool.query<PaymentRow>(
-      `SELECT *
-       FROM payment
-       WHERE order_id = $1
-         AND gateway = 'razorpay'
-         AND gateway_order_id IS NOT NULL
-         AND gateway_txn_id IS NULL
-         AND status = 'created'
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [orderId]
-    );
-    return result.rows[0] ?? null;
+    const doc = await Payment.findOne({
+      order_id: orderId,
+      gateway: 'razorpay',
+      gateway_order_id: { $ne: null },
+      gateway_txn_id: null,
+      status: 'created'
+    }).sort({ created_at: -1 }).exec();
+
+    return doc ? toPaymentRow(doc) : null;
   },
 
   async findPendingRazorpaySessionForOrderForUpdate(
-    client: PoolClient,
+    session: ClientSession,
     orderId: string
   ): Promise<PaymentRow | null> {
-    const result = await client.query<PaymentRow>(
-      `SELECT *
-       FROM payment
-       WHERE order_id = $1
-         AND gateway = 'razorpay'
-         AND gateway_order_id IS NOT NULL
-         AND gateway_txn_id IS NULL
-         AND status = 'created'
-       ORDER BY created_at DESC
-       LIMIT 1
-       FOR UPDATE`,
-      [orderId]
-    );
-    return result.rows[0] ?? null;
+    const doc = await Payment.findOne({
+      order_id: orderId,
+      gateway: 'razorpay',
+      gateway_order_id: { $ne: null },
+      gateway_txn_id: null,
+      status: 'created'
+    })
+      .sort({ created_at: -1 })
+      .session(session)
+      .exec();
+
+    return doc ? toPaymentRow(doc) : null;
   },
 
   async createRazorpaySessionIfAbsent(
-    client: PoolClient,
+    session: ClientSession,
     data: { order_id: string; gateway_order_id: string; amount: string }
   ): Promise<PaymentRow | null> {
-    const result = await client.query<PaymentRow>(
-      `INSERT INTO payment (order_id, gateway, gateway_order_id, amount, status)
-       VALUES ($1, 'razorpay', $2, $3, 'created')
-       ON CONFLICT (order_id)
-       WHERE gateway = 'razorpay'
-         AND gateway_order_id IS NOT NULL
-         AND gateway_txn_id IS NULL
-         AND status = 'created'
-       DO NOTHING
-       RETURNING *`,
-      [data.order_id, data.gateway_order_id, data.amount]
-    );
-    return result.rows[0] ?? null;
+    // Check if session already exists
+    const existing = await Payment.findOne({
+      order_id: data.order_id,
+      gateway: 'razorpay',
+      gateway_order_id: { $ne: null },
+      gateway_txn_id: null,
+      status: 'created'
+    }).session(session).exec();
+
+    if (existing) return null;
+
+    const doc = await Payment.create([{
+      order_id: data.order_id,
+      gateway: 'razorpay',
+      gateway_order_id: data.gateway_order_id,
+      amount: data.amount,
+      status: 'created'
+    }], { session });
+
+    return toPaymentRow(doc[0]);
   },
 
+  async findRazorpayTxnForUpdate(session: ClientSession, gatewayTxnId: string): Promise<PaymentRow | null> {
+    const doc = await Payment.findOne({
+      gateway: 'razorpay',
+      gateway_txn_id: gatewayTxnId
+    })
+      .session(session)
+      .exec();
 
-  async findRazorpayTxnForUpdate(client: PoolClient, gatewayTxnId: string): Promise<PaymentRow | null> {
-    const result = await client.query<PaymentRow>(
-      `SELECT *
-       FROM payment
-       WHERE gateway = 'razorpay'
-         AND gateway_txn_id = $1
-       LIMIT 1
-       FOR UPDATE`,
-      [gatewayTxnId]
-    );
-    return result.rows[0] ?? null;
+    return doc ? toPaymentRow(doc) : null;
   },
 
   async findRazorpaySessionByGatewayOrderIdForUpdate(
-    client: PoolClient,
+    session: ClientSession,
     gatewayOrderId: string
   ): Promise<PaymentRow | null> {
-    const result = await client.query<PaymentRow>(
-      `SELECT *
-       FROM payment
-       WHERE gateway = 'razorpay'
-         AND gateway_order_id = $1
-       ORDER BY created_at DESC
-       LIMIT 1
-       FOR UPDATE`,
-      [gatewayOrderId]
-    );
-    return result.rows[0] ?? null;
+    const doc = await Payment.findOne({
+      gateway: 'razorpay',
+      gateway_order_id: gatewayOrderId
+    })
+      .sort({ created_at: -1 })
+      .session(session)
+      .exec();
+
+    return doc ? toPaymentRow(doc) : null;
   },
 
   async markRazorpayPaymentCaptured(
-    client: PoolClient,
+    session: ClientSession,
     paymentId: string,
     data: { gateway_txn_id: string; webhook_payload: unknown }
   ): Promise<PaymentRow> {
-    const result = await client.query<PaymentRow>(
-      `UPDATE payment
-       SET gateway_txn_id = $2,
-           status = 'captured',
-           webhook_payload = $3::jsonb
-       WHERE id = $1
-       RETURNING *`,
-      [paymentId, data.gateway_txn_id, JSON.stringify(data.webhook_payload)]
-    );
-    return result.rows[0];
+    const doc = await Payment.findByIdAndUpdate(
+      paymentId,
+      {
+        gateway_txn_id: data.gateway_txn_id,
+        status: 'captured',
+        webhook_payload: data.webhook_payload
+      },
+      { new: true, session }
+    ).exec()!;
+
+    return toPaymentRow(doc);
   },
 
-  async findCapturedPaymentForOrder(client: PoolClient, orderId: string): Promise<PaymentRow | null> {
-    const result = await client.query<PaymentRow>(
-      `SELECT *
-       FROM payment
-       WHERE order_id = $1
-         AND status = 'captured'
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [orderId]
-    );
-    return result.rows[0] ?? null;
+  async findCapturedPaymentForOrder(session: ClientSession, orderId: string): Promise<PaymentRow | null> {
+    const doc = await Payment.findOne({
+      order_id: orderId,
+      status: 'captured'
+    })
+      .sort({ created_at: -1 })
+      .session(session)
+      .exec();
+
+    return doc ? toPaymentRow(doc) : null;
   }
 };
-

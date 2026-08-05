@@ -29,6 +29,8 @@ export const jwtService = {
 
       return {
         id: decoded.id,
+        phone: typeof decoded.phone === 'string' ? decoded.phone : null,
+        email: typeof decoded.email === 'string' ? decoded.email : null,
         role: decoded.role as JwtPayload['role'],
         campus_id: decoded.campus_id
       };

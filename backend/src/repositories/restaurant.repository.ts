@@ -1,5 +1,5 @@
-import { findById, insertReturning, updateByIdReturning } from './base.repository';
-import { pool } from '../db/pool';
+import { Restaurant, type IRestaurant } from '../models/restaurant.model';
+import { MenuItem } from '../models/menu-item.model';
 
 export interface RestaurantRow {
   id: string;
@@ -22,67 +22,90 @@ export interface CustomerRestaurantRow {
   relevance_sort: number;
 }
 
-const columns = ['campus_id', 'name', 'is_active', 'commission_rate', 'manual_priority', 'refund_risk_penalty'];
+function toRestaurantRow(doc: IRestaurant): RestaurantRow {
+  return {
+    id: doc._id.toString(),
+    campus_id: doc.campus_id.toString(),
+    name: doc.name,
+    is_active: doc.is_active,
+    commission_rate: doc.commission_rate,
+    manual_priority: doc.manual_priority,
+    refund_risk_penalty: doc.refund_risk_penalty,
+    created_at: doc.created_at
+  };
+}
 
 export const restaurantRepository = {
-  findById(id: string) {
-    return findById<RestaurantRow>('restaurant', id);
+  async findById(id: string): Promise<RestaurantRow | null> {
+    const doc = await Restaurant.findById(id).exec();
+    return doc ? toRestaurantRow(doc) : null;
   },
 
   async findActiveByIdForCampus(id: string, campusId: string): Promise<RestaurantRow | null> {
-    const result = await pool.query<RestaurantRow>(
-      'SELECT * FROM restaurant WHERE id = $1 AND campus_id = $2 AND is_active = true LIMIT 1',
-      [id, campusId]
-    );
-    return result.rows[0] ?? null;
+    const doc = await Restaurant.findOne({ _id: id, campus_id: campusId, is_active: true }).exec();
+    return doc ? toRestaurantRow(doc) : null;
   },
 
   async listActiveByCampus(campusId: string, query?: string): Promise<CustomerRestaurantRow[]> {
     const trimmedQuery = query?.trim();
 
     if (!trimmedQuery) {
-      const result = await pool.query<CustomerRestaurantRow>(
-        `SELECT id, campus_id, name, is_active, manual_priority, created_at, 0 AS relevance_sort
-         FROM restaurant
-         WHERE campus_id = $1 AND is_active = true
-         ORDER BY lower(name) ASC`,
-        [campusId]
-      );
-      return result.rows;
+      const docs = await Restaurant.find({ campus_id: campusId, is_active: true }).sort({ name: 1 }).exec();
+      return docs.map(doc => ({
+        id: doc._id.toString(),
+        campus_id: doc.campus_id.toString(),
+        name: doc.name,
+        is_active: doc.is_active,
+        manual_priority: doc.manual_priority,
+        created_at: doc.created_at,
+        relevance_sort: 0
+      }));
     }
 
-    const pattern = `%${trimmedQuery}%`;
-    const result = await pool.query<CustomerRestaurantRow>(
-      `SELECT r.id,
-              r.campus_id,
-              r.name,
-              r.is_active,
-              r.manual_priority,
-              r.created_at,
-              CASE WHEN r.name ILIKE $2 THEN 0 ELSE 1 END AS relevance_sort
-       FROM restaurant r
-       WHERE r.campus_id = $1
-         AND r.is_active = true
-         AND (
-           r.name ILIKE $2
-           OR EXISTS (
-             SELECT 1
-             FROM menu_item mi
-             WHERE mi.restaurant_id = r.id
-               AND mi.name ILIKE $2
-           )
-         )
-       ORDER BY relevance_sort ASC, lower(r.name) ASC`,
-      [campusId, pattern]
-    );
-    return result.rows;
+    // For search, we need to check if query matches restaurant name or menu item name
+    const pattern = trimmedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special chars
+    
+    const docs = await Restaurant.find({
+      campus_id: campusId,
+      is_active: true,
+      $or: [
+        { name: { $regex: pattern, $options: 'i' } },
+        { _id: { $in: await MenuItem.find({ name: { $regex: pattern, $options: 'i' } }).distinct('restaurant_id') } }
+      ]
+    }).sort({ name: 1 }).exec();
+
+    return docs.map(doc => ({
+      id: doc._id.toString(),
+      campus_id: doc.campus_id.toString(),
+      name: doc.name,
+      is_active: doc.is_active,
+      manual_priority: doc.manual_priority,
+      created_at: doc.created_at,
+      relevance_sort: doc.name.toLowerCase().includes(trimmedQuery.toLowerCase()) ? 0 : 1
+    }));
   },
 
-  create(data: Partial<RestaurantRow>) {
-    return insertReturning<RestaurantRow>('restaurant', data, columns);
+  async create(data: Partial<RestaurantRow>): Promise<RestaurantRow> {
+    const doc = await Restaurant.create({
+      campus_id: data.campus_id,
+      name: data.name,
+      is_active: data.is_active ?? true,
+      commission_rate: data.commission_rate ?? '0.00',
+      manual_priority: data.manual_priority ?? 0,
+      refund_risk_penalty: data.refund_risk_penalty ?? '0.00'
+    });
+    return toRestaurantRow(doc);
   },
 
-  update(id: string, data: Partial<RestaurantRow>) {
-    return updateByIdReturning<RestaurantRow>('restaurant', id, data, columns);
+  async update(id: string, data: Partial<RestaurantRow>): Promise<RestaurantRow | null> {
+    const updateData: Record<string, unknown> = {};
+    const columns = ['campus_id', 'name', 'is_active', 'commission_rate', 'manual_priority', 'refund_risk_penalty'];
+    for (const column of columns) {
+      if (data[column as keyof RestaurantRow] !== undefined) {
+        updateData[column] = data[column as keyof RestaurantRow];
+      }
+    }
+    const doc = await Restaurant.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    return doc ? toRestaurantRow(doc) : null;
   }
 };

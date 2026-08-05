@@ -1,11 +1,17 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { apiRouter } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { connectDatabase } from './config/database';
 
 export function createApp() {
   const app = express();
 
+  // Connect to MongoDB
+  connectDatabase().catch(console.error);
+
+  app.use(cookieParser());
   app.use(
     express.json({
       verify: (req, _res, buffer) => {
