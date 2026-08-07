@@ -20,13 +20,17 @@ export interface AppStateValue {
   menuItems: MenuItem[];
   cartItems: CartItem[];
   order: Order;
-  otpCooldownSeconds: number;
   pendingSwitch: PendingSwitch | null;
   setPendingSwitch: (value: PendingSwitch | null) => void;
-  requestOtp: () => Promise<'sent' | 'limited'>;
-  verifyOtp: (otp: string) => Promise<boolean>;
+  signup: (input: {
+    name: string;
+    password: string;
+    email?: string;
+    phone?: string;
+  }) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   selectCampus: (campusId: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loadRestaurants: (query?: string, signal?: AbortSignal) => Promise<void>;
   loadMenu: (restaurantId: string) => Promise<void>;
   refreshOrder: (orderId: string) => Promise<void>;
@@ -70,11 +74,10 @@ export function useAppState(): AppStateValue {
       menuItems: orderCtx.menuItems,
       cartItems: cart.cartItems,
       order: orderCtx.order,
-      otpCooldownSeconds: auth.otpCooldownSeconds,
       pendingSwitch: cart.pendingSwitch,
       setPendingSwitch: cart.setPendingSwitch,
-      requestOtp: auth.requestOtp,
-      verifyOtp: auth.verifyOtp,
+      signup: auth.signup,
+      login: auth.login,
       selectCampus: auth.selectCampus,
       loadRestaurants: orderCtx.loadRestaurants,
       loadMenu: orderCtx.loadMenu,

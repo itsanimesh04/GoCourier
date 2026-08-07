@@ -1,0 +1,19 @@
+import { Clock3, FileText, ShieldCheck } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { AppShell, BottomNav, PrimaryButton, ScreenHeader, SecondaryButton } from '../../components/ui';
+import { useCountdown } from '../../lib/useCountdown';
+import { formatINR } from '../../lib/utils';
+import { useExtrasCatalog } from '../../state/ExtrasCatalogContext';
+import { useExtrasRequests } from '../../state/ExtrasRequestContext';
+
+export function QuoteReviewScreen() {
+  const { id = '' } = useParams(); const navigate = useNavigate(); const { cartCount } = useExtrasCatalog(); const { getRequest, acceptQuote, rejectQuote } = useExtrasRequests(); const request = getRequest(id); const seconds = useCountdown(request?.quote ? Math.max(0, Math.floor((request.quote.expiresAt - Date.now()) / 1000)) : 0);
+  if (!request?.quote) return <AppShell bottomNav={<BottomNav cartCount={cartCount}/>}><ScreenHeader title="Quote review"/><div className="rounded-card border border-border bg-card p-8 text-center"><h1 className="font-display text-xl font-bold">Quote isn’t available</h1><button onClick={() => navigate(`/extras/requests/${id}`)} className="mt-4 text-brand">Return to request</button></div></AppShell>;
+  const quote = request.quote; const total = quote.itemCost + quote.serviceFee + quote.deliveryFee; const expiry = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  return <AppShell bottomNav={<BottomNav cartCount={cartCount}/>}><ScreenHeader title="Quote review"/><div className="mx-auto max-w-2xl"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-button bg-brand text-brandContrast"><FileText/></div><div><h1 className="font-display text-2xl font-bold">Quote ready</h1><p className="flex items-center gap-2 text-sm text-muted"><Clock3 size={14}/> Expires in <strong className="timer-nums text-secondary">{expiry}</strong></p></div></div>
+    <section className="card-gradient mt-6 rounded-card border border-border p-5"><h2 className="font-display font-bold">Item / service summary</h2><p className="mt-4 text-lg font-bold">{request.title}</p><p className="mt-1 text-sm text-muted">Quantity: {request.quantity}</p><div className="mt-5 border-t border-border pt-4"><p className="text-xs font-bold uppercase tracking-wider text-muted">Ops note</p><p className="mt-2 text-sm leading-6">{quote.opsNote}</p></div></section>
+    <section className="mt-4 rounded-card border border-border bg-card p-5"><dl className="space-y-4 text-sm"><div className="flex justify-between"><dt className="text-muted">Item cost</dt><dd>{formatINR(quote.itemCost)}</dd></div><div className="flex justify-between"><dt className="text-muted">Service fee</dt><dd>{formatINR(quote.serviceFee)}</dd></div><div className="flex justify-between"><dt className="text-muted">Delivery fee</dt><dd>{formatINR(quote.deliveryFee)}</dd></div><div className="flex justify-between border-t border-dashed border-muted pt-4 font-display text-xl font-bold"><dt>Total</dt><dd className="text-brand">{formatINR(total)}</dd></div></dl></section>
+    {request.status === 'quote_accepted' ? <div className="mt-5 rounded-card border border-success bg-success/10 p-5 text-center"><ShieldCheck className="mx-auto text-success"/><h2 className="mt-3 font-display text-xl font-bold">Quote accepted</h2><p className="mt-2 text-sm text-muted">Payment will open on a dedicated gateway screen when backend integration is available.</p></div> : <div className="mt-5 grid gap-3 sm:grid-cols-2"><SecondaryButton onClick={() => { rejectQuote(id); navigate(`/extras/requests/${id}`); }}>Reject quote</SecondaryButton><PrimaryButton disabled={seconds <= 0} onClick={() => acceptQuote(id)}>Accept & Pay</PrimaryButton></div>}
+    <p className="mt-4 text-center text-xs text-muted">Secure payment is intentionally not simulated inside the quote screen.</p>
+  </div></AppShell>;
+}

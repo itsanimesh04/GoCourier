@@ -2,6 +2,8 @@ import type { Campus, MenuItem, Order, Restaurant } from '../lib/types';
 
 const food = (name: string) => `/food/${name}.jpg`;
 
+const hours = { openTime: '10:00 AM', closeTime: '10:30 PM', isOpen: true };
+
 export const campuses: Campus[] = [
   { id: 'campus-nims', name: 'Nims University', city: 'Jaipur', state: 'Rajasthan', cutoffTime: '21:30', deliveryTime: '21:45' },
   { id: 'campus-amity', name: 'Amity University', city: 'Noida', state: 'Uttar Pradesh', cutoffTime: '21:30', deliveryTime: '21:45' },
@@ -18,7 +20,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 2.1,
     etaMinutes: 25,
     tags: ['Hot'],
-    imageUrl: food('chicken-biryani')
+    imageUrl: food('chicken-biryani'),
+    ...hours
   },
   {
     id: 'lapinoz-pizza',
@@ -29,7 +32,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 1.5,
     etaMinutes: 20,
     tags: ['Hot'],
-    imageUrl: food('paneer-pizza')
+    imageUrl: food('paneer-pizza'),
+    ...hours
   },
   {
     id: 'behrouz-biryani',
@@ -40,7 +44,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 2.8,
     etaMinutes: 25,
     tags: ['Hot'],
-    imageUrl: food('chicken-biryani')
+    imageUrl: food('chicken-biryani'),
+    ...hours
   },
   {
     id: 'burger-singh',
@@ -51,7 +56,10 @@ export const restaurants: Restaurant[] = [
     distanceKm: 1.8,
     etaMinutes: 18,
     tags: ['Hot'],
-    imageUrl: food('flavor-town')
+    imageUrl: food('garlic-bread'),
+    openTime: '11:00 AM',
+    closeTime: '11:00 PM',
+    isOpen: true
   },
   {
     id: 'wow-momo',
@@ -62,7 +70,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 1.9,
     etaMinutes: 20,
     tags: [],
-    imageUrl: food('chocolate-shake')
+    imageUrl: food('chocolate-shake'),
+    ...hours
   },
   {
     id: 'theobroma',
@@ -73,7 +82,10 @@ export const restaurants: Restaurant[] = [
     distanceKm: 2.2,
     etaMinutes: 22,
     tags: ['Hot'],
-    imageUrl: food('chocolate-shake')
+    imageUrl: food('chocolate-shake'),
+    openTime: '09:00 AM',
+    closeTime: '09:00 PM',
+    isOpen: true
   },
   {
     id: 'faasos-rolls',
@@ -84,7 +96,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 2.0,
     etaMinutes: 20,
     tags: [],
-    imageUrl: food('garlic-bread')
+    imageUrl: food('garlic-bread'),
+    ...hours
   },
   {
     id: 'flavor-town',
@@ -95,7 +108,10 @@ export const restaurants: Restaurant[] = [
     distanceKm: 1.6,
     etaMinutes: 18,
     tags: [],
-    imageUrl: food('garlic-bread')
+    imageUrl: food('garlic-bread'),
+    openTime: '12:00 PM',
+    closeTime: '11:30 PM',
+    isOpen: false
   },
   {
     id: 'guru-kripa',
@@ -106,7 +122,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 1.8,
     etaMinutes: 22,
     tags: [],
-    imageUrl: food('paneer-pizza')
+    imageUrl: food('paneer-pizza'),
+    ...hours
   },
   {
     id: 'spicecraft',
@@ -117,7 +134,8 @@ export const restaurants: Restaurant[] = [
     distanceKm: 2.4,
     etaMinutes: 28,
     tags: ['Hot'],
-    imageUrl: food('chicken-biryani')
+    imageUrl: food('chicken-biryani'),
+    ...hours
   }
 ];
 
@@ -130,7 +148,8 @@ export const menuItems: MenuItem[] = [
     price: 215,
     isVeg: true,
     imageUrl: food('paneer-pizza'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Italian'
   },
   {
     id: 'garlic-bread',
@@ -140,7 +159,8 @@ export const menuItems: MenuItem[] = [
     price: 79,
     isVeg: true,
     imageUrl: food('garlic-bread'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Italian'
   },
   {
     id: 'chicken-biryani',
@@ -150,7 +170,8 @@ export const menuItems: MenuItem[] = [
     price: 189,
     isVeg: false,
     imageUrl: food('chicken-biryani'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Biryani'
   },
   {
     id: 'chocolate-shake',
@@ -160,7 +181,8 @@ export const menuItems: MenuItem[] = [
     price: 99,
     isVeg: true,
     imageUrl: food('chocolate-shake'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Desserts'
   },
   {
     id: 'lapinoz-7cheesy',
@@ -170,7 +192,8 @@ export const menuItems: MenuItem[] = [
     price: 289,
     isVeg: true,
     imageUrl: food('paneer-pizza'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Italian'
   },
   {
     id: 'lapinoz-garlic',
@@ -180,7 +203,8 @@ export const menuItems: MenuItem[] = [
     price: 129,
     isVeg: true,
     imageUrl: food('garlic-bread'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Italian'
   },
   {
     id: 'behrouz-dum',
@@ -190,7 +214,8 @@ export const menuItems: MenuItem[] = [
     price: 299,
     isVeg: true,
     imageUrl: food('chicken-biryani'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Biryani'
   },
   {
     id: 'burger-singh-maharaja',
@@ -199,8 +224,9 @@ export const menuItems: MenuItem[] = [
     description: 'Crispy spiced paneer patty with tandoori mayo',
     price: 149,
     isVeg: true,
-    imageUrl: food('flavor-town'),
-    isAvailable: true
+    imageUrl: food('garlic-bread'),
+    isAvailable: true,
+    category: 'Fast Food'
   },
   {
     id: 'wow-momo-panfried',
@@ -210,7 +236,8 @@ export const menuItems: MenuItem[] = [
     price: 139,
     isVeg: true,
     imageUrl: food('chocolate-shake'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Chinese'
   },
   {
     id: 'theobroma-brownie',
@@ -220,7 +247,8 @@ export const menuItems: MenuItem[] = [
     price: 115,
     isVeg: true,
     imageUrl: food('chocolate-shake'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Desserts'
   },
   {
     id: 'faasos-paneer-roll',
@@ -230,7 +258,8 @@ export const menuItems: MenuItem[] = [
     price: 159,
     isVeg: true,
     imageUrl: food('garlic-bread'),
-    isAvailable: true
+    isAvailable: true,
+    category: 'Fast Food'
   },
   {
     id: 'loaded-burger',
@@ -239,8 +268,53 @@ export const menuItems: MenuItem[] = [
     description: 'Crispy patty, cheese and house sauce',
     price: 169,
     isVeg: false,
-    imageUrl: food('flavor-town'),
-    isAvailable: true
+    imageUrl: food('garlic-bread'),
+    isAvailable: true,
+    category: 'Fast Food'
+  },
+  {
+    id: 'masala-dosa',
+    restaurantId: 'guru-kripa',
+    name: 'Masala Dosa',
+    description: 'Crispy dosa stuffed with spiced potato masala',
+    price: 89,
+    isVeg: true,
+    imageUrl: food('paneer-pizza'),
+    isAvailable: true,
+    category: 'South Indian'
+  },
+  {
+    id: 'idli-sambar',
+    restaurantId: 'guru-kripa',
+    name: 'Idli Sambar (3 pcs)',
+    description: 'Soft steamed idlis with hot sambar and chutney',
+    price: 69,
+    isVeg: true,
+    imageUrl: food('garlic-bread'),
+    isAvailable: true,
+    category: 'South Indian'
+  },
+  {
+    id: 'hakka-noodles',
+    restaurantId: 'wow-momo',
+    name: 'Veg Hakka Noodles',
+    description: 'Wok-tossed noodles with crisp veggies',
+    price: 129,
+    isVeg: true,
+    imageUrl: food('chicken-biryani'),
+    isAvailable: true,
+    category: 'Chinese'
+  },
+  {
+    id: 'chilli-paneer',
+    restaurantId: 'rising-cafe',
+    name: 'Chilli Paneer Dry',
+    description: 'Indo-Chinese paneer tossed in chilli garlic sauce',
+    price: 179,
+    isVeg: true,
+    imageUrl: food('paneer-pizza'),
+    isAvailable: true,
+    category: 'Chinese'
   }
 ];
 

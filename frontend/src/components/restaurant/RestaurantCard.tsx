@@ -1,5 +1,7 @@
 import type { Restaurant } from '../../lib/types';
-import { Star } from '../icons';
+import { Clock, Heart, Star } from '../icons';
+import { useFavorites } from '../../lib/hooks/useFavorites';
+import { cn } from '../../lib/utils';
 
 export interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -7,41 +9,63 @@ export interface RestaurantCardProps {
 }
 
 export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
-  const hot = restaurant.tags.includes('Hot');
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const fav = isFavorite(restaurant.id);
+  const isPopular = restaurant.tags.includes('Hot') || restaurant.rating >= 4.5;
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="card-gradient group grid min-h-[96px] w-full grid-cols-[88px_1fr_auto] items-center gap-3.5 rounded-card border border-border p-3 text-left transition duration-200 hover:border-border/80 hover:bg-surface2/50 active:scale-[0.99]"
-    >
-      <div className="relative h-[80px] w-[88px] overflow-hidden rounded-[14px] bg-surface2">
-        <img
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          src={restaurant.imageUrl}
-          alt={restaurant.name}
-        />
-      </div>
-      <div className="min-w-0">
-        <h3 className="truncate font-display text-base font-bold text-text group-hover:text-brand transition-colors">
-          {restaurant.name}
-        </h3>
-        <p className="mt-0.5 truncate text-xs text-muted">{restaurant.cuisine}</p>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1 rounded bg-surface2 px-1.5 py-0.5 font-bold text-text">
-            <Star size={12} className="fill-urgent text-urgent" aria-hidden />
-            {restaurant.rating.toFixed(1)}
+    <article className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-subtle premium-transition hover:shadow-card">
+      <button type="button" onClick={onClick} className="block w-full text-left">
+        <div className="relative aspect-[16/10] overflow-hidden bg-input">
+          <img
+            className="h-full w-full object-cover premium-transition group-hover:scale-[1.03]"
+            src={restaurant.imageUrl}
+            alt={restaurant.name}
+            loading="lazy"
+          />
+          <span
+            className={cn(
+              'absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-bold',
+              restaurant.isOpen ? 'bg-success/95 text-white' : 'bg-foreground/80 text-white'
+            )}
+          >
+            {restaurant.isOpen ? 'Open' : 'Closed'}
           </span>
-          <span className="text-muted">•</span>
-          <span className="text-muted">{restaurant.etaMinutes} mins</span>
-          <span className="text-muted">•</span>
-          <span className="font-medium text-success">Free delivery</span>
+          {isPopular ? (
+            <span className="absolute bottom-3 left-3 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
+              Popular
+            </span>
+          ) : null}
         </div>
-      </div>
-      {hot ? (
-        <span className="self-start rounded-full border border-brand/40 bg-brand/10 px-2.5 py-1 font-display text-[11px] font-bold text-brand">
-          Popular
-        </span>
-      ) : null}
-    </button>
+        <div className="p-4">
+          <h3 className="truncate font-display text-lg font-bold text-foreground group-hover:text-primary premium-transition">
+            {restaurant.name}
+          </h3>
+          <p className="mt-0.5 truncate text-sm text-muted">{restaurant.cuisine}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+            <span className="inline-flex items-center gap-1 font-semibold text-foreground">
+              <Star size={13} className="fill-secondary text-secondary" aria-hidden />
+              {restaurant.rating.toFixed(1)}
+            </span>
+            <span>{restaurant.etaMinutes} min</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock size={12} aria-hidden />
+              {restaurant.openTime} – {restaurant.closeTime}
+            </span>
+          </div>
+        </div>
+      </button>
+      <button
+        type="button"
+        aria-label={fav ? 'Remove from favourites' : 'Add to favourites'}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleFavorite(restaurant.id);
+        }}
+        className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-subtle premium-transition hover:scale-105"
+      >
+        <Heart size={18} className={cn(fav ? 'fill-primary text-primary' : 'text-muted')} strokeWidth={2.2} />
+      </button>
+    </article>
   );
 }

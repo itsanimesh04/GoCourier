@@ -10,6 +10,7 @@ export {
   Clock,
   CreditCard,
   Flame,
+  Heart,
   Home,
   Lock,
   MapPin,

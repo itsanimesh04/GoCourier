@@ -26,8 +26,8 @@ export function TextInput({
     <label className="block">
       <div
         className={cn(
-          'surface-gradient flex min-h-[54px] items-center gap-3 rounded-input border px-4 transition',
-          error ? 'border-danger shadow-[0_0_22px_rgba(255,71,71,0.18)]' : 'border-border focus-within:border-urgent'
+          'surface-gradient flex min-h-[54px] items-center gap-3 rounded-input border px-4 transition premium-transition',
+          error ? 'border-danger shadow-[0_0_22px_rgba(239,68,68,0.18)]' : 'border-border focus-within:border-primary'
         )}
       >
         {icon ? <span className={error ? 'text-danger' : 'text-muted'}>{icon}</span> : null}
@@ -37,7 +37,7 @@ export function TextInput({
           placeholder={placeholder}
           inputMode={inputMode}
           autoFocus={autoFocus}
-          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-text outline-none focus:outline-none focus:ring-0 focus-visible:outline-none placeholder:text-muted"
+          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none focus:outline-none focus:ring-0 focus-visible:outline-none placeholder:text-muted"
         />
       </div>
       {error ? <p className="mt-2 text-xs font-medium text-danger">{error}</p> : null}

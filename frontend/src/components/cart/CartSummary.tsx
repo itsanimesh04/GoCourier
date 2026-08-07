@@ -9,11 +9,11 @@ export interface CartBarProps {
 
 export function CartBar({ count, total, onClick }: CartBarProps) {
   return (
-    <div className="w-full rounded-[16px] bg-brand p-1.5 shadow-cta transition-all animate-scooter-in">
+    <div className="w-full rounded-2xl bg-primary p-1.5 shadow-cta transition-all animate-scooter-in">
       <button
         type="button"
         onClick={onClick}
-        className="flex min-h-[48px] w-full items-center justify-between rounded-[12px] px-4 font-display font-bold text-white transition active:scale-[0.99]"
+        className="flex min-h-[48px] w-full items-center justify-between rounded-xl px-4 font-display font-bold text-primary-foreground transition premium-scale"
       >
         <div className="flex items-center gap-2.5">
           <span className="rounded-md bg-white/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider">
@@ -38,20 +38,20 @@ export interface BillSummaryProps {
 
 export function BillSummary({ subtotal, fee, total }: BillSummaryProps) {
   return (
-    <section className="card-gradient rounded-card border border-border p-4">
+    <section className="card-gradient rounded-card border border-border p-4 shadow-elevated">
       <div className="space-y-3 text-sm">
         <div className="flex justify-between text-muted">
           <span>Subtotal</span>
-          <span className="font-display font-bold text-text">{formatINR(subtotal)}</span>
+          <span className="font-display font-bold text-foreground">{formatINR(subtotal)}</span>
         </div>
         <div className="flex justify-between text-muted">
           <span>Delivery fee</span>
-          <span className="font-display font-bold text-text">{formatINR(fee)}</span>
+          <span className="font-display font-bold text-foreground">{formatINR(fee)}</span>
         </div>
         <div className="border-t border-dashed border-border pt-4">
           <div className="flex items-end justify-between">
-            <span className="font-display text-lg font-bold text-text">Total</span>
-            <span className="font-display text-[30px] font-bold text-text">{formatINR(total)}</span>
+            <span className="font-display text-lg font-bold text-foreground">Total</span>
+            <span className="font-display text-[30px] font-bold text-foreground">{formatINR(total)}</span>
           </div>
         </div>
       </div>

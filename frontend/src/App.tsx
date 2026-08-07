@@ -1,5 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { AppShell } from './components/ui';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import {
   CampusScreen,
   CartScreen,
@@ -16,30 +15,27 @@ import {
   OrderConfirmationScreen,
   OrdersScreen,
   OrderTrackingScreen,
-  OtpScreen,
-  PaymentLoadingScreen,
   OnboardingScreen,
   SignupScreen,
   LoginScreen,
-  PhoneEntryScreen,
   ProfileScreen,
   RestaurantMenuScreen,
-  SplashScreen
-} from './screens';
-import { isFocusedRoute } from './lib/utils';
+  SplashScreen,
+  HomePage,
+  PaymentLoadingScreen
+} from './pages';
 
 export function App() {
-  const location = useLocation();
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="min-h-screen w-full bg-background text-foreground">
       <Routes>
-        <Route path="/" element={<Navigate to="/splash" replace />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/splash" element={<SplashScreen />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route path="/auth/signup" element={<SignupScreen />} />
         <Route path="/auth/login" element={<LoginScreen />} />
-        <Route path="/auth/phone" element={<PhoneEntryScreen />} />
-        <Route path="/auth/otp" element={<OtpScreen />} />
+        <Route path="/auth/phone" element={<Navigate to="/auth/login" replace />} />
+        <Route path="/auth/otp" element={<Navigate to="/auth/login" replace />} />
         <Route path="/campus" element={<CampusScreen />} />
         <Route path="/food" element={<HomeScreen />} />
         <Route path="/food/restaurants/:id" element={<RestaurantMenuScreen />} />
@@ -60,7 +56,7 @@ export function App() {
         <Route path="/orders/:id/tracking" element={<OrderTrackingScreen />} />
         <Route path="/states/empty" element={<EmptyStatesScreen />} />
         <Route path="/states/errors" element={<ErrorStatesScreen />} />
-        <Route path="*" element={<Navigate to="/food" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );

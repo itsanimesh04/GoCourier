@@ -25,7 +25,7 @@ export function PrimaryButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex min-h-[56px] w-full items-center justify-center gap-3 rounded-button bg-brand px-5 font-display text-base font-bold text-brandContrast shadow-cta transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none',
+        'inline-flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl bg-primary px-5 font-display text-base font-bold text-primary-foreground shadow-cta transition premium-scale disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none',
         className
       )}
     >
@@ -53,7 +53,7 @@ export function SecondaryButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-button border border-brand bg-transparent px-5 font-display text-base font-bold text-brand transition active:scale-[0.99]',
+        'inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-2xl border border-primary/30 bg-card px-5 font-display text-base font-bold text-primary transition premium-scale',
         className
       )}
     >
@@ -67,7 +67,7 @@ export function ShareButton() {
   return (
     <button
       type="button"
-      className="grid min-h-tap min-w-tap place-items-center rounded-full text-text transition hover:bg-surface2"
+      className="grid min-h-[44px] min-w-[44px] place-items-center rounded-full text-foreground transition hover:bg-muted/10"
       aria-label="Share"
     >
       <Share2 size={20} />

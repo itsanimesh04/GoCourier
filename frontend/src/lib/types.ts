@@ -32,6 +32,9 @@ export interface Restaurant {
   etaMinutes: number;
   tags: string[];
   imageUrl: string;
+  openTime: string;
+  closeTime: string;
+  isOpen: boolean;
 }
 
 export interface MenuItem {
@@ -43,6 +46,7 @@ export interface MenuItem {
   isVeg: boolean;
   imageUrl: string;
   isAvailable: boolean;
+  category?: string;
 }
 
 export interface CartItem {
@@ -82,8 +86,39 @@ export interface Order {
 
 export interface User {
   id: string;
-  phone: string;
+  phone: string | null;
+  email: string | null;
   name: string | null;
   role: 'student';
   campus_id: string | null;
+}
+
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+export interface FoodCategory {
+  id: string;
+  name: string;
+  imageUrl: string;
+}
+
+export interface Review {
+  id: string;
+  name: string;
+  campus: string;
+  rating: number;
+  comment: string;
+  avatarColor: string;
+}
+
+export interface CuisineSection {
+  id: string;
+  title: string;
+  dishes: MenuItem[];
 }

@@ -34,7 +34,8 @@ export class ApiClientError extends Error {
 
 interface BackendUser {
   id: string;
-  phone: string;
+  phone: string | null;
+  email: string | null;
   name: string | null;
   role: 'student';
   campus_id: string | null;
@@ -179,7 +180,10 @@ function mapRestaurant(restaurant: BackendRestaurant, index: number): Restaurant
     distanceKm: presentation.distanceKm,
     etaMinutes: presentation.etaMinutes,
     tags: restaurant.is_promoted ? ['Hot'] : presentation.tags,
-    imageUrl: presentation.imageUrl
+    imageUrl: presentation.imageUrl,
+    openTime: presentation.openTime,
+    closeTime: presentation.closeTime,
+    isOpen: presentation.isOpen
   };
 }
 
@@ -230,17 +234,24 @@ function mapOrderDetail(order: BackendOrderDetail): Order {
 }
 
 export const apiClient = {
-  requestOtp(phone: string) {
-    return request<{ message: string }>('/auth/otp/request', {
+  signup(input: { name: string; password: string; email?: string; phone?: string }) {
+    return request<{ token: string; user: BackendUser }>('/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ phone })
+      body: JSON.stringify(input)
     });
   },
 
-  verifyOtp(phone: string, otp: string) {
-    return request<{ token: string; user: BackendUser }>('/auth/otp/verify', {
+  login(identifier: string, password: string) {
+    return request<{ token: string; user: BackendUser }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ phone, otp_code: otp })
+      body: JSON.stringify({ identifier, password })
+    });
+  },
+
+  logout(token: string) {
+    return request<{ message: string }>('/auth/logout', {
+      method: 'POST',
+      token
     });
   },
 
@@ -250,11 +261,19 @@ export const apiClient = {
   },
 
   async setCampus(token: string, campusId: string): Promise<User> {
-    return request<User>('/me/campus', {
+    const user = await request<BackendUser>('/me/campus', {
       method: 'POST',
       token,
       body: JSON.stringify({ campus_id: campusId })
     });
+    return {
+      id: user.id,
+      phone: user.phone,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      campus_id: user.campus_id
+    };
   },
 
   async listRestaurants(token: string, campusId: string, query = ''): Promise<Restaurant[]> {

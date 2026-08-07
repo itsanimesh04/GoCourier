@@ -10,9 +10,9 @@ export interface StatusPillProps {
 export function StatusPill({ tone, children, icon }: StatusPillProps) {
   const tones = {
     success: 'border-success/30 bg-success/10 text-success',
-    urgent: 'border-urgent/30 bg-urgent/15 text-urgent',
+    urgent: 'border-secondary/30 bg-secondary/10 text-secondary',
     danger: 'border-danger/30 bg-danger/10 text-danger',
-    neutral: 'border-border bg-surface2 text-muted'
+    neutral: 'border-border bg-muted/10 text-muted'
   };
   return (
     <span
