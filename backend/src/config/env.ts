@@ -18,7 +18,14 @@ const envSchema = z.object({
   RAZORPAY_API_BASE_URL: z.string().url().default('https://api.razorpay.com/v1'),
   COOKIE_SECRET: z.string().min(16).optional().default('cookie-secret-dev-min-16-chars'),
   COOKIE_SECURE: z.coerce.boolean().optional().default(false),
-  COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).optional().default('strict')
+  COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).optional().default('lax'),
+  ADMIN_ORIGIN: z.string().url().optional().default('http://localhost:5174'),
+  CLIENT_ORIGIN: z.string().url().optional().default('http://localhost:5173'),
+  AWS_ACCESS_KEY_ID: z.string().min(1).optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  AWS_REGION: z.string().min(1).default('ap-south-1'),
+  S3_BUCKET: z.string().min(1).optional(),
+  S3_PUBLIC_BASE_URL: z.string().url().optional()
 });
 
 const parsed = envSchema.safeParse({
@@ -31,7 +38,15 @@ const parsed = envSchema.safeParse({
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ?? (nodeEnv === 'test' ? 'rzp_test_unit_key' : undefined),
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ?? (nodeEnv === 'test' ? 'rzp_test_unit_secret' : undefined),
   RAZORPAY_WEBHOOK_SECRET:
-    process.env.RAZORPAY_WEBHOOK_SECRET ?? (nodeEnv === 'test' ? 'unit_webhook_secret' : undefined)
+    process.env.RAZORPAY_WEBHOOK_SECRET ?? (nodeEnv === 'test' ? 'unit_webhook_secret' : undefined),
+  AWS_ACCESS_KEY_ID:
+    process.env.AWS_ACCESS_KEY_ID ?? (nodeEnv === 'test' ? 'test-access-key' : undefined),
+  AWS_SECRET_ACCESS_KEY:
+    process.env.AWS_SECRET_ACCESS_KEY ?? (nodeEnv === 'test' ? 'test-secret-key' : undefined),
+  S3_BUCKET: process.env.S3_BUCKET ?? (nodeEnv === 'test' ? 'test-bucket' : undefined),
+  S3_PUBLIC_BASE_URL:
+    process.env.S3_PUBLIC_BASE_URL ??
+    (nodeEnv === 'test' ? 'https://test-bucket.s3.amazonaws.com' : undefined)
 });
 
 if (!parsed.success) {

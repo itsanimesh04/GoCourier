@@ -5,21 +5,23 @@ import { UnauthorizedError } from '../utils/errors';
 const COOKIE_NAME = 'auth_token';
 
 export const setAuthCookie = (res: import('express').Response, token: string): void => {
+  const sameSite = (process.env.COOKIE_SAMESITE as 'strict' | 'lax' | 'none' | undefined) ?? 'lax';
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production' || sameSite === 'none',
+    sameSite,
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     path: '/'
   });
 };
 
 export const clearAuthCookie = (res: import('express').Response): void => {
+  const sameSite = (process.env.COOKIE_SAMESITE as 'strict' | 'lax' | 'none' | undefined) ?? 'lax';
   res.clearCookie(COOKIE_NAME, {
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: process.env.NODE_ENV === 'production' || sameSite === 'none',
+    sameSite
   });
 };
 

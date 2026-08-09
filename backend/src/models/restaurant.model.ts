@@ -4,6 +4,16 @@ export interface IRestaurant {
   _id: mongoose.Types.ObjectId;
   campus_id: mongoose.Types.ObjectId;
   name: string;
+  cuisine: string;
+  rating: number;
+  distance_km: number;
+  eta_minutes: number;
+  tags: string[];
+  image_url: string | null;
+  image_key: string | null;
+  open_time: string | null;
+  close_time: string | null;
+  is_open: boolean;
   is_active: boolean;
   commission_rate: string;
   manual_priority: number;
@@ -15,6 +25,16 @@ export interface IRestaurant {
 const restaurantSchema = new Schema<IRestaurant>({
   campus_id: { type: Schema.Types.ObjectId, ref: 'Campus', required: true, index: true },
   name: { type: String, required: true },
+  cuisine: { type: String, default: '' },
+  rating: { type: Number, default: 0 },
+  distance_km: { type: Number, default: 0 },
+  eta_minutes: { type: Number, default: 0 },
+  tags: { type: [String], default: [] },
+  image_url: { type: String, default: null },
+  image_key: { type: String, default: null },
+  open_time: { type: String, default: null },
+  close_time: { type: String, default: null },
+  is_open: { type: Boolean, default: true },
   is_active: { type: Boolean, required: true, default: true },
   commission_rate: { type: String, default: '0.00' },
   manual_priority: { type: Number, default: 0 },

@@ -1,9 +1,11 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { apiRouter } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { connectDatabase } from './config/database';
+import { env } from './config/env';
 
 export function createApp() {
   const app = express();
@@ -11,6 +13,12 @@ export function createApp() {
   // Connect to MongoDB
   connectDatabase().catch(console.error);
 
+  app.use(
+    cors({
+      origin: [env.ADMIN_ORIGIN, env.CLIENT_ORIGIN],
+      credentials: true
+    })
+  );
   app.use(cookieParser());
   app.use(
     express.json({
