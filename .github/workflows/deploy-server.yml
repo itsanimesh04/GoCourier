@@ -1,0 +1,108 @@
+name: Deploy Express Server to EC2 with PM2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-server:
+    runs-on: ubuntu-latest
+
+    # Only run if commit message contains 'Deploy Server'
+    if: contains(github.event.head_commit.message, 'Deploy Server')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # --- Install dependencies and build (if needed) ---
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          npm ci
+
+      - name: Build TypeScript
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          npm run build
+
+      # --- Create artifact (include backend files + package files) ---
+      - name: Prepare artifact
+        run: |
+          set -e
+          ART="backend.tar.gz"
+          # Include all backend files except node_modules
+          tar -czf "$ART" --exclude='node_modules' -C backend dist package.json package-lock.json
+          ls -lh "$ART"
+
+      - name: Copy build to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "backend.tar.gz"
+          target: "~/gocourier/backend"
+
+      # --- Deploy on EC2 ---
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            # Load NVM if present (optional)
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+            mkdir -p ~/gocourier/backend
+            cd ~/gocourier/backend
+
+            # Extract new backend files
+            rm -rf dist
+            tar -xzf backend.tar.gz
+            rm -f backend.tar.gz
+
+            # Write environment variables
+            echo "${{ secrets.BACKEND_ENV_FILE }}" > .env
+
+            # Generate ecosystem.config.js (NO secrets)
+            cat > ecosystem.config.js <<'EOF'
+            module.exports = {
+              apps: [
+                {
+                  name: "backend",
+                  script: "dist/index.js",
+                  cwd: "/home/ubuntu/gocourier/backend",
+                  env_file: ".env",
+                  exec_mode: "fork",
+                  instances: "1",
+                  autorestart: true,
+                }
+              ]
+            };
+            EOF
+
+            # Install production dependencies
+            npm ci --omit=dev
+
+            # Ensure PM2 exists
+            command -v pm2 >/dev/null 2>&1 || npm install -g pm2
+
+            # Restart or start app (adjust the entry point if needed)
+            pm2 reload ecosystem.config.js || pm2 start ecosystem.config.js
+            pm2 save
