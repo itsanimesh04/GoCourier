@@ -74,6 +74,7 @@ export interface CartLineItem {
   unitPrice: number;
   quantity: number;
   selectedAddons: SelectedAddon[];
+  note?: string;
 }
 
 export interface CartItem {

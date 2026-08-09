@@ -18,14 +18,16 @@ const CartPage = () => {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center md:px-10">
-        <h1 className="font-bebas text-5xl uppercase text-tertiary">Your Cart is Empty</h1>
-        <p className="mt-3 font-sans text-gray-600">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center px-4 py-16 text-center md:px-10">
+        <h1 className="font-display text-2xl font-bold uppercase text-fg sm:text-3xl">
+          Your Cart is Empty
+        </h1>
+        <p className="mt-2 font-sans text-sm text-muted">
           Add some food or campus extras to get started.
         </p>
         <Link
           to="/food"
-          className="mt-8 inline-block bg-primary px-8 py-3 font-bebas text-2xl uppercase text-white hover:bg-red-700"
+          className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 font-sans text-sm font-semibold uppercase text-on-primary hover:opacity-90"
         >
           Browse Food
         </Link>
@@ -34,8 +36,8 @@ const CartPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
-      <h1 className="mb-6 font-bebas text-3xl uppercase tracking-wide text-tertiary sm:mb-8 sm:text-4xl md:text-5xl">
+    <div className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:py-10 md:px-10">
+      <h1 className="mb-6 font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
         Cart
       </h1>
 

@@ -8,7 +8,10 @@ import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import CheckoutPage from './pages/CheckoutPage'
+import CustomRequestPage from './pages/CustomRequestPage'
+import ExtrasListingPage from './pages/ExtrasListingPage'
 import FoodListingPage from './pages/FoodListingPage'
+import ParcelRequestPage from './pages/ParcelRequestPage'
 
 const App = () => {
   return (
@@ -21,6 +24,9 @@ const App = () => {
           <Route path="food" element={<FoodListingPage />} />
           <Route path="food/restaurants/:id" element={<ResturantPage />} />
           <Route path="food/foods/:id" element={<ProductPage />} />
+          <Route path="extras" element={<ExtrasListingPage />} />
+          <Route path="extras/custom-request" element={<CustomRequestPage />} />
+          <Route path="extras/parcel" element={<ParcelRequestPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="profile" element={<ProfilePage />} />

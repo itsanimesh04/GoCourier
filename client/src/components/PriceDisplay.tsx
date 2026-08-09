@@ -8,19 +8,19 @@ interface PriceDisplayProps {
 }
 
 const sizeClass = {
-  sm: 'text-lg',
-  md: 'text-2xl',
-  lg: 'text-3xl',
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-xl',
 };
 
 const PriceDisplay = ({ price, originalPrice, className, size = 'md' }: PriceDisplayProps) => {
   const showDiscount = originalPrice != null && originalPrice > price;
 
   return (
-    <div className={cn('flex items-baseline gap-2 font-bebas text-tertiary', sizeClass[size], className)}>
+    <div className={cn('flex items-baseline gap-2 font-display font-semibold text-fg', sizeClass[size], className)}>
       <span>₹ {price}</span>
       {showDiscount && (
-        <span className="text-base text-gray-400 line-through decoration-gray-400">
+        <span className="text-xs font-normal text-muted line-through decoration-muted">
           ₹ {originalPrice}
         </span>
       )}

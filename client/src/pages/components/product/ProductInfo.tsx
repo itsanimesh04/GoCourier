@@ -15,20 +15,20 @@ const ProductInfo = ({ item, restaurant }: ProductInfoProps) => {
       <div className="flex flex-wrap items-center gap-3">
         <VegBadge isVeg={item.isVeg} />
         {!item.isAvailable && (
-          <span className="bg-gray-200 px-2 py-0.5 font-bebas text-sm uppercase text-gray-700">
+          <span className="rounded-lg bg-surface-2 px-2 py-0.5 font-sans text-sm uppercase text-muted">
             Out of Stock
           </span>
         )}
       </div>
 
-      <h1 className="font-bebas text-3xl uppercase tracking-wide text-tertiary sm:text-4xl md:text-5xl">
+      <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
         {item.name}
       </h1>
 
-      <p className="max-w-xl font-sans text-sm text-gray-600 sm:text-base">{item.description}</p>
+      <p className="max-w-xl font-sans text-sm text-muted">{item.description}</p>
 
       {restaurant && (
-        <div className="flex flex-wrap items-center gap-3 font-bebas text-base text-gray-700 sm:gap-4 sm:text-lg">
+        <div className="flex flex-wrap items-center gap-3 font-sans text-sm text-muted sm:gap-4">
           <Link
             to={`/food/restaurants/${restaurant.id}`}
             className="uppercase tracking-wide text-primary underline-offset-4 hover:underline"
@@ -42,7 +42,7 @@ const ProductInfo = ({ item, restaurant }: ProductInfoProps) => {
           <span>{restaurant.etaMinutes} mins</span>
           <span
             className={
-              restaurant.isOpen ? 'text-green-700' : 'text-gray-500'
+              restaurant.isOpen ? 'text-green-400' : 'text-muted'
             }
           >
             {restaurant.isOpen ? 'Open' : 'Closed'}
@@ -51,7 +51,7 @@ const ProductInfo = ({ item, restaurant }: ProductInfoProps) => {
       )}
 
       {item.category && (
-        <p className="font-bebas text-base uppercase tracking-wide text-gray-500">
+        <p className="font-sans text-sm uppercase tracking-wide text-muted">
           Category · {item.category}
         </p>
       )}

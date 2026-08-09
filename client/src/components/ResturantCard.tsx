@@ -13,13 +13,13 @@ const ResturantCard = ({ restaurant }: { restaurant: Restaurant }) => {
   const wishlisted = useAppSelector(selectIsRestaurantWishlisted(restaurant.id));
 
   return (
-    <div className="group relative flex h-full flex-col border border-gray-700 transition-colors hover:border-gray-400">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-colors hover:border-muted">
       <button
         type="button"
         className="flex w-full flex-1 flex-col text-left"
         onClick={() => navigate(`/food/restaurants/${restaurant.id}`)}
       >
-        <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-gray-800">
+        <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-surface-2">
           <img
             src={restaurant.imageUrl}
             alt={restaurant.name}
@@ -28,30 +28,30 @@ const ResturantCard = ({ restaurant }: { restaurant: Restaurant }) => {
           />
 
           <span
-            className={`absolute left-2 top-2 z-10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+            className={`absolute left-2 top-2 z-10 rounded-lg px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider ${
               restaurant.isOpen
-                ? 'bg-black text-white'
-                : 'bg-gray-200 text-gray-700'
+                ? 'bg-fg text-bg'
+                : 'bg-surface-2 text-muted'
             }`}
           >
             {restaurant.isOpen ? 'Open' : 'Closed'}
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col p-2.5 sm:p-3">
-          <h3 className="truncate font-bebas text-lg text-white sm:text-xl">
+        <div className="flex flex-1 flex-col items-center p-2 text-center sm:p-2.5">
+          <h3 className="w-full truncate font-display text-sm font-semibold text-fg sm:text-base">
             {restaurant.name}
           </h3>
-          <p className="mt-1 line-clamp-2 font-bebas text-xs text-gray-500 sm:text-sm">
+          <p className="mt-0.5 line-clamp-2 font-sans text-[11px] text-muted">
             Starting {restaurant.etaMinutes} mins • {restaurant.cuisine}
           </p>
-          <div className="mt-1 flex items-center gap-1 font-bebas text-sm text-gray-700 sm:text-base">
-            <BiStar className="fill-yellow-500 text-yellow-500" size={14} />
+          <div className="mt-1 flex items-center justify-center gap-1 font-sans text-xs text-muted">
+            <BiStar className="fill-yellow-500 text-yellow-500" size={12} />
             <span>{restaurant.rating.toFixed(1)}</span>
           </div>
 
           <div className="mt-auto pt-2">
-            <span className="inline-block border border-red-600 px-2.5 py-0.5 font-bebas text-sm text-red-600 transition-colors group-hover:bg-red-600 group-hover:text-white sm:text-base">
+            <span className="inline-block rounded-lg border border-primary px-2 py-0.5 font-display text-xs font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-on-primary">
               ORDER NOW
             </span>
           </div>
@@ -65,7 +65,7 @@ const ResturantCard = ({ restaurant }: { restaurant: Restaurant }) => {
           e.stopPropagation();
           dispatch(toggleRestaurantWishlist(restaurant.id));
         }}
-        className="absolute right-2 top-2 z-10 bg-white/90 p-1.5 text-gray-700 transition-colors hover:bg-white"
+        className="absolute right-2 top-2 z-10 rounded-xl bg-surface/90 p-1.5 text-fg transition-colors hover:bg-surface"
       >
         {wishlisted ? (
           <BiSolidHeart size={16} className="text-primary" />

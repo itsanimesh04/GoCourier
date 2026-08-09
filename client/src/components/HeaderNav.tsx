@@ -1,36 +1,45 @@
 import { FiChevronDown } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { useAppDispatch } from '../store';
+import { setCatalogMode } from '../store/slices/uiSlice';
 import CuisineMenu from './CuisineMenu';
 import MealDealsMenu from './MealDealsMenu';
 
 const HeaderNav = () => {
+  const dispatch = useAppDispatch();
+
   return (
-    <nav className="hidden items-center space-x-6 text-xl tracking-wide uppercase lg:flex">
-      <Link to="/food" className="hover:opacity-80 transition-opacity">
+    <nav className="hidden items-center gap-5 font-display text-sm font-semibold uppercase tracking-wide lg:flex">
+      <Link
+        to="/food"
+        onClick={() => dispatch(setCatalogMode('food'))}
+        className="transition-opacity hover:opacity-80"
+      >
         Restaurants
       </Link>
 
-      <div className="relative group cursor-pointer">
-        <div className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+      <div className="group relative cursor-pointer">
+        <div className="flex items-center gap-1 transition-opacity hover:opacity-80">
           <span>Cuisines</span>
-          <FiChevronDown className="w-4 h-4 stroke-[2.5]" />
+          <FiChevronDown className="h-4 w-4 stroke-[2.5]" />
         </div>
         <CuisineMenu />
       </div>
 
-      <div className="relative group cursor-pointer">
-        <div className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+      <div className="group relative cursor-pointer">
+        <div className="flex items-center gap-1 transition-opacity hover:opacity-80">
           <span>Meal Deals</span>
-          <FiChevronDown className="w-4 h-4 stroke-[2.5]" />
+          <FiChevronDown className="h-4 w-4 stroke-[2.5]" />
         </div>
         <MealDealsMenu />
       </div>
 
       <Link
-        to="/food?cuisine=Fast%20Food"
-        className="hover:opacity-80 transition-opacity"
+        to="/extras"
+        onClick={() => dispatch(setCatalogMode('extras'))}
+        className="transition-opacity hover:opacity-80"
       >
-        Fast Food
+        Extras
       </Link>
     </nav>
   );

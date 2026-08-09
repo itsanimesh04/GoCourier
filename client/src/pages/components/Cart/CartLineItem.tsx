@@ -19,8 +19,8 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
   const addons = item.menuItemId ? getAddonsForMenuItem(item.menuItemId) : [];
 
   return (
-    <article className="flex flex-col gap-4 border border-gray-200 p-4 sm:flex-row">
-      <div className="h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:w-28">
+    <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 sm:flex-row">
+      <div className="h-28 w-full shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-28">
         <img
           src={item.imageUrl}
           alt={item.name}
@@ -31,12 +31,15 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
       <div className="flex flex-1 flex-col justify-between gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-bebas text-2xl uppercase text-tertiary">{item.name}</h3>
-            <p className="font-bebas text-sm uppercase text-gray-500">
+            <h3 className="font-display text-lg font-semibold uppercase text-fg sm:text-xl">{item.name}</h3>
+            <p className="font-sans text-xs uppercase text-muted">
               {item.kind === 'extra' ? 'Campus Extra' : 'Food'}
             </p>
+            {item.note && (
+              <p className="mt-1 font-sans text-xs text-muted sm:text-sm">{item.note}</p>
+            )}
             {item.selectedAddons.length > 0 && (
-              <p className="mt-1 font-sans text-sm text-gray-600">
+              <p className="mt-1 font-sans text-sm text-muted">
                 {item.selectedAddons.map((a) => a.name).join(', ')}
               </p>
             )}
@@ -45,7 +48,7 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
             type="button"
             aria-label="Remove item"
             onClick={() => dispatch(removeItem(item.cartKey))}
-            className="p-1 text-gray-500 hover:text-primary"
+            className="rounded-xl p-1 text-muted hover:text-primary"
           >
             <FiTrash2 size={18} />
           </button>
@@ -59,7 +62,7 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
               dispatch(updateQty({ cartKey: item.cartKey, quantity: n }))
             }
           />
-          <span className="font-bebas text-2xl text-tertiary">₹ {unit * item.quantity}</span>
+          <span className="font-display text-lg font-semibold text-fg sm:text-xl">₹ {unit * item.quantity}</span>
         </div>
 
         {item.kind === 'food' && addons.length > 0 && (
@@ -67,7 +70,7 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
             <button
               type="button"
               onClick={() => setEditingAddons((v) => !v)}
-              className="font-bebas text-base uppercase text-primary underline-offset-2 hover:underline"
+              className="font-display text-base font-semibold uppercase text-primary underline-offset-2 hover:underline"
             >
               {editingAddons ? 'Hide add-ons' : 'Edit add-ons'}
             </button>

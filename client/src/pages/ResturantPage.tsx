@@ -42,8 +42,13 @@ const ResturantPage = () => {
   if (!restaurant) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-        <h1 className="font-bebas text-4xl text-tertiary">Restaurant not found</h1>
-        <Link to="/food" className="mt-4 inline-block font-bebas text-xl text-primary underline">
+        <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
+          Restaurant not found
+        </h1>
+        <Link
+          to="/food"
+          className="mt-4 inline-block font-sans text-sm font-semibold text-primary underline"
+        >
           Browse food
         </Link>
       </div>
@@ -60,13 +65,13 @@ const ResturantPage = () => {
 
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-10">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <p className="font-bebas text-xl uppercase tracking-wide text-gray-600">
+          <p className="font-sans text-sm uppercase tracking-wide text-muted">
             {filtered.length} items
           </p>
           <button
             type="button"
             onClick={() => dispatch(openFilterDrawer())}
-            className="inline-flex items-center gap-2 border border-tertiary px-4 py-2 font-bebas text-lg uppercase tracking-wide text-tertiary hover:border-primary hover:text-primary"
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide text-fg hover:border-primary hover:text-primary"
           >
             <FiSliders size={16} />
             Filter
@@ -74,7 +79,7 @@ const ResturantPage = () => {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="py-16 text-center font-bebas text-2xl text-gray-500">
+          <p className="py-16 text-center font-sans text-sm font-semibold text-muted">
             No items match your filters
           </p>
         ) : (

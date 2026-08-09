@@ -1,14 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-bebas: "Bebas Neue", sans-serif;
-  --color-primary: #ff0040;
-  --color-secondary: #FFFFFF;
-  --color-tertiary: #000;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
 
+  --color-primary: #ff0040;
+  --color-primary-extras: #c8f542;
+  --color-on-primary: #ffffff;
+  --color-secondary: #ffffff;
+  --color-tertiary: #000000;
+
+  --color-bg: #0a0a0b;
+  --color-surface: #141416;
+  --color-surface-2: #1c1c20;
+  --color-fg: #f4f4f5;
+  --color-muted: #a1a1aa;
+  --color-border: #2a2a30;
 
   --animate-marquee: marquee linear infinite;
+  --animate-banner-fade: banner-fade 0.5s ease-out;
 
   @keyframes marquee {
     0% {
@@ -18,18 +29,48 @@
       transform: translateX(-50%);
     }
   }
+
+  @keyframes banner-fade {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
-:root {
-  --bg: #000;
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-
-
-  background: var(--bg);
+:root,
+html[data-theme="dark"] {
+  --bg: var(--color-bg);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  color-scheme: dark;
+  font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme="light"] {
+  --color-bg: #f4f4f5;
+  --color-surface: #ffffff;
+  --color-surface-2: #ececee;
+  --color-fg: #18181b;
+  --color-muted: #71717a;
+  --color-border: #e4e4e7;
+  --bg: var(--color-bg);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  color-scheme: light;
+}
+
+html[data-catalog="extras"] {
+  --color-primary: #c8f542;
+  --color-on-primary: #0a0a0b;
 }
 
 html,
@@ -37,14 +78,16 @@ body,
 #root {
   margin: 0;
   min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-fg);
 }
 
 body {
   overflow-x: hidden;
+  font-family: var(--font-sans);
 }
 
 img,
 video {
   max-width: 100%;
 }
-

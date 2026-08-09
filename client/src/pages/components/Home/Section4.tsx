@@ -9,14 +9,14 @@ const Section4 = ({ section }: CategoryDishSectionProps) => {
   if (!section.dishes.length) return null;
 
   return (
-    <section className="w-full py-8 sm:py-10">
-      <div className="px-4 sm:px-6 md:px-10">
-        <h2 className="font-bebas text-2xl font-bold text-tertiary sm:text-3xl">
+    <section className="w-full sm:py-2 mt-20">
+      <div className="mx-auto px-4 space-y-6">
+        <h2 className="text-center font-display text-lg font-bold text-fg sm:text-2xl">
           {section.title}
         </h2>
-        <div className="mt-5 flex gap-3 overflow-x-auto pb-2 sm:gap-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mt-4 flex justify-center flex-wrap pb-2 sm:gap-7">
           {section.dishes.map((dish) => (
-            <div key={dish.id} className="w-44 shrink-0 sm:w-56 md:w-64">
+            <div key={dish.id} className="w-44 shrink-0 sm:w-52 md:w-56">
               <FoodCard menuItem={dish} />
             </div>
           ))}

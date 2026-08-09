@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { FiUser, FiSearch, FiShoppingBag, FiMenu, FiX } from 'react-icons/fi';
+import { FiUser, FiSearch, FiShoppingBag, FiMenu, FiX, FiMoon, FiSun } from 'react-icons/fi';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { selectCartCount } from '../store/slices/cartSlice';
 import {
   selectHeaderSearchOpen,
+  selectTheme,
   setHeaderSearchOpen,
   toggleHeaderSearch,
+  toggleTheme,
 } from '../store/slices/uiSlice';
+import CampusPicker from './CampusPicker';
 import HeaderNav from './HeaderNav';
 import HeaderSearch from './HeaderSearch';
 import MobileNav from './MobileNav';
@@ -15,6 +18,7 @@ import MobileNav from './MobileNav';
 export const Header: React.FC = () => {
   const cartCount = useAppSelector(selectCartCount);
   const searchOpen = useAppSelector(selectHeaderSearchOpen);
+  const theme = useAppSelector(selectTheme);
   const dispatch = useAppDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -25,9 +29,9 @@ export const Header: React.FC = () => {
   }, [location.pathname, location.search, dispatch]);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-primary font-bebas text-white transition-all">
-      <div className="mx-auto flex items-center justify-between gap-2 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5 lg:py-6">
-        <div className="flex items-center gap-2 sm:gap-3">
+    <header className="sticky top-0 z-40 w-full bg-primary font-display text-on-primary transition-colors">
+      <div className="mx-auto flex items-center justify-between gap-2 px-4 py-2 sm:gap-3 sm:px-6 sm:py-2.5">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
@@ -37,14 +41,16 @@ export const Header: React.FC = () => {
               dispatch(setHeaderSearchOpen(false));
             }}
           >
-            {mobileOpen ? <FiX className="h-6 w-6 stroke-2" /> : <FiMenu className="h-6 w-6 stroke-2" />}
+            {mobileOpen ? <FiX className="h-5 w-5 stroke-2" /> : <FiMenu className="h-5 w-5 stroke-2" />}
           </button>
 
-          <Link to="/" className="flex flex-col justify-center select-none shrink-0">
-            <span className="text-lg leading-none tracking-wider sm:text-2xl">
-              GoCourierService
+          <Link to="/" className="flex shrink-0 flex-col justify-center select-none">
+            <span className="text-base font-bold leading-none tracking-tight sm:text-lg">
+              GoCourier
             </span>
           </Link>
+
+          <CampusPicker className="hidden sm:block" />
         </div>
 
         {searchOpen ? (
@@ -55,20 +61,33 @@ export const Header: React.FC = () => {
           <HeaderNav />
         )}
 
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
             to="/login"
-            className="hidden border border-white px-3 py-1 text-base uppercase tracking-wide transition-colors hover:bg-white hover:text-primary sm:inline-block md:text-lg"
+            className="hidden rounded-lg border border-on-primary/80 px-2.5 py-1 font-sans text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-on-primary hover:text-primary sm:inline-block"
           >
             Login
           </Link>
+
+          <button
+            type="button"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={() => dispatch(toggleTheme())}
+            className="p-1 transition-opacity hover:opacity-80"
+          >
+            {theme === 'dark' ? (
+              <FiSun className="h-5 w-5 stroke-2" />
+            ) : (
+              <FiMoon className="h-5 w-5 stroke-2" />
+            )}
+          </button>
 
           <Link
             to="/profile"
             aria-label="Account"
             className="p-1 transition-opacity hover:opacity-80"
           >
-            <FiUser className="h-5 w-5 stroke-2 sm:h-6 sm:w-6" />
+            <FiUser className="h-5 w-5 stroke-2" />
           </Link>
 
           <button
@@ -80,7 +99,7 @@ export const Header: React.FC = () => {
             }}
             className="p-1 transition-opacity hover:opacity-80"
           >
-            <FiSearch className="h-5 w-5 stroke-2 sm:h-6 sm:w-6" />
+            <FiSearch className="h-5 w-5 stroke-2" />
           </button>
 
           <Link
@@ -88,9 +107,9 @@ export const Header: React.FC = () => {
             aria-label="Cart"
             className="relative p-1 transition-opacity hover:opacity-80"
           >
-            <FiShoppingBag className="h-5 w-5 stroke-2 sm:h-6 sm:w-6" />
+            <FiShoppingBag className="h-5 w-5 stroke-2" />
             {cartCount > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[#cc141c]">
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-on-primary font-sans text-[10px] font-bold text-primary">
                 {cartCount > 9 ? '9+' : cartCount}
               </span>
             )}

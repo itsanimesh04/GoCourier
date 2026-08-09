@@ -21,7 +21,7 @@ const AuthField = ({
 }: AuthFieldProps) => {
   return (
     <label htmlFor={id} className="block">
-      <span className="mb-1.5 block font-bebas text-sm uppercase tracking-wide text-gray-500">
+      <span className="mb-1.5 block font-sans text-sm uppercase tracking-wide text-muted">
         {label}
       </span>
       <input
@@ -32,7 +32,7 @@ const AuthField = ({
         autoComplete={autoComplete}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border border-gray-300 px-3 py-3 font-sans text-base text-tertiary outline-none transition-colors placeholder:text-gray-400 focus:border-primary"
+        className="w-full rounded-xl border border-border bg-surface px-3 py-3 font-sans text-base text-fg outline-none transition-colors placeholder:text-muted focus:border-primary"
       />
     </label>
   );

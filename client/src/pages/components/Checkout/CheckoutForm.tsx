@@ -25,14 +25,14 @@ const CheckoutForm = ({
 }: CheckoutFormProps) => {
   return (
     <div className="space-y-8">
-      <section className="border border-gray-200 p-5">
-        <h2 className="mb-4 font-bebas text-2xl uppercase text-tertiary">Delivery</h2>
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="mb-4 font-display text-lg font-bold uppercase text-fg sm:text-xl">Delivery</h2>
         <label className="mb-4 block">
-          <span className="mb-1 block font-bebas text-sm uppercase text-gray-500">Campus</span>
+          <span className="mb-1 block font-sans text-sm uppercase text-muted">Campus</span>
           <select
             value={campusId}
             onChange={(e) => onCampusChange(e.target.value)}
-            className="w-full border border-gray-300 px-3 py-2.5 font-sans outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-sans text-fg outline-none focus:border-primary"
           >
             {campuses.map((c) => (
               <option key={c.id} value={c.id}>
@@ -42,7 +42,7 @@ const CheckoutForm = ({
           </select>
         </label>
         <label className="block">
-          <span className="mb-1 block font-bebas text-sm uppercase text-gray-500">
+          <span className="mb-1 block font-sans text-sm uppercase text-muted">
             Drop point
           </span>
           <input
@@ -50,27 +50,27 @@ const CheckoutForm = ({
             value={dropPoint}
             onChange={(e) => onDropPointChange(e.target.value)}
             placeholder="Hostel Block A, Room 204"
-            className="w-full border border-gray-300 px-3 py-2.5 font-sans outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-sans text-fg outline-none placeholder:text-muted focus:border-primary"
           />
         </label>
       </section>
 
-      <section className="border border-gray-200 p-5">
-        <h2 className="mb-4 font-bebas text-2xl uppercase text-tertiary">Payment</h2>
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="mb-4 font-display text-lg font-bold uppercase text-fg sm:text-xl">Payment</h2>
         <ul className="space-y-2">
           {paymentOptions.map((opt) => (
             <li key={opt.id}>
-              <label className="flex cursor-pointer items-center gap-3 border border-gray-200 px-3 py-3 hover:border-gray-400">
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border px-3 py-3 hover:border-muted">
                 <span
-                  className={`flex h-4 w-4 items-center justify-center rounded-full border border-tertiary ${
-                    paymentMethod === opt.id ? 'bg-tertiary' : ''
+                  className={`flex h-4 w-4 items-center justify-center rounded-full border border-fg ${
+                    paymentMethod === opt.id ? 'bg-fg' : ''
                   }`}
                 >
                   {paymentMethod === opt.id && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-bg" />
                   )}
                 </span>
-                <span className="font-bebas text-lg uppercase text-tertiary">{opt.label}</span>
+                <span className="font-display text-sm font-semibold uppercase text-fg">{opt.label}</span>
                 <input
                   type="radio"
                   name="payment"

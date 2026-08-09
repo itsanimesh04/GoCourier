@@ -2,41 +2,6 @@ import { menuItems } from './mockData';
 
 const food = (name: string) => `/food/${name}.jpg`;
 
-export const banners = [
-  {
-    id: 'banner-1',
-    title: 'Campus dinners, delivered on time',
-    subtitle: 'Order before cutoff and get batch delivery at your hostel gate.',
-    imageUrl: food('chicken-biryani'),
-    ctaLabel: 'Order food',
-    ctaHref: '/food'
-  },
-  {
-    id: 'banner-2',
-    title: 'Late-night cravings sorted',
-    subtitle: 'Pizzas, shakes, and rolls from campus favourites — one tap away.',
-    imageUrl: food('paneer-pizza'),
-    ctaLabel: 'Browse menu',
-    ctaHref: '/food'
-  },
-  {
-    id: 'banner-3',
-    title: 'Need stationery or snacks?',
-    subtitle: 'Extras mode covers parcels, custom requests, and campus stores.',
-    imageUrl: food('garlic-bread'),
-    ctaLabel: 'Open Extras',
-    ctaHref: '/extras'
-  },
-  {
-    id: 'banner-4',
-    title: 'Student riders. Fair fees.',
-    subtitle: 'Built for hostels — transparent pricing and reliable ETAs.',
-    imageUrl: food('chocolate-shake'),
-    ctaLabel: 'Get started',
-    ctaHref: '/auth/signup'
-  }
-];
-
 export const foodCategories = [
   { id: 'south-indian', name: 'South Indian', imageUrl: "https://www.cubesnjuliennes.com/wp-content/uploads/2020/07/Chicken-Biryani-Recipe.jpg" },
   { id: 'chinese', name: 'Chinese', imageUrl: "https://images.unsplash.com/photo-1585032226651-759b368d7246?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2hpbmVzZSUyMGZvb2R8ZW58MHx8MHx8fDA%3D" },
@@ -46,6 +11,44 @@ export const foodCategories = [
   { id: 'desserts', name: 'Desserts', imageUrl: "https://t3.ftcdn.net/jpg/03/01/97/86/360_F_301978652_O0aPwap1JaEVaAhj3mIlbqNnJGmRyCzC.jpg" },
   { id: 'rolls', name: 'Rolls', imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeHnBkUd4ua0OHfYsLtU8Cc-bYFi2TwT1frQ&s" },
   { id: 'beverages', name: 'Drinks', imageUrl: "https://media.istockphoto.com/id/1253521359/photo/summer-refreshing-drinks-with-ice.jpg?s=612x612&w=0&k=20&c=Od5r0o4xp4qlTUK9z0Oaa_OmGIMwfcRKrqWQudKOUJE=" }
+];
+
+const catImage = (id: string) =>
+  foodCategories.find((c) => c.id === id)?.imageUrl ?? food('chicken-biryani');
+
+export const banners = [
+  {
+    id: 'banner-1',
+    title: 'Campus dinners, delivered on time',
+    subtitle: 'Order before cutoff and get batch delivery at your hostel gate.',
+    imageUrl: catImage('biryani'),
+    ctaLabel: 'Order food',
+    ctaHref: '/food'
+  },
+  {
+    id: 'banner-2',
+    title: 'Late-night cravings sorted',
+    subtitle: 'Pizzas, shakes, and rolls from campus favourites — one tap away.',
+    imageUrl: catImage('pizza'),
+    ctaLabel: 'Browse menu',
+    ctaHref: '/food'
+  },
+  {
+    id: 'banner-3',
+    title: 'Need stationery or snacks?',
+    subtitle: 'Extras mode covers parcels, custom requests, and campus stores.',
+    imageUrl: catImage('rolls'),
+    ctaLabel: 'Open Extras',
+    ctaHref: '/extras'
+  },
+  {
+    id: 'banner-4',
+    title: 'Student riders. Fair fees.',
+    subtitle: 'Built for hostels — transparent pricing and reliable ETAs.',
+    imageUrl: catImage('beverages'),
+    ctaLabel: 'Get started',
+    ctaHref: '/signup'
+  }
 ];
 
 function dishesByCategory(category: string) {
@@ -61,19 +64,12 @@ export const cuisineSectionsTop= [
 export const cuisineSectionsBottom = [
   { id: 'sec-italian', title: 'Pizza & Italian', dishes: dishesByCategory('Italian') },
   { id: 'sec-fast', title: 'Burgers & wraps', dishes: dishesByCategory('Fast Food') },
-  { id: 'sec-desserts', title: 'Sweet treats', dishes: dishesByCategory('Desserts') }
+  { id: 'sec-rolls', title: 'Rolls & wraps', dishes: dishesByCategory('Rolls') },
+  { id: 'sec-desserts', title: 'Sweet treats', dishes: dishesByCategory('Desserts') },
+  { id: 'sec-drinks', title: 'Drinks & coolers', dishes: dishesByCategory('Beverages') }
 ];
 
-export const foodCarouselImages = [
-  food('chicken-biryani'),
-  food('paneer-pizza'),
-  food('garlic-bread'),
-  food('chocolate-shake'),
-  food('chicken-biryani'),
-  food('paneer-pizza'),
-  food('garlic-bread'),
-  food('chocolate-shake')
-];
+export const foodCarouselImages = foodCategories.map((c) => c.imageUrl);
 
 export const reviews = [
   {

@@ -30,7 +30,7 @@ const ProductActions = ({
   unitTotal,
 }: ProductActionsProps) => {
   return (
-    <div className="mt-8 space-y-6 border-t border-gray-200 pt-6">
+    <div className="mt-8 space-y-6 border-t border-border pt-6">
       <AddonPicker
         addons={addons}
         selected={selectedAddons}
@@ -43,7 +43,7 @@ const ProductActions = ({
           type="button"
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           onClick={onToggleWishlist}
-          className="border border-gray-300 p-3 text-tertiary hover:border-primary hover:text-primary"
+          className="rounded-xl border border-border p-3 text-fg hover:border-primary hover:text-primary"
         >
           {wishlisted ? (
             <BiSolidHeart size={22} className="text-primary" />
@@ -58,8 +58,8 @@ const ProductActions = ({
         disabled={disabled}
         onClick={onAddToCart}
         className={cn(
-          'w-full bg-primary py-3.5 font-bebas text-2xl uppercase tracking-wide text-white transition-colors hover:bg-red-700',
-          disabled && 'cursor-not-allowed opacity-50 hover:bg-primary'
+          'w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase tracking-wide text-on-primary transition-opacity hover:opacity-90',
+          disabled && 'cursor-not-allowed opacity-50 hover:opacity-50'
         )}
       >
         {disabled ? 'Unavailable' : `Add to Cart · ₹ ${unitTotal * quantity}`}

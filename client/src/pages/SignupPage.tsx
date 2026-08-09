@@ -18,7 +18,7 @@ const SignupPage = () => {
   return (
     <AuthShell
       title="Sign Up"
-      subtitle="Join GoCourierService and start ordering."
+      subtitle="Join GoCourier and start ordering."
       footer={
         <>
           Already have an account?{' '}
@@ -66,7 +66,7 @@ const SignupPage = () => {
         />
         <button
           type="submit"
-          className="mt-2 w-full bg-primary py-3.5 font-bebas text-2xl uppercase tracking-wide text-white transition-colors hover:bg-red-700"
+          className="mt-2 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase tracking-wide text-on-primary transition-opacity hover:opacity-90"
         >
           Create Account
         </button>

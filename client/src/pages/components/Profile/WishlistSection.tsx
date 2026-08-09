@@ -14,18 +14,18 @@ const WishlistSection = () => {
   const restos = restaurantIds.map(getRestaurantById).filter(Boolean);
 
   return (
-    <section className="border border-gray-200 p-5">
-      <h2 className="mb-4 font-bebas text-2xl uppercase text-tertiary">Wishlist</h2>
+    <section className="rounded-2xl border border-border bg-surface p-5">
+      <h2 className="mb-4 font-display text-lg font-bold uppercase text-fg sm:text-xl">Wishlist</h2>
 
       {foods.length === 0 && restos.length === 0 ? (
-        <p className="font-sans text-sm text-gray-600">
+        <p className="font-sans text-sm text-muted">
           Heart items and restaurants to save them here.
         </p>
       ) : (
         <div className="space-y-6">
           {foods.length > 0 && (
             <div>
-              <h3 className="mb-2 font-bebas text-lg uppercase text-gray-500">Food</h3>
+              <h3 className="mb-2 font-sans text-sm uppercase text-muted">Food</h3>
               <ul className="space-y-2">
                 {foods.map(
                   (item) =>
@@ -38,9 +38,9 @@ const WishlistSection = () => {
                           <img
                             src={item.imageUrl}
                             alt=""
-                            className="h-12 w-12 object-cover"
+                            className="h-12 w-12 rounded-lg object-cover"
                           />
-                          <span className="font-bebas text-lg uppercase text-tertiary">
+                          <span className="font-display text-sm font-semibold uppercase text-fg">
                             {item.name}
                           </span>
                         </Link>
@@ -52,7 +52,7 @@ const WishlistSection = () => {
           )}
           {restos.length > 0 && (
             <div>
-              <h3 className="mb-2 font-bebas text-lg uppercase text-gray-500">
+              <h3 className="mb-2 font-sans text-sm uppercase text-muted">
                 Restaurants
               </h3>
               <ul className="space-y-2">
@@ -67,9 +67,9 @@ const WishlistSection = () => {
                           <img
                             src={r.imageUrl}
                             alt=""
-                            className="h-12 w-12 object-cover"
+                            className="h-12 w-12 rounded-lg object-cover"
                           />
-                          <span className="font-bebas text-lg uppercase text-tertiary">
+                          <span className="font-display text-sm font-semibold uppercase text-fg">
                             {r.name}
                           </span>
                         </Link>

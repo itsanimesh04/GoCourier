@@ -5,7 +5,7 @@ interface ProductGalleryProps {
 
 const ProductGallery = ({ imageUrl, name }: ProductGalleryProps) => {
   return (
-    <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-gray-100">
+    <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-2xl bg-surface-2">
       <img
         src={imageUrl}
         alt={name}

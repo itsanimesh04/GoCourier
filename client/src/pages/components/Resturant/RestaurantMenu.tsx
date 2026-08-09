@@ -16,7 +16,7 @@ const RestaurantMenu = ({
 }: RestaurantMenuProps) => {
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 mb-8 border-b border-gray-200 bg-white px-4 py-3 md:-mx-10 md:px-10">
+      <div className="sticky top-0 z-20 -mx-4 mb-8 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur-sm md:-mx-10 md:px-10">
         <div className="flex gap-2 overflow-x-auto">
           {categories.map((cat) => (
             <button
@@ -28,10 +28,10 @@ const RestaurantMenu = ({
                   .getElementById(`cat-${cat.replace(/\s+/g, '-').toLowerCase()}`)
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className={`shrink-0 border px-3 py-1.5 font-bebas text-base uppercase tracking-wide transition-colors ${
+              className={`shrink-0 rounded-xl border px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-wide transition-colors ${
                 activeCategory === cat
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-gray-300 text-tertiary hover:border-primary hover:text-primary'
+                  ? 'border-primary bg-primary text-on-primary'
+                  : 'border-border text-fg hover:border-primary hover:text-primary'
               }`}
             >
               {cat}

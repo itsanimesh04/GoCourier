@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import FoodCard from '../components/FoodCard';
 import { getAddonsForMenuItem } from '../data/foodAddons';
+import { getRelatedFoods } from '../data/relatedFoods';
 import { getMenuItemById, getRestaurantById, lineUnitTotal } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addFoodItem } from '../store/slices/cartSlice';
@@ -26,12 +28,18 @@ const ProductPage = () => {
 
   const addons = useMemo(() => (item ? getAddonsForMenuItem(item.id) : []), [item]);
   const unitTotal = item ? lineUnitTotal(item.price, selectedAddons) : 0;
+  const related = useMemo(() => (item ? getRelatedFoods(item, 8) : []), [item]);
 
   if (!item) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-        <h1 className="font-bebas text-4xl text-tertiary">Item not found</h1>
-        <Link to="/food" className="mt-4 inline-block font-bebas text-xl text-primary underline">
+        <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
+          Item not found
+        </h1>
+        <Link
+          to="/food"
+          className="mt-4 inline-block font-sans text-sm font-semibold text-primary underline"
+        >
           Browse food
         </Link>
       </div>
@@ -56,7 +64,7 @@ const ProductPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
-      <nav className="mb-4 flex flex-wrap items-center gap-x-2 font-bebas text-xs uppercase tracking-wide text-gray-500 sm:mb-6 sm:text-sm">
+      <nav className="mb-4 flex flex-wrap items-center gap-x-2 font-sans text-xs uppercase tracking-wide text-muted sm:mb-6 sm:text-sm">
         <Link to="/food" className="hover:text-primary">
           Food
         </Link>
@@ -72,12 +80,12 @@ const ProductPage = () => {
           </>
         )}
         <span>/</span>
-        <span className="text-tertiary">{item.name}</span>
+        <span className="text-fg">{item.name}</span>
       </nav>
 
       <div className="grid gap-6 sm:gap-10 lg:grid-cols-2">
         <ProductGallery imageUrl={item.imageUrl} name={item.name} />
-        <div>
+        <div className="min-w-0">
           <ProductInfo item={item} restaurant={restaurant} />
           <ProductActions
             quantity={quantity}
@@ -92,12 +100,28 @@ const ProductPage = () => {
             unitTotal={unitTotal}
           />
           {addedFlash && (
-            <p className="mt-3 font-bebas text-lg uppercase text-green-700">
+            <p className="mt-3 font-display text-sm font-semibold uppercase text-primary">
               Added to cart
             </p>
           )}
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-12 border-t border-border pt-10 sm:mt-16 sm:pt-12">
+          <h2 className="mb-1 font-display text-lg font-bold text-fg sm:text-xl">
+            Related foods
+          </h2>
+          <p className="mb-5 font-sans text-xs text-muted sm:text-sm">
+            More from {item.category ?? 'this kitchen'} and {restaurant?.name ?? 'nearby partners'}
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+            {related.map((food) => (
+              <FoodCard key={food.id} menuItem={food} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

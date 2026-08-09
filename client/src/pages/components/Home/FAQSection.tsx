@@ -13,7 +13,7 @@ const faqData: FAQItem[] = [
     question: "WHAT DO YOU OFFER?",
     answer: (
       <>
-        We offer a wide variety of meals, fast food, beverages, and combo deals across top campus kitchens. You can also build your own customized meal box with your favorite dishes via <span className="underline cursor-pointer font-semibold text-gray-900">GoCourier Food Express</span>.
+        We offer a wide variety of meals, fast food, beverages, and combo deals across top campus kitchens. You can also build your own customized meal box with your favorite dishes via <span className="cursor-pointer font-semibold text-fg underline">GoCourier Food Express</span>.
       </>
     ),
   },
@@ -60,7 +60,6 @@ const faqData: FAQItem[] = [
 ];
 
 export const FAQSection: React.FC = () => {
-  // First item open by default matching the reference image layout
   const [openId, setOpenId] = useState<number | null>(1);
 
   const toggleFAQ = (id: number) => {
@@ -68,47 +67,43 @@ export const FAQSection: React.FC = () => {
   };
 
   return (
-    <section className="w-full py-12 sm:py-16 text-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="faq" className="w-full py-8 text-fg sm:py-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        {/* Main Title - Bebas Font */}
-        <h2 className="font-bebas text-3xl text-tertiary">
+        <h2 className="text-center font-display text-xl font-bold text-fg sm:text-2xl">
           FAQS
         </h2>
 
-        {/* Subtitle Text */}
-        <div className="mt-3 text-sm text-gray-800 leading-relaxed font-sans">
+        <div className="mx-auto mt-2 max-w-2xl text-center font-sans text-xs leading-relaxed text-muted sm:text-sm">
           <p>Curiosity didn’t kill the cat - it just brought you here!</p>
           <p>You got questions. We’ve got answers. If anything else pops up, WhatsApp us anytime.</p>
         </div>
 
-        {/* Accordion List */}
-        <div className="mt-8 border-t border-gray-200">
+        <div className="mx-auto mt-6 max-w-3xl border-t border-border">
           {faqData.map((item) => {
             const isOpen = openId === item.id;
 
             return (
-              <div key={item.id} className="border-b border-gray-200">
+              <div key={item.id} className="border-b border-border">
                 <button
                   type="button"
                   onClick={() => toggleFAQ(item.id)}
-                  className="w-full py-4 flex items-center justify-between text-left focus:outline-none group"
+                  className="group flex w-full items-center justify-between py-3 text-left focus:outline-none"
                 >
-                  <span className="font-bebas text-xl  text-tertiary leading-none">
+                  <span className="font-display text-sm font-semibold leading-snug text-fg sm:text-base">
                     {item.question}
                   </span>
-                  <span className="text-red-700 shrink-0 ml-4">
+                  <span className="ml-4 shrink-0 text-primary">
                     {isOpen ? (
-                      <FiChevronUp className="w-5 h-5 stroke-[4.5]" />
+                      <FiChevronUp className="h-5 w-5 stroke-[4.5]" />
                     ) : (
-                      <FiChevronDown className="w-5 h-5 stroke-[4.5]" />
+                      <FiChevronDown className="h-5 w-5 stroke-[4.5]" />
                     )}
                   </span>
                 </button>
 
-                {/* Collapsible Answer Content */}
                 {isOpen && (
-                  <div className="pb-5 pt-1 text-sm text-gray-700 leading-relaxed font-sans">
+                  <div className="pb-5 pt-1 font-sans text-sm leading-relaxed text-muted">
                     {item.answer}
                   </div>
                 )}

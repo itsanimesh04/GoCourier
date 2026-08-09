@@ -4,8 +4,8 @@ import WishlistSection from './components/Profile/WishlistSection';
 
 const ProfilePage = () => {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
-      <h1 className="mb-6 font-bebas text-3xl uppercase tracking-wide text-tertiary sm:mb-8 sm:text-4xl md:text-5xl">
+    <div className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:py-10 md:px-10">
+      <h1 className="mb-6 font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
         Profile
       </h1>
       <div className="grid gap-6 lg:grid-cols-3">

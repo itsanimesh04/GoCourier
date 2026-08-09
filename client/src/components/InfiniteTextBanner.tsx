@@ -12,17 +12,17 @@ interface InfiniteTextBannerProps {
 
 export const InfiniteTextBanner: React.FC<InfiniteTextBannerProps> = ({
   items = [
-    "❤️ SMELL IT, LOVE IT — OR GET 100% MONEY BACK.",
-    "REDEEM YOUR DISCOVERY SET COST ON ANY FULL-SIZE BOTTLE.",
+    "Order before cutoff — hostel drop tonight",
+    "Campus dinners, delivered on time",
+    "Student riders. Fair fees.",
   ],
   separator = "•",
-  bgColor = "bg-black",
-  textColor = "text-white",
+  bgColor = "bg-surface",
+  textColor = "text-fg",
   speed = 20,
   direction = "left",
   className = "",
 }) => {
-  // Combine all messages into a single repeated string format
   const content = items.map((text, idx) => (
     <React.Fragment key={idx}>
       <span className="inline-block">{text}</span>
@@ -30,12 +30,11 @@ export const InfiniteTextBanner: React.FC<InfiniteTextBannerProps> = ({
     </React.Fragment>
   ));
 
-  // Handle custom dynamic CSS variables for speed and direction
   const animationDirection = direction === "left" ? "normal" : "reverse";
 
   return (
     <div
-      className={`relative w-full overflow-hidden whitespace-nowrap py-2.5 font-bebas uppercase tracking-wider text-base select-none ${
+      className={`relative w-full overflow-hidden whitespace-nowrap py-2.5 font-display text-base font-semibold uppercase tracking-wider select-none ${
         bgColor.startsWith("#") ? "" : bgColor
       } ${textColor.startsWith("#") ? "" : textColor} ${className}`}
       style={{
@@ -50,11 +49,10 @@ export const InfiniteTextBanner: React.FC<InfiniteTextBannerProps> = ({
           animationDirection: animationDirection,
         }}
       >
-        {/* Render duplicate sets to ensure smooth seamless scrolling loop */}
-        <div className="flex items-center shrink-0">{content}</div>
-        <div className="flex items-center shrink-0">{content}</div>
-        <div className="flex items-center shrink-0">{content}</div>
-        <div className="flex items-center shrink-0">{content}</div>
+        <div className="flex shrink-0 items-center">{content}</div>
+        <div className="flex shrink-0 items-center">{content}</div>
+        <div className="flex shrink-0 items-center">{content}</div>
+        <div className="flex shrink-0 items-center">{content}</div>
       </div>
     </div>
   );

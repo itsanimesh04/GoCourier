@@ -102,11 +102,26 @@ const cartSlice = createSlice({
         imageUrl: string;
         unitPrice: number;
         quantity?: number;
+        note?: string;
       }>
     ) {
-      const { extrasProductId, name, imageUrl, unitPrice, quantity = 1 } = action.payload;
-      const cartKey = `extra:${extrasProductId}`;
-      const existing = state.items.find((i) => i.cartKey === cartKey);
+      const {
+        extrasProductId,
+        name,
+        imageUrl,
+        unitPrice,
+        quantity = 1,
+        note,
+      } = action.payload;
+      // Service requests get unique keys so each submission is its own line
+      const cartKey =
+        note != null && note.length > 0
+          ? `extra:${extrasProductId}:${Date.now()}`
+          : `extra:${extrasProductId}`;
+      const existing =
+        note == null || note.length === 0
+          ? state.items.find((i) => i.cartKey === cartKey)
+          : undefined;
       if (existing) {
         existing.quantity += quantity;
       } else {
@@ -119,6 +134,7 @@ const cartSlice = createSlice({
           unitPrice,
           quantity,
           selectedAddons: [],
+          note,
         });
       }
       persistCart(state.items);

@@ -17,36 +17,36 @@ const OrderSummary = ({
   disabled,
 }: OrderSummaryProps) => {
   return (
-    <aside className="border border-gray-200 p-5">
-      <h2 className="mb-4 font-bebas text-2xl uppercase text-tertiary">Your Order</h2>
+    <aside className="rounded-2xl border border-border bg-surface p-5">
+      <h2 className="mb-4 font-display text-lg font-bold uppercase text-fg sm:text-xl">Your Order</h2>
       <ul className="mb-4 max-h-64 space-y-3 overflow-y-auto">
         {items.map((item) => {
           const unit = lineUnitTotal(item.unitPrice, item.selectedAddons);
           return (
-            <li key={item.cartKey} className="flex justify-between gap-3 font-bebas text-base">
-              <span className="uppercase text-tertiary">
+            <li key={item.cartKey} className="flex justify-between gap-3 font-display text-sm font-semibold">
+              <span className="uppercase text-fg">
                 {item.quantity}× {item.name}
                 {item.selectedAddons.length > 0 && (
-                  <span className="block font-sans text-xs normal-case text-gray-500">
+                  <span className="block font-sans text-xs font-normal normal-case text-muted">
                     {item.selectedAddons.map((a) => a.name).join(', ')}
                   </span>
                 )}
               </span>
-              <span className="shrink-0 text-gray-700">₹ {unit * item.quantity}</span>
+              <span className="shrink-0 text-muted">₹ {unit * item.quantity}</span>
             </li>
           );
         })}
       </ul>
-      <dl className="space-y-2 border-t border-gray-200 pt-3 font-bebas text-lg">
-        <div className="flex justify-between text-gray-700">
+      <dl className="space-y-2 border-t border-border pt-3 font-sans text-sm">
+        <div className="flex justify-between text-muted">
           <dt>Subtotal</dt>
           <dd>₹ {subtotal}</dd>
         </div>
-        <div className="flex justify-between text-gray-700">
+        <div className="flex justify-between text-muted">
           <dt>Fee</dt>
           <dd>₹ {fee}</dd>
         </div>
-        <div className="flex justify-between text-2xl text-tertiary">
+        <div className="flex justify-between font-display text-lg font-semibold text-fg sm:text-xl">
           <dt>Total</dt>
           <dd>₹ {subtotal + fee}</dd>
         </div>
@@ -55,7 +55,7 @@ const OrderSummary = ({
         type="button"
         disabled={disabled}
         onClick={onPlaceOrder}
-        className="mt-6 w-full bg-primary py-3 font-bebas text-2xl uppercase text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-6 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase text-on-primary hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Place Order
       </button>

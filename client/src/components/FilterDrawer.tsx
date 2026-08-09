@@ -25,15 +25,15 @@ function AccordionSection({
   children: ReactNode;
 }) {
   return (
-    <div className="border-b border-gray-200">
+    <div className="border-b border-border">
       <button
         type="button"
         onClick={onToggle}
         className="flex w-full items-center justify-between py-5 text-left"
       >
-        <span className="font-bebas text-xl uppercase tracking-wide text-tertiary">{title}</span>
+        <span className="font-display text-xl font-semibold uppercase tracking-wide text-fg">{title}</span>
         <FiChevronUp
-          className={cn('h-5 w-5 transition-transform', !open && 'rotate-180')}
+          className={cn('h-5 w-5 text-muted transition-transform', !open && 'rotate-180')}
         />
       </button>
       {open && <div className="pb-5">{children}</div>}
@@ -59,16 +59,16 @@ const RadioRow = ({
   >
     <span
       className={cn(
-        'flex h-4 w-4 items-center justify-center rounded-full border border-tertiary',
-        checked && 'bg-tertiary'
+        'flex h-4 w-4 items-center justify-center rounded-full border border-fg',
+        checked && 'bg-fg'
       )}
     >
-      {checked && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+      {checked && <span className="h-1.5 w-1.5 rounded-full bg-bg" />}
     </span>
     <span
       className={cn(
-        'font-bebas text-base uppercase tracking-wide text-tertiary',
-        struck && 'line-through text-gray-400'
+        'font-display text-base font-semibold uppercase tracking-wide text-fg',
+        struck && 'text-muted line-through'
       )}
     >
       {label}
@@ -126,17 +126,17 @@ const FilterDrawer = ({
       <button
         type="button"
         aria-label="Close filters"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/60"
         onClick={() => dispatch(closeFilterDrawer())}
       />
-      <aside className="relative flex h-full w-full max-w-full flex-col bg-white shadow-xl sm:max-w-md">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 sm:px-6 sm:py-5">
-          <h2 className="font-bebas text-2xl uppercase tracking-wide text-tertiary sm:text-3xl">Filter</h2>
+      <aside className="relative flex h-full w-full max-w-full flex-col bg-surface shadow-xl sm:max-w-md">
+        <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">Filter</h2>
           <button
             type="button"
             aria-label="Close"
             onClick={() => dispatch(closeFilterDrawer())}
-            className="p-1 text-tertiary hover:opacity-70"
+            className="rounded-xl p-1 text-fg hover:opacity-70"
           >
             <FiX size={22} />
           </button>
@@ -183,14 +183,14 @@ const FilterDrawer = ({
                     priceTo: Math.max(d.priceFrom, Number(e.target.value)),
                   }))
                 }
-                className="w-full accent-tertiary"
+                className="w-full accent-primary"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="mb-1 block font-bebas text-sm uppercase text-gray-500">From</span>
-                <div className="flex items-center border border-gray-300 px-3 py-2 font-bebas text-lg">
-                  <span className="mr-1 text-gray-500">₹</span>
+                <span className="mb-1 block font-sans text-sm uppercase text-muted">From</span>
+                <div className="flex items-center rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-lg font-semibold text-fg">
+                  <span className="mr-1 text-muted">₹</span>
                   <input
                     type="number"
                     min={0}
@@ -202,14 +202,14 @@ const FilterDrawer = ({
                         priceFrom: Math.min(Number(e.target.value) || 0, d.priceTo),
                       }))
                     }
-                    className="w-full outline-none"
+                    className="w-full bg-transparent outline-none"
                   />
                 </div>
               </label>
               <label className="block">
-                <span className="mb-1 block font-bebas text-sm uppercase text-gray-500">To</span>
-                <div className="flex items-center border border-gray-300 px-3 py-2 font-bebas text-lg">
-                  <span className="mr-1 text-gray-500">₹</span>
+                <span className="mb-1 block font-sans text-sm uppercase text-muted">To</span>
+                <div className="flex items-center rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-lg font-semibold text-fg">
+                  <span className="mr-1 text-muted">₹</span>
                   <input
                     type="number"
                     min={draft.priceFrom}
@@ -221,7 +221,7 @@ const FilterDrawer = ({
                         priceTo: Math.max(Number(e.target.value) || 0, d.priceFrom),
                       }))
                     }
-                    className="w-full outline-none"
+                    className="w-full bg-transparent outline-none"
                   />
                 </div>
               </label>
@@ -283,7 +283,7 @@ const FilterDrawer = ({
           )}
         </div>
 
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-border p-4">
           <div className="mb-3 flex gap-2">
             <button
               type="button"
@@ -295,7 +295,7 @@ const FilterDrawer = ({
                   priceTo: maxPrice,
                 })
               }
-              className="flex-1 border border-tertiary py-3 font-bebas text-xl uppercase tracking-wide text-tertiary hover:bg-gray-50"
+              className="flex-1 rounded-xl border border-border py-3 font-display text-xl font-semibold uppercase tracking-wide text-fg hover:bg-surface-2"
             >
               Reset
             </button>
@@ -305,7 +305,7 @@ const FilterDrawer = ({
                 onApply(draft);
                 dispatch(closeFilterDrawer());
               }}
-              className="flex-[2] bg-primary py-3 font-bebas text-xl uppercase tracking-wide text-white hover:bg-red-700"
+              className="flex-[2] rounded-xl bg-primary py-3 font-display text-xl font-semibold uppercase tracking-wide text-on-primary hover:opacity-90"
             >
               Apply
             </button>

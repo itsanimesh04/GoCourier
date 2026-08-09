@@ -10,22 +10,22 @@ const VegBadge = ({ isVeg, className, showLabel = true }: VegBadgeProps) => {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 text-xs font-bebas uppercase tracking-wide',
+        'inline-flex items-center gap-1.5 font-sans text-xs uppercase tracking-wide',
         className
       )}
     >
       <span
         className={cn(
-          'inline-flex h-4 w-4 items-center justify-center border-2',
-          isVeg ? 'border-green-600' : 'border-red-600'
+          'inline-flex h-4 w-4 items-center justify-center rounded-sm border-2 bg-surface',
+          isVeg ? 'border-green-500' : 'border-primary'
         )}
         aria-hidden
       >
         <span
-          className={cn('h-2 w-2 rounded-full', isVeg ? 'bg-green-600' : 'bg-red-600')}
+          className={cn('h-2 w-2 rounded-full', isVeg ? 'bg-green-500' : 'bg-primary')}
         />
       </span>
-      {showLabel && <span className="text-gray-700">{isVeg ? 'Veg' : 'Non-Veg'}</span>}
+      {showLabel && <span className="text-muted">{isVeg ? 'Veg' : 'Non-Veg'}</span>}
     </span>
   );
 };

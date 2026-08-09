@@ -12,10 +12,10 @@ const CategorySection = ({ title, items, id }: CategorySectionProps) => {
 
   return (
     <section id={id} className="scroll-mt-28">
-      <h2 className="mb-4 font-bebas text-3xl uppercase tracking-wide text-tertiary">
+      <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-fg sm:text-xl">
         {title}
       </h2>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => (
           <FoodCard key={item.id} menuItem={item} />
         ))}
