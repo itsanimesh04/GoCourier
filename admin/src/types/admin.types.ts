@@ -127,6 +127,8 @@ export interface DashboardStats {
     total_amount: string;
     placed_at: string | null;
   }[];
+  orders_by_status: { status: string; count: number }[];
+  orders_last_14_days: { date: string; order_count: number; gmv: string }[];
 }
 
 export interface RevenueSummary {

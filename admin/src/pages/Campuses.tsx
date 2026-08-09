@@ -1,9 +1,23 @@
 import { useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
-import PageHeader from "../components/PageHeader";
-import Modal from "../components/Modal";
-import campusService from "../services/admin/campus.service";
-import type { Campus } from "../types/admin.types";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import Modal from "@/components/Modal";
+import campusService from "@/services/admin/campus.service";
+import type { Campus } from "@/types/admin.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const emptyForm = {
   name: "",
@@ -52,68 +66,72 @@ const Campuses = () => {
   const save = async () => {
     setSaving(true);
     try {
-      const payload = {
-        ...form,
-        state: form.state || null,
-      };
+      const payload = { ...form, state: form.state || null };
       if (editing) await campusService.update(editing.id, payload);
       else await campusService.create(payload);
       setOpen(false);
+      toast.success(editing ? "Campus updated" : "Campus created");
       await load();
+    } catch {
+      toast.error("Failed to save campus");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Campuses"
         subtitle="Batch cutoff and hostel delivery timing"
         actions={
-          <button className="admin-btn admin-btn-primary" onClick={openCreate}>
-            <FiPlus size={14} /> Add campus
-          </button>
+          <Button onClick={openCreate}>
+            <Plus className="size-4" /> Add campus
+          </Button>
         }
       />
 
-      <div className="admin-card overflow-hidden">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>City</th>
-              <th>Cutoff</th>
-              <th>Delivery</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((c) => (
-              <tr key={c.id}>
-                <td className="font-medium">{c.name}</td>
-                <td>
-                  {c.city}
-                  {c.state ? `, ${c.state}` : ""}
-                </td>
-                <td>{c.cutoff_time}</td>
-                <td>{c.delivery_time}</td>
-                <td>
-                  <span className={`badge ${c.is_active ? "badge-green" : "badge-red"}`}>
-                    {c.is_active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td>
-                  <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(c)}>
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent className="px-0 pt-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Cutoff</TableHead>
+                  <TableHead>Delivery</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>
+                      {c.city}
+                      {c.state ? `, ${c.state}` : ""}
+                    </TableCell>
+                    <TableCell>{c.cutoff_time}</TableCell>
+                    <TableCell>{c.delivery_time}</TableCell>
+                    <TableCell>
+                      <Badge variant={c.is_active ? "secondary" : "destructive"}>
+                        {c.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <Modal
         open={open}
@@ -130,10 +148,9 @@ const Campuses = () => {
               ["delivery_time", "Delivery (HH:mm)"],
             ] as const
           ).map(([key, label]) => (
-            <div key={key}>
-              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
-              <input
-                className="admin-input"
+            <div key={key} className="space-y-1.5">
+              <Label>{label}</Label>
+              <Input
                 value={form[key]}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
               />
@@ -147,9 +164,9 @@ const Campuses = () => {
             />
             Active
           </label>
-          <button className="admin-btn admin-btn-primary w-full" onClick={save} disabled={saving}>
+          <Button className="w-full" onClick={() => void save()} disabled={saving}>
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

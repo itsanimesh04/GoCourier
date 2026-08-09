@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
-import PageHeader from "../components/PageHeader";
-import Modal from "../components/Modal";
-import ImageUpload from "../components/ImageUpload";
-import categoryService from "../services/admin/category.service";
-import type { Category } from "../types/admin.types";
+import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import Modal from "@/components/Modal";
+import ImageUpload from "@/components/ImageUpload";
+import categoryService from "@/services/admin/category.service";
+import type { Category } from "@/types/admin.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Categories = () => {
   const [items, setItems] = useState<Category[]>([]);
@@ -58,7 +63,10 @@ const Categories = () => {
       if (editing) await categoryService.update(editing.id, form);
       else await categoryService.create(form);
       setOpen(false);
+      toast.success(editing ? "Category updated" : "Category created");
       await load();
+    } catch {
+      toast.error("Failed to save category");
     } finally {
       setSaving(false);
     }
@@ -66,52 +74,54 @@ const Categories = () => {
 
   const remove = async (id: string) => {
     if (!confirm("Delete this category?")) return;
-    await categoryService.remove(id);
-    await load();
+    try {
+      await categoryService.remove(id);
+      toast.success("Category deleted");
+      await load();
+    } catch {
+      toast.error("Failed to delete category");
+    }
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Categories"
         subtitle="Homepage food category tiles"
         actions={
-          <button className="admin-btn admin-btn-primary" onClick={openCreate}>
-            <FiPlus size={14} /> Add category
-          </button>
+          <Button onClick={openCreate}>
+            <Plus className="size-4" /> Add category
+          </Button>
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((c) => (
-          <div key={c.id} className="admin-card overflow-hidden">
-            <div className="h-36 bg-[#0f172a]">
+          <Card key={c.id} className="overflow-hidden pt-0">
+            <div className="h-36 bg-muted">
               {c.image_url ? (
-                <img src={c.image_url} alt="" className="w-full h-full object-cover" />
+                <img src={c.image_url} alt="" className="h-full w-full object-cover" />
               ) : (
-                <div className="h-full flex items-center justify-center text-(--text-muted) text-sm">
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                   No image
                 </div>
               )}
             </div>
-            <div className="p-4 flex items-center justify-between gap-2">
+            <CardContent className="flex items-center justify-between gap-2 pt-4">
               <div>
                 <p className="font-semibold">{c.name}</p>
-                <p className="text-xs text-(--text-muted)">Order {c.sort_order}</p>
+                <p className="text-xs text-muted-foreground">Order {c.sort_order}</p>
               </div>
               <div className="flex gap-2">
-                <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(c)}>
+                <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
                   Edit
-                </button>
-                <button
-                  className="admin-btn admin-btn-ghost py-1.5! text-red-400"
-                  onClick={() => remove(c.id)}
-                >
-                  <FiTrash2 size={14} />
-                </button>
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => void remove(c.id)}>
+                  <Trash2 className="size-3.5 text-destructive" />
+                </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
@@ -127,19 +137,17 @@ const Categories = () => {
             imageKey={form.image_key}
             onChange={({ url, key }) => setForm((f) => ({ ...f, image_url: url, image_key: key }))}
           />
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Name</label>
-            <input
-              className="admin-input"
+          <div className="space-y-1.5">
+            <Label>Name</Label>
+            <Input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Sort order</label>
-            <input
+          <div className="space-y-1.5">
+            <Label>Sort order</Label>
+            <Input
               type="number"
-              className="admin-input"
               value={form.sort_order}
               onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
             />
@@ -152,9 +160,9 @@ const Categories = () => {
             />
             Active
           </label>
-          <button className="admin-btn admin-btn-primary w-full" onClick={save} disabled={saving}>
+          <Button className="w-full" onClick={() => void save()} disabled={saving}>
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

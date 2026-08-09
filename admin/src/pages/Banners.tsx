@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
-import PageHeader from "../components/PageHeader";
-import Modal from "../components/Modal";
-import ImageUpload from "../components/ImageUpload";
-import bannerService from "../services/admin/banner.service";
-import type { Banner } from "../types/admin.types";
+import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import Modal from "@/components/Modal";
+import ImageUpload from "@/components/ImageUpload";
+import bannerService from "@/services/admin/banner.service";
+import type { Banner } from "@/types/admin.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Banners = () => {
   const [items, setItems] = useState<Banner[]>([]);
@@ -67,7 +72,10 @@ const Banners = () => {
       if (editing) await bannerService.update(editing.id, form);
       else await bannerService.create(form);
       setOpen(false);
+      toast.success(editing ? "Banner updated" : "Banner created");
       await load();
+    } catch {
+      toast.error("Failed to save banner");
     } finally {
       setSaving(false);
     }
@@ -75,51 +83,55 @@ const Banners = () => {
 
   const remove = async (id: string) => {
     if (!confirm("Delete this banner?")) return;
-    await bannerService.remove(id);
-    await load();
+    try {
+      await bannerService.remove(id);
+      toast.success("Banner deleted");
+      await load();
+    } catch {
+      toast.error("Failed to delete banner");
+    }
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Banners"
         subtitle="Hero rotator on the client homepage"
         actions={
-          <button className="admin-btn admin-btn-primary" onClick={openCreate}>
-            <FiPlus size={14} /> Add banner
-          </button>
+          <Button onClick={openCreate}>
+            <Plus className="size-4" /> Add banner
+          </Button>
         }
       />
 
       <div className="space-y-4">
         {items.map((b) => (
-          <div key={b.id} className="admin-card flex flex-col md:flex-row overflow-hidden">
-            <div className="md:w-64 h-40 bg-[#0f172a] shrink-0">
-              {b.image_url ? (
-                <img src={b.image_url} alt="" className="w-full h-full object-cover" />
-              ) : null}
-            </div>
-            <div className="p-5 flex-1 flex items-start justify-between gap-4">
-              <div>
-                <p className="font-semibold text-lg">{b.title}</p>
-                <p className="text-sm text-(--text-muted) mt-1">{b.subtitle}</p>
-                <p className="text-xs text-(--text-muted) mt-2">
-                  CTA: {b.cta_label || "—"} → {b.cta_href || "—"}
-                </p>
+          <Card key={b.id} className="overflow-hidden py-0">
+            <div className="flex flex-col md:flex-row">
+              <div className="h-40 shrink-0 bg-muted md:w-64">
+                {b.image_url ? (
+                  <img src={b.image_url} alt="" className="h-full w-full object-cover" />
+                ) : null}
               </div>
-              <div className="flex gap-2">
-                <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(b)}>
-                  Edit
-                </button>
-                <button
-                  className="admin-btn admin-btn-ghost py-1.5! text-red-400"
-                  onClick={() => remove(b.id)}
-                >
-                  <FiTrash2 size={14} />
-                </button>
-              </div>
+              <CardContent className="flex flex-1 items-start justify-between gap-4 p-5">
+                <div>
+                  <p className="text-lg font-semibold">{b.title}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{b.subtitle}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    CTA: {b.cta_label || "—"} → {b.cta_href || "—"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => openEdit(b)}>
+                    Edit
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => void remove(b.id)}>
+                    <Trash2 className="size-3.5 text-destructive" />
+                  </Button>
+                </div>
+              </CardContent>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -144,20 +156,18 @@ const Banners = () => {
               ["cta_href", "CTA href"],
             ] as const
           ).map(([key, label]) => (
-            <div key={key}>
-              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
-              <input
-                className="admin-input"
+            <div key={key} className="space-y-1.5">
+              <Label>{label}</Label>
+              <Input
                 value={form[key]}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
               />
             </div>
           ))}
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Sort order</label>
-            <input
+          <div className="space-y-1.5">
+            <Label>Sort order</Label>
+            <Input
               type="number"
-              className="admin-input"
               value={form.sort_order}
               onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
             />
@@ -170,9 +180,9 @@ const Banners = () => {
             />
             Active
           </label>
-          <button className="admin-btn admin-btn-primary w-full" onClick={save} disabled={saving}>
+          <Button className="w-full" onClick={() => void save()} disabled={saving}>
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

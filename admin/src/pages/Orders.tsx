@@ -1,171 +1,308 @@
 import { useEffect, useState } from "react";
-import PageHeader from "../components/PageHeader";
-import Modal from "../components/Modal";
-import orderService from "../services/admin/order.service";
-import type { OrderRow } from "../types/admin.types";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import orderService from "@/services/admin/order.service";
+import type { OrderRow } from "@/types/admin.types";
+import {
+  ORDER_STATUSES,
+  formatStatus,
+  orderStatusVariant,
+  paymentStatusVariant,
+} from "@/lib/status";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const STATUSES = [
-  "placed",
-  "locked",
-  "procuring",
-  "confirmed",
-  "out_for_delivery",
-  "delivered",
-  "closed",
-  "cancelled",
-];
+interface OrderDetail {
+  id: string;
+  restaurant_name?: string | null;
+  total_amount: string;
+  drop_point?: string | null;
+  payment_status: string;
+  order_status: string;
+  items?: {
+    id: string;
+    name: string;
+    quantity: number;
+    unit_price: string;
+    item_status: string;
+  }[];
+}
 
 const Orders = () => {
   const [items, setItems] = useState<OrderRow[]>([]);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [detail, setDetail] = useState<any | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [newStatus, setNewStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [rowSavingId, setRowSavingId] = useState<string | null>(null);
 
   const load = async () => {
-    const res = await orderService.list(
-      statusFilter ? { order_status: statusFilter } : undefined
-    );
-    setItems(res.data.data.items);
+    setLoading(true);
+    try {
+      const res = await orderService.list(
+        statusFilter !== "all" ? { order_status: statusFilter } : undefined
+      );
+      setItems(res.data.data.items);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    load().catch(() => setItems([]));
+    void load();
   }, [statusFilter]);
 
   const openDetail = async (id: string) => {
-    const res = await orderService.getById(id);
-    setDetail(res.data.data);
-    setNewStatus(res.data.data.order_status);
+    try {
+      const res = await orderService.getById(id);
+      setDetail(res.data.data);
+      setNewStatus(res.data.data.order_status);
+    } catch {
+      toast.error("Failed to load order detail");
+    }
   };
 
   const updateStatus = async () => {
-    if (!detail) return;
-    await orderService.updateStatus(detail.id, newStatus);
-    setDetail(null);
-    await load();
+    if (!detail || !newStatus) return;
+    setSaving(true);
+    try {
+      await orderService.updateStatus(detail.id, newStatus);
+      toast.success(`Order updated to ${formatStatus(newStatus)}`);
+      setDetail(null);
+      await load();
+    } catch {
+      toast.error("Failed to update order status");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const quickUpdate = async (id: string, order_status: string) => {
+    setRowSavingId(id);
+    try {
+      await orderService.updateStatus(id, order_status);
+      toast.success(`Status set to ${formatStatus(order_status)}`);
+      await load();
+    } catch {
+      toast.error("Failed to update order status");
+    } finally {
+      setRowSavingId(null);
+    }
   };
 
   return (
-    <div>
-      <PageHeader title="Orders" subtitle="Search and update order status" />
+    <div className="space-y-6">
+      <PageHeader title="Orders" subtitle="Filter and update order status" />
 
-      <div className="mb-4">
-        <select
-          className="admin-input max-w-xs"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="admin-card overflow-hidden">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Restaurant</th>
-              <th>Student</th>
-              <th>Status</th>
-              <th>Payment</th>
-              <th>Total</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((o) => (
-              <tr key={o.id}>
-                <td className="font-mono text-xs">{o.id.slice(-8)}</td>
-                <td>{o.restaurant_name ?? "—"}</td>
-                <td>{o.student?.name || o.student?.email || o.student?.phone || "—"}</td>
-                <td>
-                  <span className="badge badge-blue">{o.order_status}</span>
-                </td>
-                <td>
-                  <span className="badge badge-green">{o.payment_status}</span>
-                </td>
-                <td>₹{o.total_amount}</td>
-                <td>
-                  <button
-                    className="admin-btn admin-btn-ghost py-1.5!"
-                    onClick={() => openDetail(o.id)}
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
+      <div className="max-w-xs">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {ORDER_STATUSES.map((s) => (
+              <SelectItem key={s} value={s} className="capitalize">
+                {formatStatus(s)}
+              </SelectItem>
             ))}
-          </tbody>
-        </table>
+          </SelectContent>
+        </Select>
       </div>
 
-      <Modal open={!!detail} onClose={() => setDetail(null)} title="Order detail" wide>
-        {detail && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <p>
-                <span className="text-(--text-muted)">Restaurant:</span>{" "}
-                {detail.restaurant_name}
-              </p>
-              <p>
-                <span className="text-(--text-muted)">Total:</span> ₹{detail.total_amount}
-              </p>
-              <p>
-                <span className="text-(--text-muted)">Drop:</span> {detail.drop_point || "—"}
-              </p>
-              <p>
-                <span className="text-(--text-muted)">Payment:</span> {detail.payment_status}
-              </p>
-            </div>
+      <Card>
+        <CardContent className="px-0 pt-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Restaurant</TableHead>
+                  <TableHead className="hidden md:table-cell">Student</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden sm:table-cell">Payment</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead className="hidden lg:table-cell">Quick update</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={8}>
+                        <Skeleton className="h-5 w-full" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : items.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-muted-foreground">
+                      No orders found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  items.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-mono text-xs">{o.id.slice(-8)}</TableCell>
+                      <TableCell>{o.restaurant_name ?? "—"}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {o.student?.name || o.student?.email || o.student?.phone || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={orderStatusVariant(o.order_status)} className="capitalize">
+                          {formatStatus(o.order_status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant={paymentStatusVariant(o.payment_status)} className="capitalize">
+                          {formatStatus(o.payment_status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>₹{o.total_amount}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Select
+                          value={o.order_status}
+                          onValueChange={(v) => void quickUpdate(o.id, v)}
+                          disabled={rowSavingId === o.id}
+                        >
+                          <SelectTrigger className="h-8 w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ORDER_STATUSES.map((s) => (
+                              <SelectItem key={s} value={s} className="capitalize">
+                                {formatStatus(s)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" onClick={() => void openDetail(o.id)}>
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div>
-              <label className="text-xs text-(--text-muted) mb-1 block">Update status</label>
-              <div className="flex gap-2">
-                <select
-                  className="admin-input"
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <button className="admin-btn admin-btn-primary" onClick={updateStatus}>
-                  Save
-                </button>
+      <Sheet open={!!detail} onOpenChange={(open) => !open && setDetail(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Order detail</SheetTitle>
+            <SheetDescription className="font-mono text-xs">
+              {detail?.id}
+            </SheetDescription>
+          </SheetHeader>
+
+          {detail && (
+            <div className="space-y-5 px-4 pb-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Restaurant</p>
+                  <p className="font-medium">{detail.restaurant_name ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Total</p>
+                  <p className="font-medium">₹{detail.total_amount}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Drop</p>
+                  <p className="font-medium">{detail.drop_point || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Payment</p>
+                  <Badge variant={paymentStatusVariant(detail.payment_status)} className="capitalize">
+                    {formatStatus(detail.payment_status)}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Update status</p>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORDER_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s} className="capitalize">
+                        {formatStatus(s)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Qty</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(detail.items ?? []).map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₹{item.unit_price}</TableCell>
+                        <TableCell className="capitalize">{formatStatus(item.item_status)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
+          )}
 
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(detail.items ?? []).map((item: any) => (
-                  <tr key={item.id}>
-                    <td>{item.name}</td>
-                    <td>{item.quantity}</td>
-                    <td>₹{item.unit_price}</td>
-                    <td>{item.item_status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Modal>
+          <SheetFooter className="px-4 pb-4">
+            <Button
+              onClick={() => void updateStatus()}
+              disabled={saving || !detail || newStatus === detail.order_status}
+            >
+              {saving ? "Saving…" : "Update status"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

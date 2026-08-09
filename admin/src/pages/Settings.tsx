@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
-import PageHeader from "../components/PageHeader";
-import configService from "../services/admin/config.service";
-import type { AppConfig } from "../types/admin.types";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import configService from "@/services/admin/config.service";
+import type { AppConfig } from "@/types/admin.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Settings = () => {
   const [form, setForm] = useState<Partial<AppConfig>>({});
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     configService
@@ -17,7 +22,6 @@ const Settings = () => {
 
   const save = async () => {
     setSaving(true);
-    setMessage(null);
     try {
       const res = await configService.update({
         delivery_fee: form.delivery_fee,
@@ -31,100 +35,97 @@ const Settings = () => {
         faq: form.faq,
       });
       setForm(res.data.data);
-      setMessage("Settings saved");
+      toast.success("Settings saved");
     } catch {
-      setMessage("Failed to save settings");
+      toast.error("Failed to save settings");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title="Settings" subtitle="Fees, app download, FAQ, and marquee copy" />
 
-      <div className="admin-card p-6 space-y-4 max-w-3xl">
-        <div className="grid grid-cols-3 gap-3">
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>App configuration</CardTitle>
+          <CardDescription>Changes apply to the client experience</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {(
+              [
+                ["delivery_fee", "Delivery fee"],
+                ["custom_request_fee", "Custom request fee"],
+                ["parcel_fee", "Parcel fee"],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key} className="space-y-1.5">
+                <Label>{label}</Label>
+                <Input
+                  value={String(form[key] ?? "")}
+                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                />
+              </div>
+            ))}
+          </div>
+
           {(
             [
-              ["delivery_fee", "Delivery fee"],
-              ["custom_request_fee", "Custom request fee"],
-              ["parcel_fee", "Parcel fee"],
+              ["app_download_title", "App download title"],
+              ["app_download_subtitle", "App download subtitle"],
+              ["play_store_href", "Play Store URL"],
+              ["app_store_href", "App Store URL"],
             ] as const
           ).map(([key, label]) => (
-            <div key={key}>
-              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
-              <input
-                className="admin-input"
+            <div key={key} className="space-y-1.5">
+              <Label>{label}</Label>
+              <Input
                 value={String(form[key] ?? "")}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
               />
             </div>
           ))}
-        </div>
 
-        {(
-          [
-            ["app_download_title", "App download title"],
-            ["app_download_subtitle", "App download subtitle"],
-            ["play_store_href", "Play Store URL"],
-            ["app_store_href", "App Store URL"],
-          ] as const
-        ).map(([key, label]) => (
-          <div key={key}>
-            <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
-            <input
-              className="admin-input"
-              value={String(form[key] ?? "")}
-              onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+          <div className="space-y-1.5">
+            <Label>Marquee strings (one per line)</Label>
+            <Textarea
+              className="min-h-28"
+              value={(form.marquee_strings ?? []).join("\n")}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  marquee_strings: e.target.value
+                    .split("\n")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                }))
+              }
             />
           </div>
-        ))}
 
-        <div>
-          <label className="text-xs text-(--text-muted) mb-1 block">
-            Marquee strings (one per line)
-          </label>
-          <textarea
-            className="admin-input min-h-28"
-            value={(form.marquee_strings ?? []).join("\n")}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                marquee_strings: e.target.value
-                  .split("\n")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              }))
-            }
-          />
-        </div>
+          <div className="space-y-1.5">
+            <Label>FAQ (JSON array of {"{question, answer}"})</Label>
+            <Textarea
+              className="min-h-40 font-mono text-xs"
+              value={JSON.stringify(form.faq ?? [], null, 2)}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  if (Array.isArray(parsed)) setForm((f) => ({ ...f, faq: parsed }));
+                } catch {
+                  // ignore invalid while typing
+                }
+              }}
+            />
+          </div>
 
-        <div>
-          <label className="text-xs text-(--text-muted) mb-1 block">
-            FAQ (JSON array of {"{question, answer}"})
-          </label>
-          <textarea
-            className="admin-input min-h-40 font-mono text-xs"
-            value={JSON.stringify(form.faq ?? [], null, 2)}
-            onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                if (Array.isArray(parsed)) setForm((f) => ({ ...f, faq: parsed }));
-              } catch {
-                // ignore invalid while typing
-              }
-            }}
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving}>
+          <Button onClick={() => void save()} disabled={saving}>
             {saving ? "Saving…" : "Save settings"}
-          </button>
-          {message && <span className="text-sm text-(--text-muted)">{message}</span>}
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

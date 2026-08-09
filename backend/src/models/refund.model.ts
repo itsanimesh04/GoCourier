@@ -29,7 +29,6 @@ const refundSchema = new Schema<IRefund>({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-refundSchema.index({ order_id: 1 });
 refundSchema.index({ gateway_refund_id: 1 });
 refundSchema.index({ status: 1 });
 

@@ -13,9 +13,16 @@ function startOfTodayIST() {
   return new Date(ist.getTime() + offsetMs);
 }
 
+function daysAgoIST(days: number) {
+  const start = startOfTodayIST();
+  start.setDate(start.getDate() - days);
+  return start;
+}
+
 export class DashboardService {
   async getStats() {
     const todayStart = startOfTodayIST();
+    const fourteenDaysAgo = daysAgoIST(13);
 
     const [
       ordersToday,
@@ -24,7 +31,9 @@ export class DashboardService {
       openBatches,
       totalRestaurants,
       availableMenuItems,
-      recentOrders
+      recentOrders,
+      ordersByStatus,
+      ordersLast14Days
     ] = await Promise.all([
       Order.countDocuments({
         order_status: { $ne: 'cart' },
@@ -47,12 +56,67 @@ export class DashboardService {
       Order.find({ order_status: { $ne: 'cart' } })
         .sort({ placed_at: -1, created_at: -1 })
         .limit(8)
-        .exec()
+        .exec(),
+      Order.aggregate([
+        { $match: { order_status: { $ne: 'cart' } } },
+        { $group: { _id: '$order_status', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      Order.aggregate([
+        {
+          $match: {
+            order_status: { $ne: 'cart' },
+            placed_at: { $gte: fourteenDaysAgo }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$placed_at', timezone: 'Asia/Kolkata' }
+            },
+            order_count: { $sum: 1 },
+            gmv: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ['$order_status', 'cancelled'] },
+                      { $in: ['$payment_status', ['success', 'partially_refunded']] }
+                    ]
+                  },
+                  { $toDouble: '$total_amount' },
+                  0
+                ]
+              }
+            }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ])
     ]);
 
     const restaurantIds = [...new Set(recentOrders.map((o) => o.restaurant_id.toString()))];
     const restaurants = await Restaurant.find({ _id: { $in: restaurantIds } }).exec();
     const restaurantMap = new Map(restaurants.map((r) => [r._id.toString(), r.name]));
+
+    // Fill missing days in the last 14-day window
+    const dayMap = new Map(
+      ordersLast14Days.map((row) => [
+        row._id as string,
+        { order_count: row.order_count as number, gmv: Number(row.gmv ?? 0) }
+      ])
+    );
+    const filledDays: { date: string; order_count: number; gmv: string }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = daysAgoIST(i);
+      const key = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const row = dayMap.get(key);
+      filledDays.push({
+        date: key,
+        order_count: row?.order_count ?? 0,
+        gmv: (row?.gmv ?? 0).toFixed(2)
+      });
+    }
 
     return {
       orders_today: ordersToday,
@@ -68,7 +132,12 @@ export class DashboardService {
         payment_status: o.payment_status,
         total_amount: o.total_amount,
         placed_at: o.placed_at
-      }))
+      })),
+      orders_by_status: ordersByStatus.map((row) => ({
+        status: row._id as string,
+        count: row.count as number
+      })),
+      orders_last_14_days: filledDays
     };
   }
 }

@@ -1,16 +1,37 @@
 import { useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
-import PageHeader from "../components/PageHeader";
-import Modal from "../components/Modal";
-import ImageUpload from "../components/ImageUpload";
-import restaurantService from "../services/admin/restaurant.service";
-import campusService from "../services/admin/campus.service";
-import type { Campus, Restaurant } from "../types/admin.types";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import Modal from "@/components/Modal";
+import ImageUpload from "@/components/ImageUpload";
+import restaurantService from "@/services/admin/restaurant.service";
+import campusService from "@/services/admin/campus.service";
+import type { Campus, Restaurant } from "@/types/admin.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Restaurants = () => {
   const [items, setItems] = useState<Restaurant[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [campusFilter, setCampusFilter] = useState("");
+  const [campusFilter, setCampusFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Restaurant | null>(null);
   const [form, setForm] = useState({
@@ -33,7 +54,7 @@ const Restaurants = () => {
 
   const load = async () => {
     const [r, c] = await Promise.all([
-      restaurantService.list(campusFilter ? { campus_id: campusFilter } : undefined),
+      restaurantService.list(campusFilter !== "all" ? { campus_id: campusFilter } : undefined),
       campusService.list(),
     ]);
     setItems(r.data.data);
@@ -99,7 +120,10 @@ const Restaurants = () => {
       if (editing) await restaurantService.update(editing.id, payload);
       else await restaurantService.create(payload);
       setOpen(false);
+      toast.success(editing ? "Restaurant updated" : "Restaurant created");
       await load();
+    } catch {
+      toast.error("Failed to save restaurant");
     } finally {
       setSaving(false);
     }
@@ -108,70 +132,75 @@ const Restaurants = () => {
   const campusName = (id: string) => campuses.find((c) => c.id === id)?.name ?? id.slice(-6);
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Restaurants"
         subtitle="Campus-linked restaurant catalog"
         actions={
-          <button className="admin-btn admin-btn-primary" onClick={openCreate}>
-            <FiPlus size={14} /> Add restaurant
-          </button>
+          <Button onClick={openCreate}>
+            <Plus className="size-4" /> Add restaurant
+          </Button>
         }
       />
 
-      <div className="mb-4">
-        <select
-          className="admin-input max-w-xs"
-          value={campusFilter}
-          onChange={(e) => setCampusFilter(e.target.value)}
-        >
-          <option value="">All campuses</option>
-          {campuses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+      <div className="max-w-xs">
+        <Select value={campusFilter} onValueChange={setCampusFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter campus" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All campuses</SelectItem>
+            {campuses.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="admin-card overflow-hidden">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Campus</th>
-              <th>Cuisine</th>
-              <th>Open</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((r) => (
-              <tr key={r.id}>
-                <td className="font-medium">{r.name}</td>
-                <td>{campusName(r.campus_id)}</td>
-                <td>{r.cuisine || "—"}</td>
-                <td>
-                  <span className={`badge ${r.is_open ? "badge-green" : "badge-yellow"}`}>
-                    {r.is_open ? "Open" : "Closed"}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge ${r.is_active ? "badge-green" : "badge-red"}`}>
-                    {r.is_active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td>
-                  <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(r)}>
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent className="px-0 pt-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Campus</TableHead>
+                  <TableHead className="hidden sm:table-cell">Cuisine</TableHead>
+                  <TableHead>Open</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">{r.name}</TableCell>
+                    <TableCell>{campusName(r.campus_id)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{r.cuisine || "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant={r.is_open ? "secondary" : "outline"}>
+                        {r.is_open ? "Open" : "Closed"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={r.is_active ? "secondary" : "destructive"}>
+                        {r.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(r)}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <Modal
         open={open}
@@ -179,9 +208,9 @@ const Restaurants = () => {
         title={editing ? "Edit restaurant" : "Add restaurant"}
         wide
       >
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <label className="text-xs text-(--text-muted) mb-1 block">Image</label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label className="mb-1.5">Image</Label>
             <ImageUpload
               folder="restaurants"
               imageUrl={form.image_url}
@@ -191,19 +220,23 @@ const Restaurants = () => {
               }
             />
           </div>
-          <div className="col-span-2">
-            <label className="text-xs text-(--text-muted) mb-1 block">Campus</label>
-            <select
-              className="admin-input"
-              value={form.campus_id}
-              onChange={(e) => setForm((f) => ({ ...f, campus_id: e.target.value }))}
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Campus</Label>
+            <Select
+              value={form.campus_id || undefined}
+              onValueChange={(v) => setForm((f) => ({ ...f, campus_id: v }))}
             >
-              {campuses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select campus" />
+              </SelectTrigger>
+              <SelectContent>
+                {campuses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {(
             [
@@ -215,10 +248,9 @@ const Restaurants = () => {
               ["commission_rate", "Commission"],
             ] as const
           ).map(([key, label]) => (
-            <div key={key}>
-              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
-              <input
-                className="admin-input"
+            <div key={key} className="space-y-1.5">
+              <Label>{label}</Label>
+              <Input
                 value={String(form[key])}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
               />
@@ -240,13 +272,13 @@ const Restaurants = () => {
             />
             Active
           </label>
-          <button
-            className="admin-btn admin-btn-primary col-span-2"
-            onClick={save}
+          <Button
+            className="sm:col-span-2"
+            onClick={() => void save()}
             disabled={saving || !form.campus_id}
           >
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

@@ -1,20 +1,40 @@
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
+import { AppSidebar } from "@/components/AppSidebar";
+import { AppHeader } from "@/components/AppHeader";
+import { LogoutDialog } from "@/components/LogoutDialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const Layout = () => {
-  return (
-    <div className="h-screen bg-(--bg) flex flex-row w-full overflow-hidden">
-      <div className="w-65 shrink-0 h-full">
-        <Sidebar />
-      </div>
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
-      <div className="flex-1 min-h-screen w-full h-full flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      <aside className="hidden h-full w-64 shrink-0 border-r border-sidebar-border lg:block">
+        <AppSidebar onLogout={() => setLogoutOpen(true)} />
+      </aside>
+
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-72 p-0 sm:max-w-xs">
+          <AppSidebar
+            onNavigate={() => setMobileOpen(false)}
+            onLogout={() => {
+              setMobileOpen(false);
+              setLogoutOpen(true);
+            }}
+          />
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <AppHeader onMenuClick={() => setMobileOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
+
+      <LogoutDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FiUpload, FiTrash2 } from "react-icons/fi";
-import uploadService from "../services/admin/upload.service";
+import { Trash2, Upload } from "lucide-react";
+import uploadService from "@/services/admin/upload.service";
+import { Button } from "@/components/ui/button";
 
 interface ImageUploadProps {
   folder: string;
@@ -48,33 +49,35 @@ const ImageUpload = ({ folder, imageUrl, imageKey, onChange }: ImageUploadProps)
   return (
     <div className="space-y-2">
       {imageUrl ? (
-        <div className="relative w-full h-36 rounded-xl overflow-hidden border border-(--border)">
-          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-          <button
+        <div className="relative h-36 w-full overflow-hidden rounded-xl border border-border">
+          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+          <Button
             type="button"
-            onClick={handleDelete}
+            variant="secondary"
+            size="icon"
+            onClick={() => void handleDelete()}
             disabled={loading}
-            className="absolute top-2 right-2 admin-btn admin-btn-ghost p-2! bg-black/50"
+            className="absolute top-2 right-2 size-8 bg-black/60"
           >
-            <FiTrash2 size={14} />
-          </button>
+            <Trash2 className="size-3.5" />
+          </Button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 h-36 rounded-xl border border-dashed border-(--border) cursor-pointer hover:border-(--primary) hover:bg-(--primary-soft) transition-colors">
-          <FiUpload size={18} className="text-(--text-muted)" />
-          <span className="text-xs text-(--text-muted)">
+        <label className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border transition-colors hover:bg-accent/40">
+          <Upload className="size-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
             {loading ? "Uploading…" : "Upload image"}
           </span>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0])}
+            onChange={(e) => void handleFile(e.target.files?.[0])}
             disabled={loading}
           />
         </label>
       )}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 };

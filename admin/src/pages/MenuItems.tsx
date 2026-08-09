@@ -1,23 +1,45 @@
 import { useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
-import PageHeader from "../components/PageHeader";
-import Modal from "../components/Modal";
-import ImageUpload from "../components/ImageUpload";
-import menuItemService from "../services/admin/menuItem.service";
-import restaurantService from "../services/admin/restaurant.service";
-import categoryService from "../services/admin/category.service";
-import type { Category, MenuItem, Restaurant } from "../types/admin.types";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import Modal from "@/components/Modal";
+import ImageUpload from "@/components/ImageUpload";
+import menuItemService from "@/services/admin/menuItem.service";
+import restaurantService from "@/services/admin/restaurant.service";
+import categoryService from "@/services/admin/category.service";
+import type { Category, MenuItem, Restaurant } from "@/types/admin.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const MenuItems = () => {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [restaurantFilter, setRestaurantFilter] = useState("");
+  const [restaurantFilter, setRestaurantFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [form, setForm] = useState({
     restaurant_id: "",
-    category_id: "",
+    category_id: "none",
     name: "",
     description: "",
     price: "0.00",
@@ -32,7 +54,9 @@ const MenuItems = () => {
 
   const load = async () => {
     const [m, r, c] = await Promise.all([
-      menuItemService.list(restaurantFilter ? { restaurant_id: restaurantFilter } : undefined),
+      menuItemService.list(
+        restaurantFilter !== "all" ? { restaurant_id: restaurantFilter } : undefined
+      ),
       restaurantService.list(),
       categoryService.list(),
     ]);
@@ -48,8 +72,8 @@ const MenuItems = () => {
   const openCreate = () => {
     setEditing(null);
     setForm({
-      restaurant_id: restaurantFilter || restaurants[0]?.id || "",
-      category_id: "",
+      restaurant_id: restaurantFilter !== "all" ? restaurantFilter : restaurants[0]?.id || "",
+      category_id: "none",
       name: "",
       description: "",
       price: "0.00",
@@ -67,7 +91,7 @@ const MenuItems = () => {
     setEditing(item);
     setForm({
       restaurant_id: item.restaurant_id,
-      category_id: item.category_id ?? "",
+      category_id: item.category_id ?? "none",
       name: item.name,
       description: item.description,
       price: item.price,
@@ -91,7 +115,7 @@ const MenuItems = () => {
         original_price: form.original_price || null,
         is_veg: form.is_veg,
         is_available: form.is_available,
-        category_id: form.category_id || null,
+        category_id: form.category_id === "none" ? null : form.category_id,
         sort_order: Number(form.sort_order) || 0,
         image_url: form.image_url,
         image_key: form.image_key,
@@ -105,7 +129,10 @@ const MenuItems = () => {
         await menuItemService.create(form.restaurant_id, payload);
       }
       setOpen(false);
+      toast.success(editing ? "Item updated" : "Item created");
       await load();
+    } catch {
+      toast.error("Failed to save menu item");
     } finally {
       setSaving(false);
     }
@@ -115,69 +142,75 @@ const MenuItems = () => {
     restaurants.find((r) => r.id === id)?.name ?? id.slice(-6);
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Menu Items"
         subtitle="Food catalog for restaurants"
         actions={
-          <button className="admin-btn admin-btn-primary" onClick={openCreate}>
-            <FiPlus size={14} /> Add item
-          </button>
+          <Button onClick={openCreate}>
+            <Plus className="size-4" /> Add item
+          </Button>
         }
       />
 
-      <div className="mb-4">
-        <select
-          className="admin-input max-w-xs"
-          value={restaurantFilter}
-          onChange={(e) => setRestaurantFilter(e.target.value)}
-        >
-          <option value="">All restaurants</option>
-          {restaurants.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
+      <div className="max-w-xs">
+        <Select value={restaurantFilter} onValueChange={setRestaurantFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter restaurant" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All restaurants</SelectItem>
+            {restaurants.map((r) => (
+              <SelectItem key={r.id} value={r.id}>
+                {r.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="admin-card overflow-hidden">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Restaurant</th>
-              <th>Price</th>
-              <th>Veg</th>
-              <th>Available</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td className="font-medium">{item.name}</td>
-                <td>{restaurantName(item.restaurant_id)}</td>
-                <td>₹{item.price}</td>
-                <td>{item.is_veg ? "Yes" : "No"}</td>
-                <td>
-                  <span className={`badge ${item.is_available ? "badge-green" : "badge-red"}`}>
-                    {item.is_available ? "Available" : "Off"}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="admin-btn admin-btn-ghost py-1.5!"
-                    onClick={() => openEdit(item)}
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent className="px-0 pt-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden sm:table-cell">Restaurant</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead className="hidden md:table-cell">Veg</TableHead>
+                  <TableHead>Available</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {restaurantName(item.restaurant_id)}
+                    </TableCell>
+                    <TableCell>₹{item.price}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {item.is_veg ? "Yes" : "No"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.is_available ? "secondary" : "destructive"}>
+                        {item.is_available ? "Available" : "Off"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <Modal
         open={open}
@@ -185,8 +218,8 @@ const MenuItems = () => {
         title={editing ? "Edit menu item" : "Add menu item"}
         wide
       >
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
             <ImageUpload
               folder="menu-items"
               imageUrl={form.image_url}
@@ -196,63 +229,67 @@ const MenuItems = () => {
               }
             />
           </div>
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Restaurant</label>
-            <select
-              className="admin-input"
-              value={form.restaurant_id}
-              onChange={(e) => setForm((f) => ({ ...f, restaurant_id: e.target.value }))}
+          <div className="space-y-1.5">
+            <Label>Restaurant</Label>
+            <Select
+              value={form.restaurant_id || undefined}
+              onValueChange={(v) => setForm((f) => ({ ...f, restaurant_id: v }))}
             >
-              {restaurants.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select restaurant" />
+              </SelectTrigger>
+              <SelectContent>
+                {restaurants.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Category</label>
-            <select
-              className="admin-input"
+          <div className="space-y-1.5">
+            <Label>Category</Label>
+            <Select
               value={form.category_id}
-              onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
+              onValueChange={(v) => setForm((f) => ({ ...f, category_id: v }))}
             >
-              <option value="">None</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="col-span-2">
-            <label className="text-xs text-(--text-muted) mb-1 block">Name</label>
-            <input
-              className="admin-input"
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Name</Label>
+            <Input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
-          <div className="col-span-2">
-            <label className="text-xs text-(--text-muted) mb-1 block">Description</label>
-            <textarea
-              className="admin-input min-h-20"
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Description</Label>
+            <Textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             />
           </div>
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Price</label>
-            <input
-              className="admin-input"
+          <div className="space-y-1.5">
+            <Label>Price</Label>
+            <Input
               value={form.price}
               onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
             />
           </div>
-          <div>
-            <label className="text-xs text-(--text-muted) mb-1 block">Original price</label>
-            <input
-              className="admin-input"
+          <div className="space-y-1.5">
+            <Label>Original price</Label>
+            <Input
               value={form.original_price}
               onChange={(e) => setForm((f) => ({ ...f, original_price: e.target.value }))}
             />
@@ -273,13 +310,13 @@ const MenuItems = () => {
             />
             Available
           </label>
-          <button
-            className="admin-btn admin-btn-primary col-span-2"
-            onClick={save}
+          <Button
+            className="sm:col-span-2"
+            onClick={() => void save()}
             disabled={saving || !form.restaurant_id}
           >
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

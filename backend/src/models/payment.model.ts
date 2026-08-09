@@ -14,7 +14,7 @@ export interface IPayment {
 }
 
 const paymentSchema = new Schema<IPayment>({
-  order_id: { type: Schema.Types.ObjectId, ref: 'Order', required: true, unique: true, index: true },
+  order_id: { type: Schema.Types.ObjectId, ref: 'Order', required: true, unique: true },
   gateway: { type: String, required: true },
   gateway_order_id: { type: String, default: null },
   gateway_txn_id: { type: String, default: null },

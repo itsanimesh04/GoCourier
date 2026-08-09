@@ -27,7 +27,6 @@ const orderItemSchema = new Schema<IOrderItem>({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-orderItemSchema.index({ order_id: 1 });
 orderItemSchema.index({ menu_item_id: 1 });
 
 export const OrderItem = models.OrderItem || model<IOrderItem>('OrderItem', orderItemSchema);

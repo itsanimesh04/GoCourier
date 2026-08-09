@@ -7,12 +7,12 @@ interface PageHeaderProps {
 }
 
 const PageHeader = ({ title, subtitle, actions }: PageHeaderProps) => (
-  <div className="flex items-start justify-between gap-4 mb-6">
-    <div>
+  <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="min-w-0">
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {subtitle && <p className="text-sm text-(--text-muted) mt-1">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
     </div>
-    {actions}
+    {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
   </div>
 );
 
