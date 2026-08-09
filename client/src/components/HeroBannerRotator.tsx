@@ -30,7 +30,7 @@ const HeroBannerRotator = () => {
     <div className="relative overflow-hidden rounded-2xl border border-border bg-surface">
       <div
         key={banner.id}
-        className="animate-banner-fade relative flex min-h-[16rem] flex-col justify-end p-4 sm:min-h-[20rem] sm:p-5"
+        className="animate-banner-fade relative flex min-h-64 flex-col justify-end p-4 sm:min-h-80 sm:p-5"
       >
         <img
           src={banner.imageUrl}
@@ -38,7 +38,7 @@ const HeroBannerRotator = () => {
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/55 to-bg/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/55 to-bg/10" />
         <div className="relative z-10 max-w-md">
           <p className="font-display text-base font-semibold leading-tight text-fg sm:text-lg">
             {banner.title}

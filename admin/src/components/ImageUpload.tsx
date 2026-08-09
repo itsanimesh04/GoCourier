@@ -48,21 +48,21 @@ const ImageUpload = ({ folder, imageUrl, imageKey, onChange }: ImageUploadProps)
   return (
     <div className="space-y-2">
       {imageUrl ? (
-        <div className="relative w-full h-36 rounded-xl overflow-hidden border border-[var(--border)]">
+        <div className="relative w-full h-36 rounded-xl overflow-hidden border border-(--border)">
           <img src={imageUrl} alt="" className="w-full h-full object-cover" />
           <button
             type="button"
             onClick={handleDelete}
             disabled={loading}
-            className="absolute top-2 right-2 admin-btn admin-btn-ghost !p-2 bg-black/50"
+            className="absolute top-2 right-2 admin-btn admin-btn-ghost p-2! bg-black/50"
           >
             <FiTrash2 size={14} />
           </button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 h-36 rounded-xl border border-dashed border-[var(--border)] cursor-pointer hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors">
-          <FiUpload size={18} className="text-[var(--text-muted)]" />
-          <span className="text-xs text-[var(--text-muted)]">
+        <label className="flex flex-col items-center justify-center gap-2 h-36 rounded-xl border border-dashed border-(--border) cursor-pointer hover:border-(--primary) hover:bg-(--primary-soft) transition-colors">
+          <FiUpload size={18} className="text-(--text-muted)" />
+          <span className="text-xs text-(--text-muted)">
             {loading ? "Uploading…" : "Upload image"}
           </span>
           <input

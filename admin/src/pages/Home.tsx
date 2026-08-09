@@ -75,8 +75,8 @@ const Home = () => {
         {cards.map((card) => (
           <div key={card.title} className="admin-card p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-[var(--text-muted)]">{card.title}</span>
-              <span className="text-[var(--primary)]">{card.icon}</span>
+              <span className="text-sm text-(--text-muted)">{card.title}</span>
+              <span className="text-(--primary)">{card.icon}</span>
             </div>
             <p className="text-2xl font-bold">{loading ? "…" : card.value}</p>
           </div>
@@ -84,7 +84,7 @@ const Home = () => {
       </div>
 
       <div className="admin-card overflow-hidden">
-        <div className="px-5 py-4 border-b border-[var(--border)]">
+        <div className="px-5 py-4 border-b border-(--border)">
           <h3 className="font-semibold">Recent orders</h3>
         </div>
         <table className="admin-table">
@@ -100,7 +100,7 @@ const Home = () => {
           <tbody>
             {(stats?.recent_orders ?? []).length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-[var(--text-muted)]">
+                <td colSpan={5} className="text-(--text-muted)">
                   No recent orders
                 </td>
               </tr>

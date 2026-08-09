@@ -19,12 +19,12 @@ const Header = () => {
   const title = titles[pathname] ?? "GoCourier Admin";
 
   return (
-    <header className="h-[64px] bg-[var(--bg-elevated)] border-b border-[var(--border)] flex items-center justify-between px-8">
+    <header className="h-16 bg-(--bg-elevated) border-b border-(--border) flex items-center justify-between px-8">
       <div>
-        <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Admin</p>
-        <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
+        <p className="text-xs text-(--text-muted) uppercase tracking-wider">Admin</p>
+        <h2 className="text-sm font-semibold text-(--text)">{title}</h2>
       </div>
-      <div className="text-xs text-[var(--text-muted)]">GoCourier · Batch delivery ops</div>
+      <div className="text-xs text-(--text-muted)">GoCourier · Batch delivery ops</div>
     </header>
   );
 };

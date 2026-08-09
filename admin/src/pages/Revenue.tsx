@@ -30,7 +30,7 @@ const Revenue = () => {
           ["Net", data?.net_revenue],
         ].map(([label, value]) => (
           <div key={label as string} className="admin-card p-5">
-            <p className="text-sm text-[var(--text-muted)] mb-2">{label}</p>
+            <p className="text-sm text-(--text-muted) mb-2">{label}</p>
             <p className="text-2xl font-bold">₹{value ?? "0.00"}</p>
           </div>
         ))}
@@ -40,18 +40,18 @@ const Revenue = () => {
         <h3 className="font-semibold mb-4">Daily GMV</h3>
         <div className="flex items-end gap-2 h-48">
           {(data?.by_day ?? []).length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">No revenue data yet</p>
+            <p className="text-sm text-(--text-muted)">No revenue data yet</p>
           ) : (
             data?.by_day.map((day) => {
               const h = (Number(day.gmv) / maxGmv) * 100;
               return (
                 <div key={day.date} className="flex-1 flex flex-col items-center gap-2 min-w-0">
                   <div
-                    className="w-full rounded-t-md bg-[var(--primary)]"
+                    className="w-full rounded-t-md bg-(--primary)"
                     style={{ height: `${Math.max(4, h)}%` }}
                     title={`₹${day.gmv}`}
                   />
-                  <span className="text-[10px] text-[var(--text-muted)] truncate w-full text-center">
+                  <span className="text-[10px] text-(--text-muted) truncate w-full text-center">
                     {day.date.slice(5)}
                   </span>
                 </div>
@@ -62,7 +62,7 @@ const Revenue = () => {
       </div>
 
       <div className="admin-card overflow-hidden">
-        <div className="px-5 py-4 border-b border-[var(--border)]">
+        <div className="px-5 py-4 border-b border-(--border)">
           <h3 className="font-semibold">By campus</h3>
         </div>
         <table className="admin-table">

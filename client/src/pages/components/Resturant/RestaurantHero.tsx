@@ -13,17 +13,17 @@ const RestaurantHero = ({
   onToggleWishlist,
 }: RestaurantHeroProps) => {
   return (
-    <div className="relative min-h-[240px] overflow-hidden bg-bg text-fg sm:min-h-[280px] md:min-h-[320px]">
+    <div className="relative min-h-60 overflow-hidden bg-bg text-fg sm:min-h-70 md:min-h-80">
       <div className="absolute inset-0">
         <img
           src={restaurant.imageUrl}
           alt=""
           className="absolute inset-0 h-full w-full object-cover opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-bg/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-bg/20" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[240px] max-w-7xl flex-col justify-end px-4 py-12 sm:min-h-[280px] sm:py-16 md:min-h-[320px] md:px-10 md:py-20">
+      <div className="relative z-10 mx-auto flex min-h-60 max-w-7xl flex-col justify-end px-4 py-12 sm:min-h-70 sm:py-16 md:min-h-80 md:px-10 md:py-20">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-full">
             <span

@@ -53,7 +53,7 @@ const Settings = () => {
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">{label}</label>
+              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
               <input
                 className="admin-input"
                 value={String(form[key] ?? "")}
@@ -72,7 +72,7 @@ const Settings = () => {
           ] as const
         ).map(([key, label]) => (
           <div key={key}>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">{label}</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
             <input
               className="admin-input"
               value={String(form[key] ?? "")}
@@ -82,7 +82,7 @@ const Settings = () => {
         ))}
 
         <div>
-          <label className="text-xs text-[var(--text-muted)] mb-1 block">
+          <label className="text-xs text-(--text-muted) mb-1 block">
             Marquee strings (one per line)
           </label>
           <textarea
@@ -101,7 +101,7 @@ const Settings = () => {
         </div>
 
         <div>
-          <label className="text-xs text-[var(--text-muted)] mb-1 block">
+          <label className="text-xs text-(--text-muted) mb-1 block">
             FAQ (JSON array of {"{question, answer}"})
           </label>
           <textarea
@@ -122,7 +122,7 @@ const Settings = () => {
           <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving}>
             {saving ? "Saving…" : "Save settings"}
           </button>
-          {message && <span className="text-sm text-[var(--text-muted)]">{message}</span>}
+          {message && <span className="text-sm text-(--text-muted)">{message}</span>}
         </div>
       </div>
     </div>

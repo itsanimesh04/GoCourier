@@ -4,8 +4,8 @@ import Header from "./components/Header";
 
 const Layout = () => {
   return (
-    <div className="h-screen bg-[var(--bg)] flex flex-row w-full overflow-hidden">
-      <div className="w-[260px] shrink-0 h-full">
+    <div className="h-screen bg-(--bg) flex flex-row w-full overflow-hidden">
+      <div className="w-65 shrink-0 h-full">
         <Sidebar />
       </div>
 

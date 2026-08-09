@@ -47,7 +47,7 @@ const Payments = () => {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-[var(--text-muted)]">
+                <td colSpan={6} className="text-(--text-muted)">
                   No payments yet
                 </td>
               </tr>
@@ -61,7 +61,7 @@ const Payments = () => {
                   <td>
                     <span className="badge badge-blue">{p.status}</span>
                   </td>
-                  <td className="text-xs text-[var(--text-muted)]">
+                  <td className="text-xs text-(--text-muted)">
                     {new Date(p.created_at).toLocaleString()}
                   </td>
                 </tr>

@@ -17,7 +17,7 @@ const AuthShell = ({ title, subtitle, children, footer }: AuthShellProps) => {
           alt=""
           className="absolute inset-0 h-full w-full object-cover opacity-35"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/70 to-primary/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-primary via-primary/70 to-primary/40" />
         <div className="relative z-10 w-full p-6 sm:p-10 lg:p-14">
           <Link
             to="/"

@@ -65,7 +65,7 @@ const Users = () => {
                 <td className="font-medium">{u.name || "—"}</td>
                 <td>
                   <div className="text-sm">{u.email || "—"}</div>
-                  <div className="text-xs text-[var(--text-muted)]">{u.phone || ""}</div>
+                  <div className="text-xs text-(--text-muted)">{u.phone || ""}</div>
                 </td>
                 <td>
                   <span className="badge badge-blue">{u.role}</span>
@@ -77,7 +77,7 @@ const Users = () => {
                 </td>
                 <td>
                   <button
-                    className="admin-btn admin-btn-ghost !py-1.5"
+                    className="admin-btn admin-btn-ghost py-1.5!"
                     onClick={() => toggleActive(u)}
                   >
                     {u.is_active ? "Deactivate" : "Activate"}

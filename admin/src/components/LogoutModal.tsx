@@ -38,14 +38,14 @@ const LogoutModal = ({ isOpen, onClose }: LogoutModalProps) => {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-[var(--text-muted)]"
+            className="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-(--text-muted)"
           >
             <FiX size={16} />
           </button>
         </div>
         <div className="px-6 pb-6">
           <h2 className="text-lg font-bold mb-1">Sign out?</h2>
-          <p className="text-sm text-[var(--text-muted)] mb-6">
+          <p className="text-sm text-(--text-muted) mb-6">
             You will need to sign back in to access GoCourier Admin.
           </p>
           <div className="flex items-center gap-3">

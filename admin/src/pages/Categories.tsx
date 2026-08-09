@@ -89,7 +89,7 @@ const Categories = () => {
               {c.image_url ? (
                 <img src={c.image_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="h-full flex items-center justify-center text-[var(--text-muted)] text-sm">
+                <div className="h-full flex items-center justify-center text-(--text-muted) text-sm">
                   No image
                 </div>
               )}
@@ -97,14 +97,14 @@ const Categories = () => {
             <div className="p-4 flex items-center justify-between gap-2">
               <div>
                 <p className="font-semibold">{c.name}</p>
-                <p className="text-xs text-[var(--text-muted)]">Order {c.sort_order}</p>
+                <p className="text-xs text-(--text-muted)">Order {c.sort_order}</p>
               </div>
               <div className="flex gap-2">
-                <button className="admin-btn admin-btn-ghost !py-1.5" onClick={() => openEdit(c)}>
+                <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(c)}>
                   Edit
                 </button>
                 <button
-                  className="admin-btn admin-btn-ghost !py-1.5 text-red-400"
+                  className="admin-btn admin-btn-ghost py-1.5! text-red-400"
                   onClick={() => remove(c.id)}
                 >
                   <FiTrash2 size={14} />
@@ -128,7 +128,7 @@ const Categories = () => {
             onChange={({ url, key }) => setForm((f) => ({ ...f, image_url: url, image_key: key }))}
           />
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Name</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Name</label>
             <input
               className="admin-input"
               value={form.name}
@@ -136,7 +136,7 @@ const Categories = () => {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Sort order</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Sort order</label>
             <input
               type="number"
               className="admin-input"

@@ -92,7 +92,7 @@ const Orders = () => {
                 <td>₹{o.total_amount}</td>
                 <td>
                   <button
-                    className="admin-btn admin-btn-ghost !py-1.5"
+                    className="admin-btn admin-btn-ghost py-1.5!"
                     onClick={() => openDetail(o.id)}
                   >
                     View
@@ -109,22 +109,22 @@ const Orders = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <p>
-                <span className="text-[var(--text-muted)]">Restaurant:</span>{" "}
+                <span className="text-(--text-muted)">Restaurant:</span>{" "}
                 {detail.restaurant_name}
               </p>
               <p>
-                <span className="text-[var(--text-muted)]">Total:</span> ₹{detail.total_amount}
+                <span className="text-(--text-muted)">Total:</span> ₹{detail.total_amount}
               </p>
               <p>
-                <span className="text-[var(--text-muted)]">Drop:</span> {detail.drop_point || "—"}
+                <span className="text-(--text-muted)">Drop:</span> {detail.drop_point || "—"}
               </p>
               <p>
-                <span className="text-[var(--text-muted)]">Payment:</span> {detail.payment_status}
+                <span className="text-(--text-muted)">Payment:</span> {detail.payment_status}
               </p>
             </div>
 
             <div>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">Update status</label>
+              <label className="text-xs text-(--text-muted) mb-1 block">Update status</label>
               <div className="flex gap-2">
                 <select
                   className="admin-input"

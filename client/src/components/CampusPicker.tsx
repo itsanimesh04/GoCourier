@@ -37,7 +37,7 @@ const CampusPicker = ({ variant = 'header', className }: CampusPickerProps) => {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'inline-flex max-w-[11rem] items-center gap-1.5 rounded-xl px-2 py-1.5 text-left transition-colors sm:max-w-[14rem]',
+          'inline-flex max-w-44 items-center gap-1.5 rounded-xl px-2 py-1.5 text-left transition-colors sm:max-w-56',
           variant === 'header'
             ? 'hover:bg-on-primary/15'
             : 'border border-border bg-surface-2 text-fg hover:border-primary'

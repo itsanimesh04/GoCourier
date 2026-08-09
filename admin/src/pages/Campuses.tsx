@@ -105,7 +105,7 @@ const Campuses = () => {
                   </span>
                 </td>
                 <td>
-                  <button className="admin-btn admin-btn-ghost !py-1.5" onClick={() => openEdit(c)}>
+                  <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(c)}>
                     Edit
                   </button>
                 </td>
@@ -131,7 +131,7 @@ const Campuses = () => {
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">{label}</label>
+              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
               <input
                 className="admin-input"
                 value={form[key]}

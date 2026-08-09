@@ -305,7 +305,7 @@ const FilterDrawer = ({
                 onApply(draft);
                 dispatch(closeFilterDrawer());
               }}
-              className="flex-[2] rounded-xl bg-primary py-3 font-display text-xl font-semibold uppercase tracking-wide text-on-primary hover:opacity-90"
+              className="flex-2 rounded-xl bg-primary py-3 font-display text-xl font-semibold uppercase tracking-wide text-on-primary hover:opacity-90"
             >
               Apply
             </button>

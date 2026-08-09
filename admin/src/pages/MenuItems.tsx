@@ -167,7 +167,7 @@ const MenuItems = () => {
                 </td>
                 <td>
                   <button
-                    className="admin-btn admin-btn-ghost !py-1.5"
+                    className="admin-btn admin-btn-ghost py-1.5!"
                     onClick={() => openEdit(item)}
                   >
                     Edit
@@ -197,7 +197,7 @@ const MenuItems = () => {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Restaurant</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Restaurant</label>
             <select
               className="admin-input"
               value={form.restaurant_id}
@@ -211,7 +211,7 @@ const MenuItems = () => {
             </select>
           </div>
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Category</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Category</label>
             <select
               className="admin-input"
               value={form.category_id}
@@ -226,7 +226,7 @@ const MenuItems = () => {
             </select>
           </div>
           <div className="col-span-2">
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Name</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Name</label>
             <input
               className="admin-input"
               value={form.name}
@@ -234,7 +234,7 @@ const MenuItems = () => {
             />
           </div>
           <div className="col-span-2">
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Description</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Description</label>
             <textarea
               className="admin-input min-h-20"
               value={form.description}
@@ -242,7 +242,7 @@ const MenuItems = () => {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Price</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Price</label>
             <input
               className="admin-input"
               value={form.price}
@@ -250,7 +250,7 @@ const MenuItems = () => {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Original price</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Original price</label>
             <input
               className="admin-input"
               value={form.original_price}

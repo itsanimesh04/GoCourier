@@ -102,17 +102,17 @@ const Banners = () => {
             <div className="p-5 flex-1 flex items-start justify-between gap-4">
               <div>
                 <p className="font-semibold text-lg">{b.title}</p>
-                <p className="text-sm text-[var(--text-muted)] mt-1">{b.subtitle}</p>
-                <p className="text-xs text-[var(--text-muted)] mt-2">
+                <p className="text-sm text-(--text-muted) mt-1">{b.subtitle}</p>
+                <p className="text-xs text-(--text-muted) mt-2">
                   CTA: {b.cta_label || "—"} → {b.cta_href || "—"}
                 </p>
               </div>
               <div className="flex gap-2">
-                <button className="admin-btn admin-btn-ghost !py-1.5" onClick={() => openEdit(b)}>
+                <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(b)}>
                   Edit
                 </button>
                 <button
-                  className="admin-btn admin-btn-ghost !py-1.5 text-red-400"
+                  className="admin-btn admin-btn-ghost py-1.5! text-red-400"
                   onClick={() => remove(b.id)}
                 >
                   <FiTrash2 size={14} />
@@ -145,7 +145,7 @@ const Banners = () => {
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">{label}</label>
+              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
               <input
                 className="admin-input"
                 value={form[key]}
@@ -154,7 +154,7 @@ const Banners = () => {
             </div>
           ))}
           <div>
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Sort order</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Sort order</label>
             <input
               type="number"
               className="admin-input"

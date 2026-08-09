@@ -163,7 +163,7 @@ const Restaurants = () => {
                   </span>
                 </td>
                 <td>
-                  <button className="admin-btn admin-btn-ghost !py-1.5" onClick={() => openEdit(r)}>
+                  <button className="admin-btn admin-btn-ghost py-1.5!" onClick={() => openEdit(r)}>
                     Edit
                   </button>
                 </td>
@@ -181,7 +181,7 @@ const Restaurants = () => {
       >
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Image</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Image</label>
             <ImageUpload
               folder="restaurants"
               imageUrl={form.image_url}
@@ -192,7 +192,7 @@ const Restaurants = () => {
             />
           </div>
           <div className="col-span-2">
-            <label className="text-xs text-[var(--text-muted)] mb-1 block">Campus</label>
+            <label className="text-xs text-(--text-muted) mb-1 block">Campus</label>
             <select
               className="admin-input"
               value={form.campus_id}
@@ -216,7 +216,7 @@ const Restaurants = () => {
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">{label}</label>
+              <label className="text-xs text-(--text-muted) mb-1 block">{label}</label>
               <input
                 className="admin-input"
                 value={String(form[key])}

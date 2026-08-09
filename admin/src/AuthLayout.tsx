@@ -31,7 +31,7 @@ const AuthLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--bg)]">
+      <div className="flex items-center justify-center h-screen bg-(--bg)">
         <TinyLoader />
       </div>
     );

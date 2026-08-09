@@ -97,7 +97,7 @@ const Hero = () => {
                   }
                   className="flex w-full flex-col items-center gap-1.5 text-center transition-opacity hover:opacity-80"
                 >
-                  <div className="relative aspect-square w-full max-w-[5.5rem] overflow-hidden rounded-xl border border-border bg-surface-2 sm:max-w-none">
+                  <div className="relative aspect-square w-full max-w-22 overflow-hidden rounded-xl border border-border bg-surface-2 sm:max-w-none">
                     <img
                       src={cat.imageUrl}
                       alt={cat.name}

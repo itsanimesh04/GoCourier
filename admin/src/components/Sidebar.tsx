@@ -37,17 +37,17 @@ const Sidebar = () => {
     <>
       <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} />
 
-      <div className="w-full h-screen bg-[var(--bg-elevated)] border-r border-[var(--border)] flex flex-col z-50">
-        <div className="px-5 py-4 border-b border-[var(--border)]">
+      <div className="w-full h-screen bg-(--bg-elevated) border-r border-(--border) flex flex-col z-50">
+        <div className="px-5 py-4 border-b border-(--border)">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-9 h-9 rounded-xl bg-(--primary) flex items-center justify-center text-white font-bold text-sm">
               GC
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-[var(--text)] tracking-tight">
+              <span className="text-base font-bold text-(--text) tracking-tight">
                 GoCourier Admin
               </span>
-              <span className="text-[10px] text-[var(--text-muted)] -mt-0.5">
+              <span className="text-[10px] text-(--text-muted) -mt-0.5">
                 Operations console
               </span>
             </div>
@@ -55,7 +55,7 @@ const Sidebar = () => {
         </div>
 
         <div className="flex-1 px-3 py-5 overflow-y-auto">
-          <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-3 mb-3">
+          <p className="text-[11px] font-semibold text-(--text-muted) uppercase tracking-wider px-3 mb-3">
             Manage
           </p>
           <nav>
@@ -71,8 +71,8 @@ const Sidebar = () => {
                       to={link.path}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-                          : "text-[var(--text-muted)] hover:bg-white/5 hover:text-[var(--text)]"
+                          ? "bg-(--primary-soft) text-(--primary)"
+                          : "text-(--text-muted) hover:bg-white/5 hover:text-(--text)"
                       }`}
                     >
                       <span>{link.icon}</span>
@@ -85,10 +85,10 @@ const Sidebar = () => {
           </nav>
         </div>
 
-        <div className="px-3 pb-4 border-t border-[var(--border)] pt-3">
+        <div className="px-3 pb-4 border-t border-(--border) pt-3">
           <button
             onClick={() => setIsLogoutModalOpen(true)}
-            className="flex items-center gap-3 w-full px-3 py-2.5 text-[var(--text-muted)] hover:bg-white/5 hover:text-[var(--text)] rounded-lg transition-all"
+            className="flex items-center gap-3 w-full px-3 py-2.5 text-(--text-muted) hover:bg-white/5 hover:text-(--text) rounded-lg transition-all"
           >
             <FiLogOut size={18} />
             <span className="font-medium text-sm">Sign Out</span>
