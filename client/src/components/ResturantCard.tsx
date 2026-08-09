@@ -1,86 +1,77 @@
-import { BiHeart, BiStar } from "react-icons/bi";
-import { useNavigate } from "react-router-dom";
-
-interface Restaurant {
-  id: string;
-  name: string;
-  imageUrl: string;
-  isOpen: boolean;
-  etaMinutes: number;
-  cuisine: string;
-  rating: number;
-}
+import { BiHeart, BiSolidHeart, BiStar } from 'react-icons/bi';
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store';
+import {
+  selectIsRestaurantWishlisted,
+  toggleRestaurantWishlist,
+} from '../store/slices/wishlistSlice';
+import type { Restaurant } from '../utils/types';
 
 const ResturantCard = ({ restaurant }: { restaurant: Restaurant }) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const wishlisted = useAppSelector(selectIsRestaurantWishlisted(restaurant.id));
 
   return (
-    <div className="group relative flex flex-col justify-between border border-gray-200 bg-white rounded-none transition-colors hover:border-gray-400">
+    <div className="group relative flex h-full flex-col border border-gray-700 transition-colors hover:border-gray-400">
       <button
         type="button"
-        className="block w-full text-left"
+        className="flex w-full flex-1 flex-col text-left"
         onClick={() => navigate(`/food/restaurants/${restaurant.id}`)}
       >
-        {/* Square Image Box */}
-        <div className="relative aspect-square w-full overflow-hidden bg-gray-100 rounded-none">
+        <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-gray-800">
           <img
             src={restaurant.imageUrl}
             alt={restaurant.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
 
-          {/* Simple Status Tag */}
           <span
-            className={`absolute left-2 top-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+            className={`absolute left-2 top-2 z-10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
               restaurant.isOpen
-                ? "bg-black text-white"
-                : "bg-gray-200 text-gray-700"
+                ? 'bg-black text-white'
+                : 'bg-gray-200 text-gray-700'
             }`}
           >
-            {restaurant.isOpen ? "Open" : "Closed"}
+            {restaurant.isOpen ? 'Open' : 'Closed'}
           </span>
         </div>
 
-        {/* Card Content */}
-        <div className="p-3 flex flex-col justify-between grow">
-          <div>
-            {/* Bold Uppercase Restaurant Name */}
-            <h3 className="truncate text-xl font-bebas text-tertiary">
-              {restaurant.name}
-            </h3>
-
-            {/* Subtitle / Cuisine & Price / ETA */}
-            <p className="mt-1 text-sm text-gray-500 font-bebas truncate">
-              Starting {restaurant.etaMinutes} mins • {restaurant.cuisine}
-            </p>
-
-            {/* Rating */}
-            <div className="mt-1 flex items-center gap-1 text-base font-bebas text-gray-700">
-              <BiStar className="text-yellow-500 fill-yellow-500" size={14} />
-              <span>{restaurant.rating.toFixed(1)}</span>
-            </div>
+        <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+          <h3 className="truncate font-bebas text-lg text-white sm:text-xl">
+            {restaurant.name}
+          </h3>
+          <p className="mt-1 line-clamp-2 font-bebas text-xs text-gray-500 sm:text-sm">
+            Starting {restaurant.etaMinutes} mins • {restaurant.cuisine}
+          </p>
+          <div className="mt-1 flex items-center gap-1 font-bebas text-sm text-gray-700 sm:text-base">
+            <BiStar className="fill-yellow-500 text-yellow-500" size={14} />
+            <span>{restaurant.rating.toFixed(1)}</span>
           </div>
 
-          {/* Boxy CTA Button (Matching BUY NOW) */}
-          <div className="mt-2">
-            <span className="inline-block border border-red-600 text-red-600 text-base font-bebas px-2.5 py-0.5 rounded-none group-hover:bg-red-600 group-hover:text-white transition-colors">
+          <div className="mt-auto pt-2">
+            <span className="inline-block border border-red-600 px-2.5 py-0.5 font-bebas text-sm text-red-600 transition-colors group-hover:bg-red-600 group-hover:text-white sm:text-base">
               ORDER NOW
             </span>
           </div>
         </div>
       </button>
 
-      {/* Optional Heart Favorite Action */}
       <button
         type="button"
-        aria-label="Add to favourites"
+        aria-label={wishlisted ? 'Remove from favourites' : 'Add to favourites'}
         onClick={(e) => {
           e.stopPropagation();
+          dispatch(toggleRestaurantWishlist(restaurant.id));
         }}
-        className="absolute right-2 top-2 p-1.5 bg-white/80 hover:bg-white text-gray-700 transition-colors"
+        className="absolute right-2 top-2 z-10 bg-white/90 p-1.5 text-gray-700 transition-colors hover:bg-white"
       >
-        <BiHeart size={16} />
+        {wishlisted ? (
+          <BiSolidHeart size={16} className="text-primary" />
+        ) : (
+          <BiHeart size={16} />
+        )}
       </button>
     </div>
   );

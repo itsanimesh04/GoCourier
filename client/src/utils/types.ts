@@ -43,10 +43,37 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number;
   isVeg: boolean;
   imageUrl: string;
   isAvailable: boolean;
   category?: string;
+}
+
+export interface FoodAddon {
+  id: string;
+  name: string;
+  price: number;
+  isVeg?: boolean;
+}
+
+export interface SelectedAddon {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface CartLineItem {
+  cartKey: string;
+  kind: 'food' | 'extra';
+  menuItemId?: string;
+  extrasProductId?: string;
+  restaurantId?: string;
+  name: string;
+  imageUrl: string;
+  unitPrice: number;
+  quantity: number;
+  selectedAddons: SelectedAddon[];
 }
 
 export interface CartItem {
@@ -122,3 +149,25 @@ export interface CuisineSection {
   title: string;
   dishes: MenuItem[];
 }
+
+export interface FoodFilters {
+  availability: 'all' | 'in_stock' | 'out_of_stock';
+  priceFrom: number;
+  priceTo: number;
+  diet: 'all' | 'veg' | 'non_veg';
+  categories: string[];
+  minRating: number | null;
+  cuisine: string | null;
+  query: string;
+}
+
+export const DEFAULT_FOOD_FILTERS: FoodFilters = {
+  availability: 'all',
+  priceFrom: 0,
+  priceTo: 750,
+  diet: 'all',
+  categories: [],
+  minRating: null,
+  cuisine: null,
+  query: '',
+};

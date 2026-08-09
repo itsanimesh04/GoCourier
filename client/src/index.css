@@ -3,7 +3,7 @@
 
 @theme {
   --font-bebas: "Bebas Neue", sans-serif;
-  --color-primary: #CF2028;
+  --color-primary: #ff0040;
   --color-secondary: #FFFFFF;
   --color-tertiary: #000;
 
@@ -21,7 +21,7 @@
 }
 
 :root {
-  --bg: #fff;
+  --bg: #000;
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 
 
@@ -32,7 +32,19 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
+html,
+body,
+#root {
   margin: 0;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+img,
+video {
+  max-width: 100%;
 }
 

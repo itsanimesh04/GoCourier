@@ -1,3 +1,5 @@
+import type { MenuItem, Order, Restaurant, User } from '../utils/types';
+
 const food = (name: string) => `/food/${name}.jpg`;
 
 const hours = { openTime: '10:00 AM', closeTime: '10:30 PM', isOpen: true };
@@ -8,7 +10,7 @@ export const campuses = [
   { id: 'campus-manipal', name: 'Manipal University', city: 'Manipal', state: 'Karnataka', cutoffTime: '21:30', deliveryTime: '21:45' }
 ];
 
-export const restaurants= [
+export const restaurants: Restaurant[] = [
   {
     id: 'rising-cafe',
     campusId: 'campus-nims',
@@ -137,13 +139,14 @@ export const restaurants= [
   }
 ];
 
-export const menuItems = [
+export const menuItems: MenuItem[] = [
   {
     id: 'paneer-pizza',
     restaurantId: 'rising-cafe',
     name: 'Paneer Pizza (8 in)',
     description: 'Cheesy paneer, capsicum, onion and classic herbs',
     price: 215,
+    originalPrice: 269,
     isVeg: true,
     imageUrl: 'https://www.cookingcarnival.com/wp-content/uploads/2019/11/Paneer-Pizza-7.jpg',
     isAvailable: true,
@@ -155,6 +158,7 @@ export const menuItems = [
     name: 'Garlic Bread',
     description: 'Toasted with garlic butter and herbs',
     price: 79,
+    originalPrice: 99,
     isVeg: true,
     imageUrl: food('garlic-bread'),
     isAvailable: true,
@@ -166,6 +170,7 @@ export const menuItems = [
     name: 'Chicken Biryani',
     description: 'Aromatic basmati rice with spicy chicken',
     price: 189,
+    originalPrice: 229,
     isVeg: false,
     imageUrl: food('chicken-biryani'),
     isAvailable: true,
@@ -188,6 +193,7 @@ export const menuItems = [
     name: '7 Cheesy Pizza',
     description: 'Loaded with 7 exotic cheeses and Italian spices',
     price: 289,
+    originalPrice: 349,
     isVeg: true,
     imageUrl: 'https://cdn.uengage.io/uploads/5/image-998314-1715587934.png',
     isAvailable: true,
@@ -199,6 +205,7 @@ export const menuItems = [
     name: 'Cheesy Garlic Breadsticks',
     description: 'Freshly baked sticks stuffed with melted cheese',
     price: 129,
+    originalPrice: 159,
     isVeg: true,
     imageUrl: 'https://cdn.uengage.io/uploads/5/image-998314-1715587934.png',
     isAvailable: true,
@@ -210,6 +217,7 @@ export const menuItems = [
     name: 'Subz-e-Falafel Dum Biryani',
     description: 'Royal vegetable biryani layered with spices and nuts',
     price: 299,
+    originalPrice: 349,
     isVeg: true,
     imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYEMWjAxibPovxPrmUJLfmADrRheYfNwopkA&s',
     isAvailable: true,
@@ -221,6 +229,7 @@ export const menuItems = [
     name: 'Maharaja Paneer Burger',
     description: 'Crispy spiced paneer patty with tandoori mayo',
     price: 149,
+    originalPrice: 179,
     isVeg: true,
     imageUrl: 'https://b.zmtcdn.com/data/pictures/6/20660136/24dbd155326efee7c706c215594734cb.jpg?fit=around|750:500&crop=750:500;*,*',
     isAvailable: true,
@@ -243,6 +252,7 @@ export const menuItems = [
     name: 'Overload Brownie Box',
     description: 'Rich gooey chocolate walnut brownie slice',
     price: 115,
+    originalPrice: 145,
     isVeg: true,
     imageUrl: 'https://theobroma.in/cdn/shop/files/WalnutBrownie_d7d6e2d8-ba46-4cc2-8d8b-67063988e11a.jpg?v=1711183767',
     isAvailable: true,
@@ -265,6 +275,7 @@ export const menuItems = [
     name: 'Loaded Burger',
     description: 'Crispy patty, cheese and house sauce',
     price: 169,
+    originalPrice: 199,
     isVeg: false,
     imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS409J-BiS1ywS-TTu07JBHsDQS--sOz4nykw&s',
     isAvailable: true,
@@ -276,6 +287,7 @@ export const menuItems = [
     name: 'Masala Dosa',
     description: 'Crispy dosa stuffed with spiced potato masala',
     price: 89,
+    originalPrice: 110,
     isVeg: true,
     imageUrl: 'https://www.cookwithmanali.com/wp-content/uploads/2020/05/Masala-Dosa.jpg',
     isAvailable: true,
@@ -298,6 +310,7 @@ export const menuItems = [
     name: 'Veg Hakka Noodles',
     description: 'Wok-tossed noodles with crisp veggies',
     price: 129,
+    originalPrice: 149,
     isVeg: true,
     imageUrl: 'https://www.cubesnjuliennes.com/wp-content/uploads/2020/06/Spicy-Chicken-Hakka-Noodles-Recipe.jpg',
     isAvailable: true,
@@ -309,11 +322,61 @@ export const menuItems = [
     name: 'Chilli Paneer Dry',
     description: 'Indo-Chinese paneer tossed in chilli garlic sauce',
     price: 179,
+    originalPrice: 210,
     isVeg: true,
     imageUrl: 'https://www.cookwithmanali.com/wp-content/uploads/2016/01/Chilli-Paneer-Restaurant-Style.jpg',
-    isAvailable: true,
+    isAvailable: false,
     category: 'Chinese'
   }
+];
+
+export const currentUser: User = {
+  id: 'user-1',
+  name: 'Rohan Sharma',
+  email: 'rohan.sharma@campus.edu',
+  phone: '+91 98765 43210',
+  role: 'student',
+  campus_id: 'campus-nims',
+};
+
+export const seedOrders: Order[] = [
+  {
+    id: 'order-seed-1',
+    displayId: 'GC-19812',
+    restaurantId: 'lapinoz-pizza',
+    restaurantName: "La Pino'z Pizza",
+    campusId: 'campus-nims',
+    dropPoint: 'Hostel Block B, Room 118',
+    orderStatus: 'delivered',
+    paymentStatus: 'success',
+    subtotal: 418,
+    fee: 20,
+    totalAmount: 438,
+    eta: '8:40 PM',
+    placedAt: 'Jul 28, 8:05 PM',
+    items: [
+      {
+        id: 'oi-1',
+        menuItemId: 'lapinoz-7cheesy',
+        name: '7 Cheesy Pizza',
+        quantity: 1,
+        unitPrice: 289,
+        lineTotal: 289,
+        itemStatus: 'confirmed',
+        refundAmount: 0,
+      },
+      {
+        id: 'oi-2',
+        menuItemId: 'lapinoz-garlic',
+        name: 'Cheesy Garlic Breadsticks',
+        quantity: 1,
+        unitPrice: 129,
+        lineTotal: 129,
+        itemStatus: 'confirmed',
+        refundAmount: 0,
+      },
+    ],
+  },
 ];
 
 export const initialOrder = {

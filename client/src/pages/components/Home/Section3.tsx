@@ -8,7 +8,7 @@ export const Section3 = () => {
   const list = restaurants.slice(0, 6);
 
   return (
-    <section className="w-full bg-white py-12 sm:py-16">
+    <section className="w-full py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-4">
         {/* Centered Heading Layout matching the image */}
         <div className="text-center mb-10">
@@ -18,7 +18,7 @@ export const Section3 = () => {
         </div>
 
         {/* Product / Restaurant Grid - 6 Column boxy layout */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
           {list.map((restaurant) => {
             return (
               <ResturantCard key={restaurant.id} restaurant={restaurant} />

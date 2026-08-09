@@ -1,65 +1,151 @@
-import { BiHeart} from "react-icons/bi";
-import { useNavigate } from "react-router-dom";
-import type { MenuItem } from "../utils/types";
-
-
+import { BiHeart, BiSolidHeart } from 'react-icons/bi';
+import { FiMinus, FiPlus } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store';
+import {
+  addFoodItem,
+  decrementFoodItem,
+  selectMenuItemQty,
+} from '../store/slices/cartSlice';
+import {
+  selectIsFoodWishlisted,
+  toggleFoodWishlist,
+} from '../store/slices/wishlistSlice';
+import type { MenuItem } from '../utils/types';
+import PriceDisplay from './PriceDisplay';
+import VegBadge from './VegBadge';
 
 const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const wishlisted = useAppSelector(selectIsFoodWishlisted(menuItem.id));
+  const cartQty = useAppSelector(selectMenuItemQty(menuItem.id));
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!menuItem.isAvailable) return;
+    dispatch(
+      addFoodItem({
+        menuItemId: menuItem.id,
+        restaurantId: menuItem.restaurantId,
+        name: menuItem.name,
+        imageUrl: menuItem.imageUrl,
+        unitPrice: menuItem.price,
+        quantity: 1,
+        selectedAddons: [],
+      })
+    );
+  };
+
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    handleAddToCart(e);
+  };
+
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    dispatch(decrementFoodItem(menuItem.id));
+  };
 
   return (
-    <div className="group relative flex flex-col justify-between border border-gray-200 bg-white rounded-none transition-colors hover:border-gray-400">
+    <div className="group relative flex h-full flex-col border border-gray-200 bg-white transition-colors hover:border-gray-400">
       <button
         type="button"
-        className="block w-full text-left"
+        className="flex w-full flex-1 flex-col text-left"
         onClick={() => navigate(`/food/foods/${menuItem.id}`)}
       >
-        {/* Square Image Box */}
-        <div className="relative aspect-square  overflow-hidden bg-gray-100 rounded-none h-55 w-75">
+        <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-gray-100">
           <img
             src={menuItem.imageUrl}
             alt={menuItem.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
+          {!menuItem.isAvailable && (
+            <span className="absolute left-2 top-2 z-10 bg-gray-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              Sold out
+            </span>
+          )}
         </div>
 
-        {/* Card Content */}
-        <div className="p-3 flex flex-col justify-between grow">
-          <div>
-            {/* Bold Uppercase Restaurant Name */}
-            <h3 className="truncate text-xl font-bebas text-tertiary">
-              {menuItem.name}
-            </h3>
-
-            {/* Subtitle / Cuisine & Price / ETA */}
-            <p className="mt-1 text-sm text-gray-500 font-bebas truncate">
-              {menuItem.description}
-            </p>
-
-            {/* Rating */}
-            <div className="mt-1 flex items-center gap-1 text-2xl font-bebas text-gray-700">
-              <span>₹ {menuItem.price}</span>
-            </div>
+        <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+          <div className="mb-1">
+            <VegBadge isVeg={menuItem.isVeg} showLabel={false} />
           </div>
-
-          {/* Boxy CTA Button (Matching BUY NOW) */}
-            <div className="mt-3 w-full text-center border border-red-600 text-red-600 text-base font-bebas px-2.5 py-0.5 rounded-none group-hover:bg-red-600 group-hover:text-white transition-colors">
-              ADD TO CART
-            </div>
+          <h3 className="truncate font-bebas text-lg text-tertiary sm:text-xl">
+            {menuItem.name}
+          </h3>
+          <p className="mt-1 line-clamp-2 font-bebas text-xs text-gray-500 sm:text-sm">
+            {menuItem.description}
+          </p>
+          <PriceDisplay
+            price={menuItem.price}
+            originalPrice={menuItem.originalPrice}
+            size="md"
+            className="mt-1 text-xl sm:text-2xl"
+          />
         </div>
       </button>
 
-      {/* Optional Heart Favorite Action */}
+      <div className="mt-auto px-2.5 pb-2.5 sm:px-3 sm:pb-3">
+        {!menuItem.isAvailable ? (
+          <button
+            type="button"
+            disabled
+            className="w-full cursor-not-allowed border border-red-600 px-2.5 py-1.5 text-center font-bebas text-sm text-red-600 opacity-40 sm:text-base"
+          >
+            UNAVAILABLE
+          </button>
+        ) : cartQty > 0 ? (
+          <div className="flex w-full items-center border border-red-600 bg-red-600 text-white">
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              onClick={handleDecrement}
+              className="flex flex-1 items-center justify-center py-1.5 hover:bg-red-700"
+            >
+              <FiMinus size={16} />
+            </button>
+            <span className="min-w-8 px-2 text-center font-bebas text-xl leading-none">
+              {cartQty}
+            </span>
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              onClick={handleIncrement}
+              className="flex flex-1 items-center justify-center py-1.5 hover:bg-red-700"
+            >
+              <FiPlus size={16} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="w-full border border-red-600 px-2.5 py-1.5 text-center font-bebas text-sm text-red-600 transition-colors hover:bg-red-600 hover:text-white sm:text-base"
+          >
+            ADD TO CART
+          </button>
+        )}
+      </div>
+
       <button
         type="button"
-        aria-label="Add to favourites"
+        aria-label={wishlisted ? 'Remove from favourites' : 'Add to favourites'}
         onClick={(e) => {
           e.stopPropagation();
+          dispatch(toggleFoodWishlist(menuItem.id));
         }}
-        className="absolute right-2 top-2 p-1.5 bg-white/80 hover:bg-white text-gray-700 transition-colors"
+        className="absolute right-2 top-2 z-10 bg-white/90 p-1.5 text-gray-700 transition-colors hover:bg-white"
       >
-        <BiHeart size={16} />
+        {wishlisted ? (
+          <BiSolidHeart size={16} className="text-primary" />
+        ) : (
+          <BiHeart size={16} />
+        )}
       </button>
     </div>
   );
