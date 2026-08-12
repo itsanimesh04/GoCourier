@@ -67,8 +67,7 @@ export function filterMenuItems(
       if (!cuisineMatch) return false;
     }
     if (filters.minRating != null) {
-      const restaurant = map.get(item.restaurantId);
-      if (!restaurant || restaurant.rating < filters.minRating) return false;
+      if (item.rating < filters.minRating) return false;
     }
     if (q) {
       const hay = `${item.name} ${item.description} ${item.category ?? ''}`.toLowerCase();

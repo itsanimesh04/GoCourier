@@ -28,6 +28,7 @@ export interface Restaurant {
   name: string;
   cuisine: string;
   rating: number;
+  address: string;
   distanceKm: number;
   etaMinutes: number;
   tags: string[];
@@ -44,6 +45,7 @@ export interface MenuItem {
   description: string;
   price: number;
   originalPrice?: number;
+  rating: number;
   isVeg: boolean;
   imageUrl: string;
   isAvailable: boolean;

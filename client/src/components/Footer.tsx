@@ -13,7 +13,7 @@ export const Footer = () => {
             GoCourier
           </Link>
           <p className="mt-1.5 max-w-md font-sans text-sm text-on-primary/85">
-            Campus batch delivery — food, extras, and parcels to your hostel gate.
+            Campus batch delivery — food, extras, and parcels to your campus gate.
           </p>
         </div>
 

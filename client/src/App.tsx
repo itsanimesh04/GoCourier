@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import CatalogThemeSync from './components/CatalogThemeSync'
 import Home from './pages/Home'
 import Layout from './Layout'
 import ProductPage from './pages/ProductPage'
@@ -16,6 +17,7 @@ import ParcelRequestPage from './pages/ParcelRequestPage'
 const App = () => {
   return (
     <BrowserRouter>
+      <CatalogThemeSync />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

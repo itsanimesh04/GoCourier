@@ -9,11 +9,13 @@ import {
   getCampusById,
   getNextCutoffDate,
 } from '../utils/campusTime';
+import { useTimerAccent } from '../utils/timerAccent';
 
 const StickyCampusBatch = () => {
   const location = useLocation();
   const campusId = useAppSelector(selectSelectedCampusId);
   const campus = getCampusById(campusId);
+  const { textClass, bgClass, pingClass } = useTimerAccent();
   const [visible, setVisible] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -46,12 +48,12 @@ const StickyCampusBatch = () => {
   const locked = remaining <= 0;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[min(100vw-2rem,17rem)] overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl shadow-black/40">
+    <div className="w-full overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl shadow-black/40">
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-50" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-50 ${pingClass}`} />
+            <span className={`relative inline-flex h-2 w-2 rounded-full ${bgClass}`} />
           </span>
           <p className="truncate font-display text-xs font-semibold uppercase tracking-wide text-fg">
             Tonight&apos;s batch
@@ -74,7 +76,7 @@ const StickyCampusBatch = () => {
               <p className="font-sans text-[10px] uppercase tracking-wide text-muted">
                 Cutoff in
               </p>
-              <p className="font-display text-2xl font-bold tracking-tight text-primary">
+              <p className={`font-display text-2xl font-bold tracking-tight ${textClass}`}>
                 {locked ? 'CLOSED' : formatCountdown(remaining)}
               </p>
             </div>
@@ -87,11 +89,11 @@ const StickyCampusBatch = () => {
               </p>
             </div>
           </div>
-          <div className="mt-3 h-1 rounded-full bg-primary" />
+          <div className={`mt-3 h-1 rounded-full ${bgClass}`} />
         </div>
       ) : (
         <div className="flex items-center justify-between px-3 py-2">
-          <p className="font-display text-lg font-bold text-primary">
+          <p className={`font-display text-lg font-bold ${textClass}`}>
             {locked ? 'CLOSED' : formatCountdown(remaining)}
           </p>
           <p className="font-sans text-[10px] text-muted">

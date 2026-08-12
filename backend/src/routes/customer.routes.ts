@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from 'express';
+import { uploadController } from '../controllers/admin/upload.controller';
 import { cartController } from '../controllers/customer/cart.controller';
 import { customerCampusController } from '../controllers/customer/campus.controller';
 import { customerOrderController } from '../controllers/customer/order.controller';
@@ -6,6 +7,7 @@ import { customerRestaurantController } from '../controllers/customer/restaurant
 import { authenticate } from '../middleware/authenticate';
 import { authorizeRole } from '../middleware/authorizeRole';
 import { validateRequest } from '../middleware/validateRequest';
+import { uploadImage } from '../middleware/upload';
 import { idParamsSchema } from '../validators/common.validators';
 import {
   createCartSchema,
@@ -35,3 +37,4 @@ customerRouter.get('/orders', ...studentOnly, validateRequest(listOrdersSchema),
 customerRouter.get('/orders/:id', ...studentOnly, validateRequest(idParamsSchema), customerOrderController.detail);
 customerRouter.post('/orders', ...studentOnly, validateRequest(createOrderSchema), customerOrderController.create);
 customerRouter.post('/orders/:id/pay', ...studentOnly, validateRequest(idParamsSchema), customerOrderController.pay);
+customerRouter.post('/uploads', ...studentOnly, uploadImage.single('file'), uploadController.upload);

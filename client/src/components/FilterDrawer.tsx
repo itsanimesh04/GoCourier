@@ -29,14 +29,14 @@ function AccordionSection({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between py-5 text-left"
+        className="flex w-full items-center justify-between py-4 text-left"
       >
-        <span className="font-display text-xl font-semibold uppercase tracking-wide text-fg">{title}</span>
+        <span className="font-display text-base font-semibold uppercase tracking-wide text-fg">{title}</span>
         <FiChevronUp
-          className={cn('h-5 w-5 text-muted transition-transform', !open && 'rotate-180')}
+          className={cn('h-4 w-4 text-muted transition-transform', !open && 'rotate-180')}
         />
       </button>
-      {open && <div className="pb-5">{children}</div>}
+      {open && <div className="pb-4">{children}</div>}
     </div>
   );
 }
@@ -55,7 +55,7 @@ const RadioRow = ({
   <button
     type="button"
     onClick={onSelect}
-    className="flex w-full items-center gap-3 py-2 text-left"
+    className="flex w-full items-center gap-3 py-1.5 text-left"
   >
     <span
       className={cn(
@@ -67,7 +67,7 @@ const RadioRow = ({
     </span>
     <span
       className={cn(
-        'font-display text-base font-semibold uppercase tracking-wide text-fg',
+        'font-display text-sm font-semibold uppercase tracking-wide text-fg',
         struck && 'text-muted line-through'
       )}
     >
@@ -122,23 +122,23 @@ const FilterDrawer = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-60 flex justify-end">
       <button
         type="button"
         aria-label="Close filters"
         className="absolute inset-0 bg-black/60"
         onClick={() => dispatch(closeFilterDrawer())}
       />
-      <aside className="relative flex h-full w-full max-w-full flex-col bg-surface shadow-xl sm:max-w-md">
-        <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6 sm:py-5">
-          <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">Filter</h2>
+      <aside className="relative flex h-full w-full max-w-full flex-col bg-surface shadow-xl sm:max-w-lg">
+        <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
+          <h2 className="font-display text-xl font-bold uppercase tracking-wide text-fg sm:text-2xl">Filter</h2>
           <button
             type="button"
             aria-label="Close"
             onClick={() => dispatch(closeFilterDrawer())}
             className="rounded-xl p-1 text-fg hover:opacity-70"
           >
-            <FiX size={22} />
+            <FiX size={20} />
           </button>
         </div>
 
@@ -171,7 +171,7 @@ const FilterDrawer = ({
             open={sections.price}
             onToggle={() => toggleSection('price')}
           >
-            <div className="mb-4 px-1">
+            <div className="mb-3 px-1">
               <input
                 type="range"
                 min={0}
@@ -188,8 +188,8 @@ const FilterDrawer = ({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="mb-1 block font-sans text-sm uppercase text-muted">From</span>
-                <div className="flex items-center rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-lg font-semibold text-fg">
+                <span className="mb-1 block font-sans text-xs uppercase text-muted">From</span>
+                <div className="flex items-center rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-base font-semibold text-fg">
                   <span className="mr-1 text-muted">₹</span>
                   <input
                     type="number"
@@ -207,8 +207,8 @@ const FilterDrawer = ({
                 </div>
               </label>
               <label className="block">
-                <span className="mb-1 block font-sans text-sm uppercase text-muted">To</span>
-                <div className="flex items-center rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-lg font-semibold text-fg">
+                <span className="mb-1 block font-sans text-xs uppercase text-muted">To</span>
+                <div className="flex items-center rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-base font-semibold text-fg">
                   <span className="mr-1 text-muted">₹</span>
                   <input
                     type="number"
@@ -295,7 +295,7 @@ const FilterDrawer = ({
                   priceTo: maxPrice,
                 })
               }
-              className="flex-1 rounded-xl border border-border py-3 font-display text-xl font-semibold uppercase tracking-wide text-fg hover:bg-surface-2"
+              className="flex-1 rounded-xl border border-border py-2.5 font-display text-base font-semibold uppercase tracking-wide text-fg hover:bg-surface-2"
             >
               Reset
             </button>
@@ -305,7 +305,7 @@ const FilterDrawer = ({
                 onApply(draft);
                 dispatch(closeFilterDrawer());
               }}
-              className="flex-2 rounded-xl bg-primary py-3 font-display text-xl font-semibold uppercase tracking-wide text-on-primary hover:opacity-90"
+              className="flex-2 rounded-xl bg-primary py-2.5 font-display text-base font-semibold uppercase tracking-wide text-on-primary hover:opacity-90"
             >
               Apply
             </button>

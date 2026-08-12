@@ -12,9 +12,10 @@ interface InfiniteTextBannerProps {
 
 export const InfiniteTextBanner: React.FC<InfiniteTextBannerProps> = ({
   items = [
-    "Order before cutoff — hostel drop tonight",
+    "Order before cutoff time for hostel drop tonight",
     "Campus dinners, delivered on time",
     "Student riders. Fair fees.",
+    "We don't deliver inside the campus",
   ],
   separator = "•",
   bgColor = "bg-surface",

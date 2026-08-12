@@ -1,4 +1,4 @@
-import { BiHeart, BiSolidHeart } from 'react-icons/bi';
+import { BiHeart, BiSolidHeart, BiStar } from 'react-icons/bi';
 import { FiMinus, FiPlus } from 'react-icons/fi';
 import { HiOutlineBuildingStorefront } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
@@ -60,7 +60,7 @@ const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
         className="flex w-full flex-1 flex-col text-left"
         onClick={() => navigate(`/food/foods/${menuItem.id}`)}
       >
-        <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-2">
+        <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-surface-2">
           <img
             src={menuItem.imageUrl}
             alt={menuItem.name}
@@ -87,6 +87,11 @@ const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
           <h3 className="line-clamp-2 font-display text-sm font-semibold leading-snug text-fg sm:text-base">
             {menuItem.name}
           </h3>
+
+          <div className="mt-1 flex items-center gap-1 font-sans text-[11px] text-muted">
+            <BiStar className="fill-yellow-500 text-yellow-500" size={11} />
+            <span>{menuItem.rating.toFixed(1)}</span>
+          </div>
 
           {restaurant && (
             <p className="mt-1 flex min-w-0 items-center gap-1 font-sans text-[11px] text-muted sm:text-xs">

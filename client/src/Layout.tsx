@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom"
+import FixedBottomRightStack from "./components/FixedBottomRightStack"
 import Footer from "./components/Footer"
 import Header from "./components/Header"
-import StickyCampusBatch from "./components/StickyCampusBatch"
 
 const Layout = () => {
   return (
@@ -9,7 +9,7 @@ const Layout = () => {
       <Header />
       <Outlet />
       <Footer />
-      <StickyCampusBatch />
+      <FixedBottomRightStack />
     </div>
   )
 }

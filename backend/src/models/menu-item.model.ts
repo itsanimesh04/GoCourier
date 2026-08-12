@@ -8,6 +8,7 @@ export interface IMenuItem {
   description: string;
   price: string;
   original_price: string | null;
+  rating: number;
   is_veg: boolean | null;
   image_url: string | null;
   image_key: string | null;
@@ -25,6 +26,7 @@ const menuItemSchema = new Schema<IMenuItem>({
   description: { type: String, default: '' },
   price: { type: String, required: true },
   original_price: { type: String, default: null },
+  rating: { type: Number, default: 0, min: 0, max: 5 },
   is_veg: { type: Boolean, default: null },
   image_url: { type: String, default: null },
   image_key: { type: String, default: null },

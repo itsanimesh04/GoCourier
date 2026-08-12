@@ -46,7 +46,7 @@ const ResturantPage = () => {
           Restaurant not found
         </h1>
         <Link
-          to="/food"
+          to="/"
           className="mt-4 inline-block font-sans text-sm font-semibold text-primary underline"
         >
           Browse food

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { FiChevronRight } from 'react-icons/fi';
 import { useSearchParams } from 'react-router-dom';
 import CatalogModeTabs from '../components/CatalogModeTabs';
 import ExtraCard from '../components/ExtraCard';
@@ -17,6 +18,7 @@ const ExtrasListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const query = searchParams.get('q') ?? '';
+  const storeParam = searchParams.get('store');
   const categoryParam = searchParams.get('category');
   const [category, setCategory] = useState<ExtrasCategory>(
     extrasCategories.includes(categoryParam as ExtrasCategory)
@@ -40,6 +42,7 @@ const ExtrasListingPage = () => {
   const products = useMemo(() => {
     const q = query.trim().toLowerCase();
     return extrasProducts.filter((p) => {
+      if (storeParam && p.storeId !== storeParam) return false;
       if (category !== 'All' && p.category !== category) return false;
       if (!q) return true;
       const store = extrasStores.find((s) => s.id === p.storeId);
@@ -49,7 +52,14 @@ const ExtrasListingPage = () => {
         (store?.name.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [category, query]);
+  }, [category, query, storeParam]);
+
+  const selectStore = (storeId: string | null) => {
+    const params = new URLSearchParams(searchParams);
+    if (storeId) params.set('store', storeId);
+    else params.delete('store');
+    setSearchParams(params, { replace: true });
+  };
 
   const selectCategory = (next: ExtrasCategory) => {
     setCategory(next);
@@ -102,22 +112,50 @@ const ExtrasListingPage = () => {
           Stores
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {extrasStores.map((store) => (
-            <div
-              key={store.id}
-              className="rounded-2xl border border-border bg-surface p-4"
-            >
-              <div
-                className="mb-3 h-1.5 w-10 rounded-full"
-                style={{ backgroundColor: store.accent }}
-              />
-              <p className="font-display text-base font-semibold text-fg">
-                {store.name}
-              </p>
-              <p className="mt-1 font-sans text-xs text-muted">{store.category}</p>
-            </div>
-          ))}
+          {extrasStores.map((store) => {
+            const active = storeParam === store.id;
+            return (
+              <button
+                key={store.id}
+                type="button"
+                onClick={() => selectStore(active ? null : store.id)}
+                className={cn(
+                  'group flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-4 sm:py-3.5',
+                  active
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border bg-surface hover:border-primary hover:bg-surface-2'
+                )}
+              >
+                <span className="min-w-0">
+                  <span
+                    className="mb-2 block h-1.5 w-10 rounded-full"
+                    style={{ backgroundColor: store.accent }}
+                  />
+                  <span className="block font-display text-sm font-semibold text-fg sm:text-base">
+                    {store.name}
+                  </span>
+                  <span className="mt-1 block font-sans text-xs text-muted">{store.category}</span>
+                </span>
+                <FiChevronRight
+                  className={cn(
+                    'h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5',
+                    active ? 'text-primary' : 'text-muted group-hover:text-primary'
+                  )}
+                  aria-hidden
+                />
+              </button>
+            );
+          })}
         </div>
+        {storeParam && (
+          <button
+            type="button"
+            onClick={() => selectStore(null)}
+            className="mt-3 font-sans text-xs font-semibold text-primary hover:opacity-80"
+          >
+            Clear store filter
+          </button>
+        )}
       </section>
 
       <section>

@@ -10,6 +10,7 @@ function mapRestaurant(doc: InstanceType<typeof Restaurant>) {
     name: doc.name,
     cuisine: doc.cuisine,
     rating: doc.rating,
+    address: doc.address,
     distance_km: doc.distance_km,
     eta_minutes: doc.eta_minutes,
     tags: doc.tags,
@@ -53,6 +54,7 @@ export class RestaurantService {
     name: string;
     cuisine?: string;
     rating?: number;
+    address?: string;
     distance_km?: number;
     eta_minutes?: number;
     tags?: string[];
@@ -72,6 +74,7 @@ export class RestaurantService {
       name: data.name,
       cuisine: data.cuisine ?? '',
       rating: data.rating ?? 0,
+      address: data.address ?? '',
       distance_km: data.distance_km ?? 0,
       eta_minutes: data.eta_minutes ?? 0,
       tags: data.tags ?? [],
@@ -95,6 +98,7 @@ export class RestaurantService {
       name: string;
       cuisine: string;
       rating: number;
+      address: string;
       distance_km: number;
       eta_minutes: number;
       tags: string[];

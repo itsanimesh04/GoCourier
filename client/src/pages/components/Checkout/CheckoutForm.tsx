@@ -2,32 +2,27 @@ import { campuses } from '../../../data/mockData';
 
 interface CheckoutFormProps {
   campusId: string;
-  dropPoint: string;
   paymentMethod: string;
   onCampusChange: (id: string) => void;
-  onDropPointChange: (value: string) => void;
   onPaymentChange: (value: string) => void;
 }
 
 const paymentOptions = [
   { id: 'upi', label: 'UPI' },
   { id: 'card', label: 'Debit / Credit Card' },
-  { id: 'cod', label: 'Cash on Delivery' },
 ];
 
 const CheckoutForm = ({
   campusId,
-  dropPoint,
   paymentMethod,
   onCampusChange,
-  onDropPointChange,
   onPaymentChange,
 }: CheckoutFormProps) => {
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="mb-4 font-display text-lg font-bold uppercase text-fg sm:text-xl">Delivery</h2>
-        <label className="mb-4 block">
+        <label className="block">
           <span className="mb-1 block font-sans text-sm uppercase text-muted">Campus</span>
           <select
             value={campusId}
@@ -41,18 +36,9 @@ const CheckoutForm = ({
             ))}
           </select>
         </label>
-        <label className="block">
-          <span className="mb-1 block font-sans text-sm uppercase text-muted">
-            Drop point
-          </span>
-          <input
-            type="text"
-            value={dropPoint}
-            onChange={(e) => onDropPointChange(e.target.value)}
-            placeholder="Hostel Block A, Room 204"
-            className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-sans text-fg outline-none placeholder:text-muted focus:border-primary"
-          />
-        </label>
+        <p className="mt-3 font-sans text-xs text-muted">
+          Orders are delivered with tonight&apos;s hostel batch at your campus gate.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">

@@ -26,7 +26,7 @@ const CartPage = () => {
           Add some food or campus extras to get started.
         </p>
         <Link
-          to="/food"
+          to="/"
           className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 font-sans text-sm font-semibold uppercase text-on-primary hover:opacity-90"
         >
           Browse Food

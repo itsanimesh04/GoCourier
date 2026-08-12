@@ -39,6 +39,7 @@ const Restaurants = () => {
     name: "",
     cuisine: "",
     rating: 4.2,
+    address: "",
     distance_km: 1,
     eta_minutes: 30,
     tags: "",
@@ -72,6 +73,7 @@ const Restaurants = () => {
       name: "",
       cuisine: "",
       rating: 4.2,
+      address: "",
       distance_km: 1,
       eta_minutes: 30,
       tags: "",
@@ -93,6 +95,7 @@ const Restaurants = () => {
       name: r.name,
       cuisine: r.cuisine,
       rating: r.rating,
+      address: r.address ?? "",
       distance_km: r.distance_km,
       eta_minutes: r.eta_minutes,
       tags: r.tags?.join(", ") ?? "",
@@ -112,6 +115,9 @@ const Restaurants = () => {
     try {
       const payload = {
         ...form,
+        rating: Number(form.rating) || 0,
+        distance_km: Number(form.distance_km) || 0,
+        eta_minutes: Number(form.eta_minutes) || 0,
         tags: form.tags
           .split(",")
           .map((t) => t.trim())
@@ -242,6 +248,8 @@ const Restaurants = () => {
             [
               ["name", "Name"],
               ["cuisine", "Cuisine"],
+              ["address", "Address"],
+              ["rating", "Rating (0–5)"],
               ["tags", "Tags (comma separated)"],
               ["open_time", "Open time"],
               ["close_time", "Close time"],

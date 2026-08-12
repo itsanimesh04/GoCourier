@@ -7,10 +7,12 @@ import {
   getCampusById,
   getNextCutoffDate,
 } from '../utils/campusTime';
+import { useTimerAccent } from '../utils/timerAccent';
 
 const CampusBatchCard = () => {
   const campusId = useAppSelector(selectSelectedCampusId);
   const campus = getCampusById(campusId);
+  const { textClass, bgClass, pingClass } = useTimerAccent();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -27,8 +29,8 @@ const CampusBatchCard = () => {
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${pingClass}`} />
+            <span className={`relative inline-flex h-2 w-2 rounded-full ${bgClass}`} />
           </span>
           <h3 className="font-display text-xs font-semibold uppercase tracking-wide text-fg sm:text-sm">
             Tonight&apos;s campus batch
@@ -44,7 +46,7 @@ const CampusBatchCard = () => {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="font-sans text-[11px] text-muted">Order cutoff in</p>
-          <p className="mt-0.5 font-display text-2xl font-bold tracking-tight text-primary sm:text-3xl">
+          <p className={`mt-0.5 font-display text-2xl font-bold tracking-tight sm:text-3xl ${textClass}`}>
             {locked ? 'CLOSED' : formatCountdown(remaining)}
           </p>
         </div>
@@ -57,7 +59,7 @@ const CampusBatchCard = () => {
         </div>
       </div>
 
-      <div className="mt-3.5 h-1 rounded-full bg-primary" />
+      <div className={`mt-3.5 h-1 rounded-full ${bgClass}`} />
     </div>
   );
 };

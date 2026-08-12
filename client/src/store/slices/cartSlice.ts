@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { restaurants, seedOrders } from '../../data/mockData';
+import { restaurants, seedOrders, campuses } from '../../data/mockData';
 import { lineUnitTotal } from '../../data/selectors';
 import type { CartLineItem, Order, SelectedAddon } from '../../utils/types';
 
@@ -41,7 +41,6 @@ function makeFoodCartKey(menuItemId: string, addons: SelectedAddon[]): string {
 
 export interface PlaceOrderPayload {
   campusId: string;
-  dropPoint: string;
   paymentMethod: string;
 }
 
@@ -191,13 +190,14 @@ const cartSlice = createSlice({
 
       const id = `order-${Date.now()}`;
       const displayId = `GC-${Math.floor(10000 + Math.random() * 90000)}`;
+      const campus = campuses.find((c) => c.id === action.payload.campusId);
       const order: Order = {
         id,
         displayId,
         restaurantId: restaurant?.id ?? 'mixed',
         restaurantName: restaurant?.name ?? 'Multiple vendors',
         campusId: action.payload.campusId,
-        dropPoint: action.payload.dropPoint,
+        dropPoint: campus ? `${campus.name} — hostel batch drop` : 'Hostel batch drop',
         orderStatus: 'placed',
         paymentStatus: 'success',
         subtotal,

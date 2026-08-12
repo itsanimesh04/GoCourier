@@ -17,6 +17,7 @@ export const restaurants: Restaurant[] = [
     name: 'The Rising Cafe',
     cuisine: 'North Indian, Chinese',
     rating: 4.2,
+    address: 'Main Gate Road, Nims Campus, Jaipur',
     distanceKm: 2.1,
     etaMinutes: 25,
     tags: ['Hot'],
@@ -29,6 +30,7 @@ export const restaurants: Restaurant[] = [
     name: "La Pino'z Pizza",
     cuisine: 'Pizza, Italian, Garlic Bread',
     rating: 4.4,
+    address: 'Student Plaza, Block B, Nims University',
     distanceKm: 1.5,
     etaMinutes: 20,
     tags: ['Hot'],
@@ -41,6 +43,7 @@ export const restaurants: Restaurant[] = [
     name: 'Behrouz Biryani',
     cuisine: 'Biryani, Mughlai, Kebab',
     rating: 4.6,
+    address: 'Food Court, Amity University, Noida',
     distanceKm: 2.8,
     etaMinutes: 25,
     tags: ['Hot'],
@@ -53,6 +56,7 @@ export const restaurants: Restaurant[] = [
     name: 'Burger Singh',
     cuisine: 'Burger, Fast Food, Fries',
     rating: 4.3,
+    address: 'Sector 125, Amity Campus, Noida',
     distanceKm: 1.8,
     etaMinutes: 18,
     tags: ['Hot'],
@@ -67,6 +71,7 @@ export const restaurants: Restaurant[] = [
     name: 'Wow Momo',
     cuisine: 'Momo, Tibetan, Chinese',
     rating: 4.4,
+    address: 'MIT Food Street, Manipal',
     distanceKm: 1.9,
     etaMinutes: 20,
     tags: [],
@@ -79,6 +84,7 @@ export const restaurants: Restaurant[] = [
     name: 'Theobroma',
     cuisine: 'Cakes, Desserts, Bakery',
     rating: 4.7,
+    address: 'Tiger Circle, Manipal',
     distanceKm: 2.2,
     etaMinutes: 22,
     tags: ['Hot'],
@@ -93,6 +99,7 @@ export const restaurants: Restaurant[] = [
     name: 'Faasos Rolls & Wraps',
     cuisine: 'Rolls, Wraps, Fast Food',
     rating: 4.2,
+    address: 'Hostel Lane 3, Manipal',
     distanceKm: 2.0,
     etaMinutes: 20,
     tags: [],
@@ -105,6 +112,7 @@ export const restaurants: Restaurant[] = [
     name: 'Flavor Town',
     cuisine: 'Snacks, Fast Food',
     rating: 4.5,
+    address: 'KC Road, Manipal',
     distanceKm: 1.6,
     etaMinutes: 18,
     tags: [],
@@ -119,6 +127,7 @@ export const restaurants: Restaurant[] = [
     name: 'Guru Kripa Hotel',
     cuisine: 'South Indian',
     rating: 4.1,
+    address: 'End Point Road, Manipal',
     distanceKm: 1.8,
     etaMinutes: 22,
     tags: [],
@@ -131,6 +140,7 @@ export const restaurants: Restaurant[] = [
     name: 'SpiceCraft',
     cuisine: 'Biryani, Mughlai',
     rating: 4.3,
+    address: 'MIT Main Road, Manipal',
     distanceKm: 2.4,
     etaMinutes: 28,
     tags: ['Hot'],
@@ -139,7 +149,7 @@ export const restaurants: Restaurant[] = [
   }
 ];
 
-export const menuItems: MenuItem[] = [
+const menuItemsBase = [
   {
     id: 'paneer-pizza',
     restaurantId: 'rising-cafe',
@@ -524,6 +534,11 @@ export const menuItems: MenuItem[] = [
     category: 'Beverages'
   }
 ];
+
+export const menuItems: MenuItem[] = menuItemsBase.map((item, i) => ({
+  ...item,
+  rating: Math.round((3.6 + (i % 13) * 0.1) * 10) / 10,
+}));
 
 export const currentUser: User = {
   id: 'user-1',

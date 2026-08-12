@@ -36,7 +36,6 @@ const CheckoutPage = () => {
     setCampusId(id);
     dispatch(setSelectedCampusId(id));
   };
-  const [dropPoint, setDropPoint] = useState('Hostel Block A, Room 204');
   const [paymentMethod, setPaymentMethod] = useState('upi');
 
   const placed = lastId ? orders.find((o) => o.id === lastId) : null;
@@ -86,10 +85,8 @@ const CheckoutPage = () => {
         <div className="lg:col-span-2">
           <CheckoutForm
             campusId={campusId}
-            dropPoint={dropPoint}
             paymentMethod={paymentMethod}
             onCampusChange={handleCampusChange}
-            onDropPointChange={setDropPoint}
             onPaymentChange={setPaymentMethod}
           />
         </div>
@@ -98,12 +95,10 @@ const CheckoutPage = () => {
             items={items}
             subtotal={subtotal}
             fee={fee}
-            disabled={!dropPoint.trim()}
             onPlaceOrder={() =>
               dispatch(
                 placeOrder({
                   campusId,
-                  dropPoint: dropPoint.trim(),
                   paymentMethod,
                 })
               )

@@ -44,6 +44,7 @@ const MenuItems = () => {
     description: "",
     price: "0.00",
     original_price: "",
+    rating: 4.2,
     is_veg: true,
     is_available: true,
     sort_order: 0,
@@ -78,6 +79,7 @@ const MenuItems = () => {
       description: "",
       price: "0.00",
       original_price: "",
+      rating: 4.2,
       is_veg: true,
       is_available: true,
       sort_order: 0,
@@ -96,6 +98,7 @@ const MenuItems = () => {
       description: item.description,
       price: item.price,
       original_price: item.original_price ?? "",
+      rating: item.rating ?? 4.2,
       is_veg: item.is_veg ?? true,
       is_available: item.is_available,
       sort_order: item.sort_order,
@@ -113,6 +116,7 @@ const MenuItems = () => {
         description: form.description,
         price: form.price,
         original_price: form.original_price || null,
+        rating: Number(form.rating) || 0,
         is_veg: form.is_veg,
         is_available: form.is_available,
         category_id: form.category_id === "none" ? null : form.category_id,
@@ -292,6 +296,17 @@ const MenuItems = () => {
             <Input
               value={form.original_price}
               onChange={(e) => setForm((f) => ({ ...f, original_price: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Rating (0–5)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={5}
+              step={0.1}
+              value={form.rating}
+              onChange={(e) => setForm((f) => ({ ...f, rating: Number(e.target.value) }))}
             />
           </div>
           <label className="flex items-center gap-2 text-sm">

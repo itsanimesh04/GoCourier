@@ -6,6 +6,7 @@ export interface IRestaurant {
   name: string;
   cuisine: string;
   rating: number;
+  address: string;
   distance_km: number;
   eta_minutes: number;
   tags: string[];
@@ -27,6 +28,7 @@ const restaurantSchema = new Schema<IRestaurant>({
   name: { type: String, required: true },
   cuisine: { type: String, default: '' },
   rating: { type: Number, default: 0 },
+  address: { type: String, default: '' },
   distance_km: { type: Number, default: 0 },
   eta_minutes: { type: Number, default: 0 },
   tags: { type: [String], default: [] },

@@ -13,6 +13,7 @@ function mapMenuItem(doc: InstanceType<typeof MenuItem>) {
     description: doc.description,
     price: doc.price,
     original_price: doc.original_price,
+    rating: doc.rating,
     is_veg: doc.is_veg,
     image_url: doc.image_url,
     image_key: doc.image_key,
@@ -58,6 +59,7 @@ export class MenuItemService {
       price: string;
       description?: string;
       original_price?: string | null;
+      rating?: number;
       is_veg?: boolean | null;
       is_available?: boolean;
       category_id?: string | null;
@@ -74,6 +76,7 @@ export class MenuItemService {
       price: data.price,
       description: data.description ?? '',
       original_price: data.original_price ?? null,
+      rating: data.rating ?? 0,
       is_veg: data.is_veg ?? null,
       is_available: data.is_available ?? true,
       category_id: data.category_id ?? null,
@@ -92,6 +95,7 @@ export class MenuItemService {
       price: string;
       description: string;
       original_price: string | null;
+      rating: number;
       is_veg: boolean | null;
       is_available: boolean;
       category_id: string | null;

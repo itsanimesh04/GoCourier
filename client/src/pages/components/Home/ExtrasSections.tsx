@@ -1,7 +1,11 @@
+import { FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import ExtraCard from '../../../components/ExtraCard';
 import ExtrasServiceCards from '../../../components/ExtrasServiceCards';
 import { extrasProducts, extrasStores } from '../../../data/extrasCatalog';
+
+const storeButtonClass =
+  'group flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-3 text-left transition-colors hover:border-primary hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-4 sm:py-3.5';
 
 const ExtrasSections = () => {
   const featured = extrasProducts.filter((p) => p.featured && p.available);
@@ -31,17 +35,25 @@ const ExtrasSections = () => {
           {extrasStores.map((store) => (
             <Link
               key={store.id}
-              to="/extras"
-              className="rounded-xl border border-border bg-surface p-3 text-center transition-colors hover:border-primary"
+              to={`/extras?store=${store.id}`}
+              className={storeButtonClass}
             >
-              <div
-                className="mx-auto mb-2 h-1 w-8 rounded-full"
-                style={{ backgroundColor: store.accent }}
+              <span className="min-w-0">
+                <span
+                  className="mb-2 block h-1 w-8 rounded-full"
+                  style={{ backgroundColor: store.accent }}
+                />
+                <span className="block font-display text-sm font-semibold text-fg">
+                  {store.name}
+                </span>
+                <span className="mt-0.5 block font-sans text-[11px] text-muted">
+                  {store.category}
+                </span>
+              </span>
+              <FiChevronRight
+                className="h-4 w-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                aria-hidden
               />
-              <p className="font-display text-sm font-semibold text-fg">
-                {store.name}
-              </p>
-              <p className="mt-0.5 font-sans text-[11px] text-muted">{store.category}</p>
             </Link>
           ))}
         </div>

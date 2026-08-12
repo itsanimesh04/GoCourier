@@ -16,6 +16,7 @@ export interface Restaurant {
   name: string;
   cuisine: string;
   rating: number;
+  address: string;
   distance_km: number;
   eta_minutes: number;
   tags: string[];
@@ -36,6 +37,7 @@ export interface MenuItem {
   description: string;
   price: string;
   original_price: string | null;
+  rating: number;
   is_veg: boolean | null;
   image_url: string | null;
   image_key: string | null;
