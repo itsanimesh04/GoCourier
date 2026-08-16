@@ -19,8 +19,6 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().min(16).optional().default('cookie-secret-dev-min-16-chars'),
   COOKIE_SECURE: z.coerce.boolean().optional().default(false),
   COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).optional().default('lax'),
-  ADMIN_ORIGIN: z.string().url().optional().default('http://localhost:5174'),
-  CLIENT_ORIGIN: z.string().url().optional().default('http://localhost:5173'),
   AWS_ACCESS_KEY_ID: z.string().min(1).optional(),
   AWS_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   AWS_REGION: z.string().min(1).default('ap-south-1'),
