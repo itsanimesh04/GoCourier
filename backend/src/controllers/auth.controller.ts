@@ -18,6 +18,11 @@ export const authController = {
     return sendSuccess(res, result);
   }),
 
+  me: asyncHandler(async (req, res) => {
+    const result = await authService.identity(req.user!.id);
+    return sendSuccess(res, result);
+  }),
+
   requestOtp: asyncHandler(async (req, res) => {
     const result = await authService.requestOtp(req.body.phone);
     return sendSuccess(res, result, 201);

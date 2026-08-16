@@ -5,10 +5,10 @@ import FilterDrawer from '../components/FilterDrawer';
 import {
   filterMenuItems,
   getMenuByRestaurant,
-  getRestaurantById,
   groupByCategory,
 } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
+import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { openFilterDrawer } from '../store/slices/uiSlice';
 import {
   selectIsRestaurantWishlisted,
@@ -20,15 +20,17 @@ import RestaurantMenu from './components/Resturant/RestaurantMenu';
 
 const ResturantPage = () => {
   const { id = '' } = useParams();
-  const restaurant = getRestaurantById(id);
+  const restaurants = useAppSelector(selectRestaurants);
+  const menuItems = useAppSelector(selectMenuItems);
+  const restaurant = restaurants.find((r) => r.id === id);
   const dispatch = useAppDispatch();
   const wishlisted = useAppSelector(selectIsRestaurantWishlisted(id));
   const [filters, setFilters] = useState<FoodFilters>(DEFAULT_FOOD_FILTERS);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const allItems = useMemo(
-    () => (restaurant ? getMenuByRestaurant(restaurant.id) : []),
-    [restaurant]
+    () => (restaurant ? getMenuByRestaurant(menuItems, restaurant.id) : []),
+    [restaurant, menuItems]
   );
 
   const filtered = useMemo(

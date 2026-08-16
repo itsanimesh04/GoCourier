@@ -1,5 +1,6 @@
 import { FiMoon, FiSun } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { selectMenuItems } from '../store/slices/catalogSlice';
 import { getAllCategories } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
@@ -18,7 +19,8 @@ const MobileNav = ({ open, onClose }: MobileNavProps) => {
   const dispatch = useAppDispatch();
   const theme = useAppSelector(selectTheme);
   if (!open) return null;
-  const categories = getAllCategories().slice(0, 6);
+  const menuItems = useAppSelector(selectMenuItems);
+  const categories = getAllCategories(menuItems).slice(0, 6);
 
   return (
     <div className="border-t border-on-primary/20 bg-primary lg:hidden">

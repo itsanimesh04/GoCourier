@@ -1,11 +1,14 @@
 import { extrasImageUrl } from '../../../data/extrasImages';
-import { extrasProducts } from '../../../data/extrasCatalog';
-import { useAppDispatch } from '../../../store';
+import { useAppDispatch, useAppSelector } from '../../../store';
 import { addExtra } from '../../../store/slices/cartSlice';
+import { selectExtras } from '../../../store/slices/catalogSlice';
 
 const CartExtrasSection = () => {
   const dispatch = useAppDispatch();
-  const available = extrasProducts.filter((p) => p.available);
+  const extras = useAppSelector(selectExtras);
+  const available = extras.filter((p) => p.available);
+
+  if (available.length === 0) return null;
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-4">
@@ -17,17 +20,13 @@ const CartExtrasSection = () => {
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {available.map((product) => {
-          const imageUrl = extrasImageUrl(product.imageIndex);
+          const imageUrl = product.imageUrl ?? extrasImageUrl(0);
           return (
             <div
               key={product.id}
               className="flex items-center gap-3 rounded-xl border border-border p-2 hover:border-muted"
             >
-              <img
-                src={imageUrl}
-                alt={product.name}
-                className="h-14 w-14 rounded-lg object-cover"
-              />
+              <img src={imageUrl} alt={product.name} className="h-14 w-14 rounded-lg object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-display text-sm font-semibold uppercase text-fg">
                   {product.name}
@@ -39,7 +38,7 @@ const CartExtrasSection = () => {
               <button
                 type="button"
                 onClick={() =>
-                  dispatch(
+                  void dispatch(
                     addExtra({
                       extrasProductId: product.id,
                       name: product.name,

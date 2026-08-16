@@ -2,8 +2,8 @@ import { BiHeart, BiSolidHeart, BiStar } from 'react-icons/bi';
 import { FiMinus, FiPlus } from 'react-icons/fi';
 import { HiOutlineBuildingStorefront } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
-import { getRestaurantById } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
+import { selectRestaurants } from '../store/slices/catalogSlice';
 import {
   addFoodItem,
   decrementFoodItem,
@@ -22,7 +22,8 @@ const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
   const dispatch = useAppDispatch();
   const wishlisted = useAppSelector(selectIsFoodWishlisted(menuItem.id));
   const cartQty = useAppSelector(selectMenuItemQty(menuItem.id));
-  const restaurant = getRestaurantById(menuItem.restaurantId);
+  const restaurants = useAppSelector(selectRestaurants);
+  const restaurant = restaurants.find((r) => r.id === menuItem.restaurantId);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();

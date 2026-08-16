@@ -5,6 +5,7 @@ import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import ImageUpload from "@/components/ImageUpload";
 import menuItemService from "@/services/admin/menuItem.service";
+import addonService, { type Addon } from "@/services/admin/addon.service";
 import restaurantService from "@/services/admin/restaurant.service";
 import categoryService from "@/services/admin/category.service";
 import type { Category, MenuItem, Restaurant } from "@/types/admin.types";
@@ -34,6 +35,7 @@ const MenuItems = () => {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [addons, setAddons] = useState<Addon[]>([]);
   const [restaurantFilter, setRestaurantFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<MenuItem | null>(null);
@@ -50,20 +52,23 @@ const MenuItems = () => {
     sort_order: 0,
     image_url: null as string | null,
     image_key: null as string | null,
+    addon_ids: [] as string[],
   });
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [m, r, c] = await Promise.all([
+    const [m, r, c, a] = await Promise.all([
       menuItemService.list(
         restaurantFilter !== "all" ? { restaurant_id: restaurantFilter } : undefined
       ),
       restaurantService.list(),
       categoryService.list(),
+      addonService.list(),
     ]);
     setItems(m.data.data);
     setRestaurants(r.data.data);
     setCategories(c.data.data);
+    setAddons(a.data.data);
   };
 
   useEffect(() => {
@@ -85,6 +90,7 @@ const MenuItems = () => {
       sort_order: 0,
       image_url: null,
       image_key: null,
+      addon_ids: [],
     });
     setOpen(true);
   };
@@ -104,6 +110,7 @@ const MenuItems = () => {
       sort_order: item.sort_order,
       image_url: item.image_url,
       image_key: item.image_key,
+      addon_ids: item.addon_ids ?? [],
     });
     setOpen(true);
   };
@@ -123,6 +130,7 @@ const MenuItems = () => {
         sort_order: Number(form.sort_order) || 0,
         image_url: form.image_url,
         image_key: form.image_key,
+        addon_ids: form.addon_ids,
       };
       if (editing) {
         await menuItemService.update(editing.id, {
@@ -325,6 +333,34 @@ const MenuItems = () => {
             />
             Available
           </label>
+          <div className="sm:col-span-2 space-y-2">
+            <Label>Add-ons</Label>
+            <div className="flex flex-wrap gap-2">
+              {addons.map((addon) => {
+                const checked = form.addon_ids.includes(addon.id);
+                return (
+                  <label key={addon.id} className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setForm((f) => ({
+                          ...f,
+                          addon_ids: checked
+                            ? f.addon_ids.filter((id) => id !== addon.id)
+                            : [...f.addon_ids, addon.id],
+                        }))
+                      }
+                    />
+                    {addon.name} (₹{addon.price})
+                  </label>
+                );
+              })}
+              {addons.length === 0 && (
+                <p className="text-xs text-muted-foreground">No add-ons yet. Create them via API or add later.</p>
+              )}
+            </div>
+          </div>
           <Button
             className="sm:col-span-2"
             onClick={() => void save()}

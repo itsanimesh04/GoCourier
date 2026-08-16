@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import CampusBatchCard from '../../../components/CampusBatchCard';
 import CatalogModeTabs from '../../../components/CatalogModeTabs';
 import HeroBannerRotator from '../../../components/HeroBannerRotator';
-import { extrasCategories } from '../../../data/extrasCatalog';
-import { foodCategories } from '../../../data/homepageData';
 import { useAppSelector } from '../../../store';
+import { selectExtras, selectFoodCategories } from '../../../store/slices/catalogSlice';
 import { selectCatalogMode } from '../../../store/slices/uiSlice';
 
 const extrasCategoryMeta: Record<string, string> = {
@@ -35,15 +34,17 @@ const Hero = () => {
     navigate(q ? `${base}?q=${encodeURIComponent(q)}` : base);
   };
 
+  const apiCategories = useAppSelector(selectFoodCategories);
+  const extras = useAppSelector(selectExtras);
+  const extrasCats = [...new Set(extras.map((item) => item.category).filter(Boolean))];
+
   const categories = isExtras
-    ? extrasCategories
-        .filter((c) => c !== 'All')
-        .map((name) => ({
-          id: name,
-          name,
-          imageUrl: extrasCategoryMeta[name] ?? extrasCategoryMeta.Stationery,
-        }))
-    : foodCategories;
+    ? extrasCats.map((name) => ({
+        id: name,
+        name,
+        imageUrl: extras.find((item) => item.category === name)?.imageUrl || extrasCategoryMeta[name] || extrasCategoryMeta.Stationery,
+      }))
+    : apiCategories;
 
   return (
     <section id="home-hero" className="w-full py-6 sm:py-8">

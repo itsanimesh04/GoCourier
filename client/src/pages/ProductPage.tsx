@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
-import { getAddonsForMenuItem } from '../data/foodAddons';
 import { getRelatedFoods } from '../data/relatedFoods';
-import { getMenuItemById, getRestaurantById, lineUnitTotal } from '../data/selectors';
+import { lineUnitTotal } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
+import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { addFoodItem } from '../store/slices/cartSlice';
 import {
   selectIsFoodWishlisted,
@@ -17,8 +17,10 @@ import ProductInfo from './components/product/ProductInfo';
 
 const ProductPage = () => {
   const { id = '' } = useParams();
-  const item = getMenuItemById(id);
-  const restaurant = item ? getRestaurantById(item.restaurantId) : undefined;
+  const menuItems = useAppSelector(selectMenuItems);
+  const restaurants = useAppSelector(selectRestaurants);
+  const item = menuItems.find((m) => m.id === id);
+  const restaurant = item ? restaurants.find((r) => r.id === item.restaurantId) : undefined;
   const dispatch = useAppDispatch();
   const wishlisted = useAppSelector(selectIsFoodWishlisted(id));
 
@@ -26,9 +28,12 @@ const ProductPage = () => {
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const [addedFlash, setAddedFlash] = useState(false);
 
-  const addons = useMemo(() => (item ? getAddonsForMenuItem(item.id) : []), [item]);
+  const addons = item?.addons ?? [];
   const unitTotal = item ? lineUnitTotal(item.price, selectedAddons) : 0;
-  const related = useMemo(() => (item ? getRelatedFoods(item, 8) : []), [item]);
+  const related = useMemo(
+    () => (item ? getRelatedFoods(item, menuItems) : []),
+    [item, menuItems]
+  );
 
   if (!item) {
     return (

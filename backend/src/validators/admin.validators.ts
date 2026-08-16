@@ -216,6 +216,31 @@ export const updateConfigSchema = z.object({
     .refine((v) => Object.keys(v).length > 0, { message: 'At least one field is required' })
 });
 
+const extraProductBody = z
+  .object({
+    campus_id: objectIdParam.nullable().optional(),
+    name: z.string().trim().min(1),
+    unit: z.string().optional(),
+    price: decimalString,
+    category: z.string().optional(),
+    store_name: z.string().optional(),
+    image_url: imageUrlField,
+    image_key: z.string().nullable().optional(),
+    available: z.boolean().optional(),
+    featured: z.boolean().optional(),
+    sort_order: z.number().int().optional()
+  })
+  .strict();
+
+export const createExtraProductSchema = z.object({ body: extraProductBody });
+export const updateExtraProductSchema = z.object({
+  params: z.object({ id: objectIdParam }),
+  body: extraProductBody.partial().refine((v) => Object.keys(v).length > 0, {
+    message: 'At least one field is required'
+  })
+});
+export const extraProductIdSchema = z.object({ params: z.object({ id: objectIdParam }) });
+
 export const deleteUploadSchema = z.object({
   body: z.object({ key: z.string().trim().min(1) }).strict()
 });

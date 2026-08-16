@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { banners } from '../data/homepageData';
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
+import { selectBanners } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
 
 const INTERVAL_MS = 4500;
@@ -9,14 +9,18 @@ const INTERVAL_MS = 4500;
 const HeroBannerRotator = () => {
   const [index, setIndex] = useState(0);
   const dispatch = useAppDispatch();
-  const banner = banners[index % banners.length];
+  const banners = useAppSelector(selectBanners);
+  const banner = banners[index % Math.max(banners.length, 1)];
 
   useEffect(() => {
+    if (banners.length === 0) return;
     const id = window.setInterval(() => {
       setIndex((i) => (i + 1) % banners.length);
     }, INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [banners.length]);
+
+  if (!banner) return null;
 
   const onCta = () => {
     if (banner.ctaHref.startsWith('/extras')) {

@@ -1,8 +1,16 @@
 import { LuBike } from 'react-icons/lu';
-import { appDownload } from '../../../data/homepageData';
+import { useAppSelector } from '../../../store';
+import { selectAppConfig } from '../../../store/slices/catalogSlice';
 import appDownloadImage from '../../../assets/images/phone-mockup.png';
 
 const AppDownloadSection = () => {
+  const config = useAppSelector(selectAppConfig);
+  const appDownload = {
+    title: config?.appDownloadTitle || 'Get the GoCourier app',
+    subtitle: config?.appDownloadSubtitle || '',
+    playStoreHref: config?.playStoreHref || '#',
+    appStoreHref: config?.appStoreHref || '#',
+  };
   return (
     <section className="relative w-full overflow-hidden bg-primary py-12 text-on-primary">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-on-primary/10 via-transparent to-transparent" />

@@ -1,16 +1,33 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthField from './components/Auth/AuthField';
 import AuthShell from './components/Auth/AuthShell';
+import { useAppDispatch, useAppSelector } from '../store';
+import { loginUser, selectAuthError } from '../store/slices/authSlice';
+import { fetchCart } from '../store/slices/cartSlice';
+import { loadCatalog } from '../store/slices/catalogSlice';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+  const error = useAppSelector(selectAuthError);
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const from = (location.state as { from?: string } | null)?.from ?? '/';
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/profile');
+    setSubmitting(true);
+    const result = await dispatch(loginUser({ identifier, password }));
+    setSubmitting(false);
+    if (loginUser.fulfilled.match(result)) {
+      const campusId = result.payload.campus_id ?? undefined;
+      await dispatch(loadCatalog(campusId));
+      await dispatch(fetchCart());
+      navigate(from, { replace: true });
+    }
   };
 
   return (
@@ -29,12 +46,12 @@ const LoginPage = () => {
       <form onSubmit={submit} className="space-y-4">
         <AuthField
           id="login-email"
-          label="Email"
-          type="email"
-          value={email}
-          onChange={setEmail}
+          label="Email or phone"
+          type="text"
+          value={identifier}
+          onChange={setIdentifier}
           placeholder="you@campus.edu"
-          autoComplete="email"
+          autoComplete="username"
         />
         <AuthField
           id="login-password"
@@ -45,11 +62,13 @@ const LoginPage = () => {
           placeholder="••••••••"
           autoComplete="current-password"
         />
+        {error && <p className="font-sans text-sm text-red-400">{error}</p>}
         <button
           type="submit"
-          className="mt-2 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase tracking-wide text-on-primary transition-opacity hover:opacity-90"
+          disabled={submitting}
+          className="mt-2 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase tracking-wide text-on-primary transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          Login
+          {submitting ? 'Logging in…' : 'Login'}
         </button>
       </form>
     </AuthShell>

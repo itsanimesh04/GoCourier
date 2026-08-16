@@ -9,6 +9,7 @@ export const customerCampusService = {
       id: doc._id.toString(),
       name: doc.name,
       city: doc.city,
+      state: doc.state,
       cutoff_time: doc.cutoff_time,
       delivery_time: doc.delivery_time,
       is_active: doc.is_active,

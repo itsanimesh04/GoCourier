@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { FiChevronUp, FiX } from 'react-icons/fi';
+import { selectFoodCategories, selectMenuItems } from '../store/slices/catalogSlice';
 import { getAllCategories } from '../data/selectors';
 import { closeFilterDrawer, selectFilterDrawerOpen } from '../store/slices/uiSlice';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -92,7 +93,10 @@ const FilterDrawer = ({
     category: true,
     rating: true,
   });
-  const categories = getAllCategories();
+  const menuItems = useAppSelector(selectMenuItems);
+  const foodCategories = useAppSelector(selectFoodCategories);
+  const categories =
+    foodCategories.length > 0 ? foodCategories.map((c) => c.name) : getAllCategories(menuItems);
 
   useEffect(() => {
     if (open) setDraft(value);

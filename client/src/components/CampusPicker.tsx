@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiChevronDown, FiMapPin } from 'react-icons/fi';
-import { campuses } from '../data/mockData';
 import { useAppDispatch, useAppSelector } from '../store';
+import { selectAuthUser, setUserCampus } from '../store/slices/authSlice';
+import { selectCampuses } from '../store/slices/catalogSlice';
 import {
   selectSelectedCampusId,
   setSelectedCampusId,
@@ -16,8 +17,10 @@ interface CampusPickerProps {
 
 const CampusPicker = ({ variant = 'header', className }: CampusPickerProps) => {
   const dispatch = useAppDispatch();
+  const campuses = useAppSelector(selectCampuses);
   const campusId = useAppSelector(selectSelectedCampusId);
-  const campus = getCampusById(campusId);
+  const user = useAppSelector(selectAuthUser);
+  const campus = getCampusById(campuses, campusId);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +32,7 @@ const CampusPicker = ({ variant = 'header', className }: CampusPickerProps) => {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const shortName = campus.name.replace(/\s+University$/i, '');
+  const shortName = campus?.name.replace(/\s+University$/i, '') ?? 'Campus';
 
   return (
     <div ref={rootRef} className={cn('relative', className)}>
@@ -72,6 +75,7 @@ const CampusPicker = ({ variant = 'header', className }: CampusPickerProps) => {
                   aria-selected={active}
                   onClick={() => {
                     dispatch(setSelectedCampusId(c.id));
+                    if (user) void dispatch(setUserCampus(c.id));
                     setOpen(false);
                   }}
                   className={cn(
@@ -83,7 +87,7 @@ const CampusPicker = ({ variant = 'header', className }: CampusPickerProps) => {
                 >
                   <span className="text-sm font-medium">{c.name}</span>
                   <span className="text-xs text-muted">
-                    {c.city}, {c.state}
+                    {c.city}{c.state ? `, ${c.state}` : ''}
                   </span>
                 </button>
               </li>

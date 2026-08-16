@@ -50,6 +50,8 @@ interface OrderDetail {
     quantity: number;
     unit_price: string;
     item_status: string;
+    item_kind?: string;
+    note?: string | null;
   }[];
 }
 
@@ -281,7 +283,15 @@ const Orders = () => {
                   <TableBody>
                     {(detail.items ?? []).map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell>{item.name}</TableCell>
+                        <TableCell>
+                          <div>
+                            {item.name}
+                            {item.item_kind && item.item_kind !== "food" && (
+                              <p className="text-xs text-muted-foreground capitalize">{item.item_kind.replace("_", " ")}</p>
+                            )}
+                            {item.note && <p className="text-xs text-muted-foreground">{item.note}</p>}
+                          </div>
+                        </TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>₹{item.unit_price}</TableCell>
                         <TableCell className="capitalize">{formatStatus(item.item_status)}</TableCell>

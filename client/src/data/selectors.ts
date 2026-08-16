@@ -1,17 +1,15 @@
-import { extrasProducts } from './extrasCatalog';
-import { menuItems, restaurants } from './mockData';
 import type { FoodFilters, MenuItem, Restaurant } from '../utils/types';
 
-export function getRestaurantById(id: string): Restaurant | undefined {
-  return restaurants.find((r) => r.id === id);
+export function getRestaurantById(list: Restaurant[], id: string): Restaurant | undefined {
+  return list.find((r) => r.id === id);
 }
 
-export function getMenuItemById(id: string): MenuItem | undefined {
-  return menuItems.find((m) => m.id === id);
+export function getMenuItemById(list: MenuItem[], id: string): MenuItem | undefined {
+  return list.find((m) => m.id === id);
 }
 
-export function getMenuByRestaurant(restaurantId: string): MenuItem[] {
-  return menuItems.filter((m) => m.restaurantId === restaurantId);
+export function getMenuByRestaurant(list: MenuItem[], restaurantId: string): MenuItem[] {
+  return list.filter((m) => m.restaurantId === restaurantId);
 }
 
 export function groupByCategory(items: MenuItem[]): Record<string, MenuItem[]> {
@@ -23,20 +21,22 @@ export function groupByCategory(items: MenuItem[]): Record<string, MenuItem[]> {
   }, {});
 }
 
-export function getAllCategories(): string[] {
+export function getAllCategories(items: MenuItem[]): string[] {
   const set = new Set<string>();
-  menuItems.forEach((m) => {
+  items.forEach((m) => {
     if (m.category) set.add(m.category);
   });
   return Array.from(set).sort();
 }
 
-export function getAllCuisines(): string[] {
+export function getAllCuisines(restaurants: Restaurant[], items: MenuItem[]): string[] {
   const set = new Set<string>();
   restaurants.forEach((r) => {
-    r.cuisine.split(',').forEach((c) => set.add(c.trim()));
+    r.cuisine.split(',').forEach((c) => {
+      if (c.trim()) set.add(c.trim());
+    });
   });
-  menuItems.forEach((m) => {
+  items.forEach((m) => {
     if (m.category) set.add(m.category);
   });
   return Array.from(set).sort();
@@ -48,7 +48,7 @@ export function filterMenuItems(
   restaurantMap?: Map<string, Restaurant>
 ): MenuItem[] {
   const q = filters.query.trim().toLowerCase();
-  const map = restaurantMap ?? new Map(restaurants.map((r) => [r.id, r]));
+  const map = restaurantMap ?? new Map<string, Restaurant>();
 
   return items.filter((item) => {
     if (filters.availability === 'in_stock' && !item.isAvailable) return false;
@@ -87,10 +87,6 @@ export function filterRestaurants(list: Restaurant[], filters: FoodFilters): Res
     if (q && !`${r.name} ${r.cuisine}`.toLowerCase().includes(q)) return false;
     return true;
   });
-}
-
-export function getExtrasProductById(id: string) {
-  return extrasProducts.find((p) => p.id === id);
 }
 
 export function lineUnitTotal(unitPrice: number, addons: { price: number }[]): number {

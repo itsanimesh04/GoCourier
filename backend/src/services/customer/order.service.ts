@@ -116,7 +116,9 @@ export const customerOrderService = {
         : null,
       items: items.map((item) => ({
         id: item.id,
+        item_kind: item.item_kind,
         menu_item_id: item.menu_item_id,
+        extras_product_id: item.extras_product_id,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
@@ -124,6 +126,9 @@ export const customerOrderService = {
         item_status: item.item_status,
         refund_amount: item.refund_amount,
         is_veg: item.is_veg,
+        note: item.note,
+        image_url: item.image_url,
+        addon_snapshot: item.addon_snapshot,
         refunds: refundsByItemId.get(item.id) ?? []
       })),
       refunds,

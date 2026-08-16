@@ -1,5 +1,4 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { campuses } from '../../data/mockData';
 
 export type CatalogMode = 'food' | 'extras';
 export type ThemeMode = 'dark' | 'light';
@@ -51,11 +50,7 @@ const initialState: UiState = {
   filterDrawerOpen: false,
   headerSearchOpen: false,
   catalogMode: persisted.catalogMode === 'extras' ? 'extras' : 'food',
-  selectedCampusId:
-    persisted.selectedCampusId &&
-    campuses.some((c) => c.id === persisted.selectedCampusId)
-      ? persisted.selectedCampusId
-      : campuses[0]?.id ?? 'campus-nims',
+  selectedCampusId: persisted.selectedCampusId ?? '',
   theme: persisted.theme === 'light' ? 'light' : 'dark',
 };
 

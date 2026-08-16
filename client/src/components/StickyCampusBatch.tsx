@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store';
+import { selectCampuses } from '../store/slices/catalogSlice';
 import { selectSelectedCampusId } from '../store/slices/uiSlice';
 import {
   formatClockLabel,
@@ -14,7 +15,8 @@ import { useTimerAccent } from '../utils/timerAccent';
 const StickyCampusBatch = () => {
   const location = useLocation();
   const campusId = useAppSelector(selectSelectedCampusId);
-  const campus = getCampusById(campusId);
+  const campuses = useAppSelector(selectCampuses);
+  const campus = getCampusById(campuses, campusId);
   const { textClass, bgClass, pingClass } = useTimerAccent();
   const [visible, setVisible] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -41,7 +43,7 @@ const StickyCampusBatch = () => {
     return () => window.clearInterval(id);
   }, [visible]);
 
-  if (!visible) return null;
+  if (!visible || !campus) return null;
 
   const cutoff = getNextCutoffDate(campus.cutoffTime, new Date(now));
   const remaining = cutoff.getTime() - now;

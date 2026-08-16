@@ -1,67 +1,54 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FiChevronRight } from 'react-icons/fi';
 import { useSearchParams } from 'react-router-dom';
 import CatalogModeTabs from '../components/CatalogModeTabs';
 import ExtraCard from '../components/ExtraCard';
 import ExtrasServiceCards from '../components/ExtrasServiceCards';
-import {
-  extrasCategories,
-  extrasProducts,
-  extrasStores,
-  type ExtrasCategory,
-} from '../data/extrasCatalog';
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
+import { selectExtras } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
 import { cn } from '../utils/utils';
 
 const ExtrasListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
+  const extras = useAppSelector(selectExtras);
   const query = searchParams.get('q') ?? '';
   const storeParam = searchParams.get('store');
   const categoryParam = searchParams.get('category');
-  const [category, setCategory] = useState<ExtrasCategory>(
-    extrasCategories.includes(categoryParam as ExtrasCategory)
-      ? (categoryParam as ExtrasCategory)
-      : 'All'
-  );
+  const categories = ['All', ...[...new Set(extras.map((p) => p.category))]];
+  const [category, setCategory] = useState(categoryParam && categories.includes(categoryParam) ? categoryParam : 'All');
 
   useEffect(() => {
     dispatch(setCatalogMode('extras'));
   }, [dispatch]);
 
-  useEffect(() => {
-    if (
-      categoryParam &&
-      extrasCategories.includes(categoryParam as ExtrasCategory)
-    ) {
-      setCategory(categoryParam as ExtrasCategory);
-    }
-  }, [categoryParam]);
+  const stores = useMemo(
+    () => [...new Set(extras.map((p) => p.storeName))],
+    [extras]
+  );
 
   const products = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return extrasProducts.filter((p) => {
-      if (storeParam && p.storeId !== storeParam) return false;
+    return extras.filter((p) => {
+      if (storeParam && p.storeName !== storeParam) return false;
       if (category !== 'All' && p.category !== category) return false;
       if (!q) return true;
-      const store = extrasStores.find((s) => s.id === p.storeId);
       return (
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
-        (store?.name.toLowerCase().includes(q) ?? false)
+        p.storeName.toLowerCase().includes(q)
       );
     });
-  }, [category, query, storeParam]);
+  }, [category, extras, query, storeParam]);
 
-  const selectStore = (storeId: string | null) => {
+  const selectStore = (storeName: string | null) => {
     const params = new URLSearchParams(searchParams);
-    if (storeId) params.set('store', storeId);
+    if (storeName) params.set('store', storeName);
     else params.delete('store');
     setSearchParams(params, { replace: true });
   };
 
-  const selectCategory = (next: ExtrasCategory) => {
+  const selectCategory = (next: string) => {
     setCategory(next);
     const params = new URLSearchParams(searchParams);
     if (next === 'All') params.delete('category');
@@ -77,9 +64,7 @@ const ExtrasListingPage = () => {
             Campus extras
           </h1>
           <p className="mt-1 font-sans text-sm text-muted">
-            {query
-              ? `Results for “${query}”`
-              : 'Stationery, snacks, and essentials for hostel life'}
+            {query ? `Results for “${query}”` : 'Stationery, snacks, and essentials for hostel life'}
           </p>
         </div>
         <CatalogModeTabs navigateOnChange />
@@ -90,7 +75,7 @@ const ExtrasListingPage = () => {
       </div>
 
       <div className="mb-8 flex flex-wrap gap-2">
-        {extrasCategories.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat}
             type="button"
@@ -107,56 +92,31 @@ const ExtrasListingPage = () => {
         ))}
       </div>
 
-      <section className="mb-12">
-        <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
-          Stores
-        </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {extrasStores.map((store) => {
-            const active = storeParam === store.id;
-            return (
-              <button
-                key={store.id}
-                type="button"
-                onClick={() => selectStore(active ? null : store.id)}
-                className={cn(
-                  'group flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-4 sm:py-3.5',
-                  active
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border bg-surface hover:border-primary hover:bg-surface-2'
-                )}
-              >
-                <span className="min-w-0">
-                  <span
-                    className="mb-2 block h-1.5 w-10 rounded-full"
-                    style={{ backgroundColor: store.accent }}
-                  />
-                  <span className="block font-display text-sm font-semibold text-fg sm:text-base">
-                    {store.name}
-                  </span>
-                  <span className="mt-1 block font-sans text-xs text-muted">{store.category}</span>
-                </span>
-                <FiChevronRight
+      {stores.length > 0 && (
+        <section className="mb-12">
+          <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+            Stores
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {stores.map((store) => {
+              const active = storeParam === store;
+              return (
+                <button
+                  key={store}
+                  type="button"
+                  onClick={() => selectStore(active ? null : store)}
                   className={cn(
-                    'h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5',
-                    active ? 'text-primary' : 'text-muted group-hover:text-primary'
+                    'rounded-xl border px-3 py-3 text-left font-display text-sm font-semibold',
+                    active ? 'border-primary bg-primary/10' : 'border-border bg-surface'
                   )}
-                  aria-hidden
-                />
-              </button>
-            );
-          })}
-        </div>
-        {storeParam && (
-          <button
-            type="button"
-            onClick={() => selectStore(null)}
-            className="mt-3 font-sans text-xs font-semibold text-primary hover:opacity-80"
-          >
-            Clear store filter
-          </button>
-        )}
-      </section>
+                >
+                  {store}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">

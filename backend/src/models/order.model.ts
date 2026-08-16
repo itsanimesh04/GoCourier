@@ -1,25 +1,28 @@
 import mongoose, { Schema, model, models } from 'mongoose';
 
-export type OrderStatus = 
-  | 'cart' 
-  | 'placed' 
-  | 'locked' 
-  | 'procuring' 
-  | 'confirmed' 
-  | 'out_for_delivery' 
-  | 'delivered' 
-  | 'closed' 
+export type OrderStatus =
+  | 'cart'
+  | 'placed'
+  | 'locked'
+  | 'procuring'
+  | 'confirmed'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'closed'
   | 'cancelled';
 
 export type PaymentStatus = 'pending' | 'success' | 'failed' | 'late' | 'refunded' | 'partially_refunded';
+
+export type OrderKind = 'food' | 'extras' | 'mixed' | 'parcel' | 'custom';
 
 export interface IOrder {
   _id: mongoose.Types.ObjectId;
   student_id: mongoose.Types.ObjectId;
   campus_id: mongoose.Types.ObjectId;
-  restaurant_id: mongoose.Types.ObjectId;
+  restaurant_id: mongoose.Types.ObjectId | null;
   batch_id: mongoose.Types.ObjectId | null;
   drop_point: string | null;
+  order_kind: OrderKind;
   order_status: OrderStatus;
   payment_status: PaymentStatus;
   subtotal: string;
@@ -33,15 +36,31 @@ export interface IOrder {
 const orderSchema = new Schema<IOrder>({
   student_id: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   campus_id: { type: Schema.Types.ObjectId, ref: 'Campus', required: true },
-  restaurant_id: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
+  restaurant_id: { type: Schema.Types.ObjectId, ref: 'Restaurant', default: null },
   batch_id: { type: Schema.Types.ObjectId, ref: 'Batch', default: null },
   drop_point: { type: String, default: null },
-  order_status: { type: String, enum: ['cart', 'placed', 'locked', 'procuring', 'confirmed', 'out_for_delivery', 'delivered', 'closed', 'cancelled'], required: true, default: 'cart' },
-  payment_status: { type: String, enum: ['pending', 'success', 'failed', 'late', 'refunded', 'partially_refunded'], required: true, default: 'pending' },
+  order_kind: {
+    type: String,
+    enum: ['food', 'extras', 'mixed', 'parcel', 'custom'],
+    required: true,
+    default: 'food'
+  },
+  order_status: {
+    type: String,
+    enum: ['cart', 'placed', 'locked', 'procuring', 'confirmed', 'out_for_delivery', 'delivered', 'closed', 'cancelled'],
+    required: true,
+    default: 'cart'
+  },
+  payment_status: {
+    type: String,
+    enum: ['pending', 'success', 'failed', 'late', 'refunded', 'partially_refunded'],
+    required: true,
+    default: 'pending'
+  },
   subtotal: { type: String, required: true, default: '0.00' },
   fee: { type: String, required: true, default: '0.00' },
   total_amount: { type: String, required: true, default: '0.00' },
-  placed_at: { type: Date, default: null },
+  placed_at: { type: Date, default: null }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

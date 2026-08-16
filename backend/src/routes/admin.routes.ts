@@ -11,6 +11,7 @@ import { adminPaymentController } from '../controllers/admin/payment.controller'
 import { revenueController } from '../controllers/admin/revenue.controller';
 import { dashboardController } from '../controllers/admin/dashboard.controller';
 import { adminConfigController } from '../controllers/admin/config.controller';
+import { extraProductController } from '../controllers/admin/extra-product.controller';
 import { uploadController } from '../controllers/admin/upload.controller';
 import { authenticate } from '../middleware/authenticate';
 import { authorizeRole } from '../middleware/authorizeRole';
@@ -25,9 +26,11 @@ import {
   createBannerSchema,
   createCampusSchema,
   createCategorySchema,
+  createExtraProductSchema,
   createMenuItemSchema,
   createRestaurantSchema,
   deleteUploadSchema,
+  extraProductIdSchema,
   menuItemIdSchema,
   orderIdSchema,
   paymentIdSchema,
@@ -37,6 +40,7 @@ import {
   updateCampusSchema,
   updateCategorySchema,
   updateConfigSchema,
+  updateExtraProductSchema,
   updateMenuItemSchema,
   updateOrderStatusSchema,
   updateRestaurantSchema,
@@ -101,6 +105,20 @@ adminRouter.get('/banners/:id', validateRequest(bannerIdSchema), bannerControlle
 adminRouter.post('/banners', validateRequest(createBannerSchema), bannerController.create);
 adminRouter.patch('/banners/:id', validateRequest(updateBannerSchema), bannerController.update);
 adminRouter.delete('/banners/:id', validateRequest(bannerIdSchema), bannerController.remove);
+
+adminRouter.get('/extras-products', extraProductController.list);
+adminRouter.get('/extras-products/:id', validateRequest(extraProductIdSchema), extraProductController.getById);
+adminRouter.post('/extras-products', validateRequest(createExtraProductSchema), extraProductController.create);
+adminRouter.patch(
+  '/extras-products/:id',
+  validateRequest(updateExtraProductSchema),
+  extraProductController.update
+);
+adminRouter.delete(
+  '/extras-products/:id',
+  validateRequest(extraProductIdSchema),
+  extraProductController.remove
+);
 
 adminRouter.get('/users', adminUserController.list);
 adminRouter.get('/users/:id', validateRequest(userIdSchema), adminUserController.getById);

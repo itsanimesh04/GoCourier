@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useAppSelector } from '../store';
+import { selectMenuItems } from '../store/slices/catalogSlice';
 import { getAllCategories } from '../data/selectors';
 
 const CuisineMenu = () => {
-  const categories = getAllCategories();
+  const menuItems = useAppSelector(selectMenuItems);
+  const categories = getAllCategories(menuItems);
 
   return (
     <div className="invisible absolute left-0 top-full z-40 min-w-52 pt-2 opacity-0 transition-all group-hover:visible group-hover:opacity-100">

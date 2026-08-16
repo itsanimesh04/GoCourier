@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { addExtra } from '../store/slices/cartSlice';
+import { selectAppConfig } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
 import ExtrasRequestShell from './components/Extras/ExtrasRequestShell';
 
@@ -12,6 +13,8 @@ const sizes = ['Small', 'Medium', 'Large'] as const;
 
 const ParcelRequestPage = () => {
   const dispatch = useAppDispatch();
+  const config = useAppSelector(selectAppConfig);
+  const fee = config?.parcelFee ?? 79;
   const navigate = useNavigate();
   const [pickup, setPickup] = useState('');
   const [dropPoint, setDropPoint] = useState('');
@@ -41,8 +44,12 @@ const ParcelRequestPage = () => {
         extrasProductId: 'parcel-pickup',
         name: 'Parcel pickup & drop',
         imageUrl: SERVICE_IMAGE,
-        unitPrice: 79,
+        unitPrice: fee,
         note,
+        itemKind: 'parcel',
+        pickupPoint: pickup.trim(),
+        dropPoint: dropPoint.trim(),
+        size,
       })
     );
     navigate('/cart');

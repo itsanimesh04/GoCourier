@@ -5,6 +5,7 @@ import { apiRouter } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { connectDatabase } from './config/database';
+import { corsOrigins } from './config/env';
 
 export function createApp() {
   const app = express();
@@ -14,7 +15,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: ['https://admin.gocourierservice.com', 'https://gocourierservice.com'],
+      origin: corsOrigins(),
       credentials: true
     })
   );

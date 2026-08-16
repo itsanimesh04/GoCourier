@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiX } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { addExtra } from '../store/slices/cartSlice';
+import { selectAppConfig } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
 import { uploadCustomRequestPhoto } from '../services/upload.service';
 import ExtrasRequestShell from './components/Extras/ExtrasRequestShell';
@@ -12,6 +13,8 @@ const SERVICE_IMAGE =
 
 const CustomRequestPage = () => {
   const dispatch = useAppDispatch();
+  const config = useAppSelector(selectAppConfig);
+  const fee = config?.customRequestFee ?? 49;
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [need, setNeed] = useState('');
@@ -67,8 +70,9 @@ const CustomRequestPage = () => {
           extrasProductId: 'custom-request',
           name: 'Custom request',
           imageUrl: imageUrl || SERVICE_IMAGE,
-          unitPrice: 49,
+          unitPrice: fee,
           note,
+          itemKind: 'custom_request',
         })
       );
       navigate('/cart');

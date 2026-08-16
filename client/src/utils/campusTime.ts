@@ -1,6 +1,6 @@
-import { campuses } from '../data/mockData';
+import type { Campus } from './types';
 
-export function getCampusById(id: string) {
+export function getCampusById(campuses: Campus[], id: string) {
   return campuses.find((c) => c.id === id) ?? campuses[0];
 }
 

@@ -1,5 +1,4 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { campuses, currentUser } from '../../data/mockData';
 
 const STORAGE_KEY = 'gcs-profile';
 
@@ -45,13 +44,10 @@ function persist(state: ProfileState) {
 const persisted = typeof window !== 'undefined' ? loadPersisted() : {};
 
 const initialState: ProfileState = {
-  name: persisted.name ?? currentUser.name ?? 'Student',
-  email: persisted.email ?? currentUser.email ?? '',
-  phone: persisted.phone ?? currentUser.phone ?? '',
-  campusId:
-    persisted.campusId && campuses.some((c) => c.id === persisted.campusId)
-      ? persisted.campusId
-      : (currentUser.campus_id ?? campuses[0]?.id ?? 'campus-nims'),
+  name: persisted.name ?? 'Student',
+  email: persisted.email ?? '',
+  phone: persisted.phone ?? '',
+  campusId: persisted.campusId ?? '',
   avatarId:
     persisted.avatarId && AVATAR_PRESETS.some((a) => a.id === persisted.avatarId)
       ? (persisted.avatarId as AvatarId)

@@ -115,6 +115,14 @@ export const authService = {
     return { message: 'Logged out' };
   },
 
+  async identity(userId: string) {
+    const user = await userRepository.findById(userId);
+    if (!user || !user.is_active) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+    return { user: toPublicUser(user) };
+  },
+
   async requestOtp(phone: string) {
     const since = new Date(Date.now() - rateLimitWindowMinutes * 60 * 1000);
     const recentCount = await otpRepository.countRecentByPhone(phone, since);

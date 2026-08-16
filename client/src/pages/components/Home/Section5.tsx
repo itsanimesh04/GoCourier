@@ -1,7 +1,17 @@
-import { foodCarouselImages } from '../../../data/homepageData';
+import { useAppSelector } from '../../../store';
+import { selectFoodCategories, selectRestaurants } from '../../../store/slices/catalogSlice';
 
 const Section5 = () => {
-  const strip = [...foodCarouselImages, ...foodCarouselImages];
+  const categories = useAppSelector(selectFoodCategories);
+  const restaurants = useAppSelector(selectRestaurants);
+  const images = [
+    ...categories.map((c) => c.imageUrl).filter(Boolean),
+    ...restaurants.map((r) => r.imageUrl).filter(Boolean),
+  ].slice(0, 12);
+
+  if (images.length === 0) return null;
+
+  const strip = [...images, ...images];
 
   return (
     <section className="w-full overflow-hidden py-3 sm:py-4 my-36">

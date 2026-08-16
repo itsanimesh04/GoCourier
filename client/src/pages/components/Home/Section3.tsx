@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { restaurants } from "../../../data/mockData";
+import { useAppSelector } from "../../../store";
+import { selectRestaurants } from "../../../store/slices/catalogSlice";
 import ResturantCard from "../../../components/ResturantCard";
 
 export const Section3 = () => {
   const navigate = useNavigate();
+  const restaurants = useAppSelector(selectRestaurants);
   const list = restaurants.slice(0, 6);
 
   return (

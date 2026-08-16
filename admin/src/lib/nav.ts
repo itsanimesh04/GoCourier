@@ -10,6 +10,7 @@ import {
   CreditCard,
   IndianRupee,
   Settings,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Restaurants", path: "/restaurants", icon: UtensilsCrossed },
   { title: "Menu Items", path: "/menu-items", icon: ShoppingBag },
   { title: "Categories", path: "/categories", icon: Grid3X3 },
+  { title: "Extras", path: "/extras", icon: Package },
   { title: "Banners", path: "/banners", icon: Image },
   { title: "Orders", path: "/orders", icon: ClipboardList },
   { title: "Users", path: "/users", icon: Users },
@@ -39,6 +41,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/restaurants": "Restaurants",
   "/menu-items": "Menu Items",
   "/categories": "Categories",
+  "/extras": "Extras",
   "/banners": "Banners",
   "/orders": "Orders",
   "/users": "Users",

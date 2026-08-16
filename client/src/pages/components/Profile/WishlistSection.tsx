@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { getMenuItemById, getRestaurantById } from '../../../data/selectors';
 import { useAppSelector } from '../../../store';
+import { selectMenuItems, selectRestaurants } from '../../../store/slices/catalogSlice';
 import {
   selectFoodWishlist,
   selectRestaurantWishlist,
@@ -10,8 +11,10 @@ const WishlistSection = () => {
   const foodIds = useAppSelector(selectFoodWishlist);
   const restaurantIds = useAppSelector(selectRestaurantWishlist);
 
-  const foods = foodIds.map(getMenuItemById).filter(Boolean);
-  const restos = restaurantIds.map(getRestaurantById).filter(Boolean);
+  const menuItems = useAppSelector(selectMenuItems);
+  const restaurants = useAppSelector(selectRestaurants);
+  const foods = foodIds.map((id) => getMenuItemById(menuItems, id)).filter(Boolean);
+  const restos = restaurantIds.map((id) => getRestaurantById(restaurants, id)).filter(Boolean);
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-5">

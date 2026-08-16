@@ -4,9 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import FilterDrawer from '../components/FilterDrawer';
 import FoodCard from '../components/FoodCard';
 import ResturantCard from '../components/ResturantCard';
-import { menuItems, restaurants } from '../data/mockData';
 import { filterMenuItems, filterRestaurants } from '../data/selectors';
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
+import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { openFilterDrawer, setCatalogMode } from '../store/slices/uiSlice';
 import { DEFAULT_FOOD_FILTERS, type FoodFilters } from '../utils/types';
 
@@ -25,6 +25,8 @@ function filtersFromParams(params: URLSearchParams): FoodFilters {
 const FoodListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
+  const menuItems = useAppSelector(selectMenuItems);
+  const restaurants = useAppSelector(selectRestaurants);
   const [filters, setFilters] = useState<FoodFilters>(() =>
     filtersFromParams(searchParams)
   );
@@ -38,10 +40,10 @@ const FoodListingPage = () => {
     setFilters(filtersFromParams(searchParams));
   }, [urlKey, searchParams]);
 
-  const foods = useMemo(() => filterMenuItems(menuItems, filters), [filters]);
+  const foods = useMemo(() => filterMenuItems(menuItems, filters), [filters, menuItems]);
   const restoList = useMemo(
     () => filterRestaurants(restaurants, filters),
-    [filters]
+    [filters, restaurants]
   );
 
   const applyFilters = (next: FoodFilters) => {

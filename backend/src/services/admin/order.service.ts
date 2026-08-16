@@ -20,9 +20,10 @@ function mapOrder(doc: InstanceType<typeof Order>) {
     id: doc._id.toString(),
     student_id: doc.student_id.toString(),
     campus_id: doc.campus_id.toString(),
-    restaurant_id: doc.restaurant_id.toString(),
+    restaurant_id: doc.restaurant_id?.toString() ?? null,
     batch_id: doc.batch_id?.toString() ?? null,
     drop_point: doc.drop_point,
+    order_kind: doc.order_kind ?? 'food',
     order_status: doc.order_status,
     payment_status: doc.payment_status,
     subtotal: doc.subtotal,
@@ -67,7 +68,7 @@ export class AdminOrderService {
       Order.countDocuments(filter)
     ]);
 
-    const restaurantIds = [...new Set(docs.map((d) => d.restaurant_id.toString()))];
+    const restaurantIds = [...new Set(docs.map((d) => d.restaurant_id?.toString()).filter(Boolean))] as string[];
     const studentIds = [...new Set(docs.map((d) => d.student_id.toString()))];
     const [restaurants, students] = await Promise.all([
       Restaurant.find({ _id: { $in: restaurantIds } }).exec(),
@@ -81,7 +82,9 @@ export class AdminOrderService {
     return {
       items: docs.map((doc) => ({
         ...mapOrder(doc),
-        restaurant_name: restaurantMap.get(doc.restaurant_id.toString()) ?? null,
+        restaurant_name: doc.restaurant_id
+          ? restaurantMap.get(doc.restaurant_id.toString()) ?? null
+          : 'Campus extras',
         student: studentMap.get(doc.student_id.toString()) ?? null
       })),
       total,
@@ -116,13 +119,21 @@ export class AdminOrderService {
         const lineTotal = (Number.isFinite(unit) ? unit : 0) * item.quantity;
         return {
           id: item._id.toString(),
-          menu_item_id: item.menu_item_id.toString(),
+          item_kind: item.item_kind ?? 'food',
+          menu_item_id: item.menu_item_id?.toString() ?? null,
+          extras_product_id: item.extras_product_id?.toString() ?? null,
           name: item.item_name_snap,
           quantity: item.quantity,
           unit_price: item.price_snapshot,
           line_total: lineTotal.toFixed(2),
           item_status: item.item_status,
-          refund_amount: item.refund_amount
+          refund_amount: item.refund_amount,
+          note: item.note ?? null,
+          image_url: item.image_url ?? null,
+          addon_snapshot: item.addon_snapshot ?? [],
+          pickup_point: item.pickup_point ?? null,
+          drop_point: item.drop_point ?? null,
+          size: item.size ?? null
         };
       })
     };

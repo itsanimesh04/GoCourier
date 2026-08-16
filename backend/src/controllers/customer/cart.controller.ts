@@ -1,10 +1,16 @@
 import { cartService } from '../../services/customer/cart.service';
+import { userRepository } from '../../repositories/user.repository';
 import { sendSuccess } from '../../utils/apiResponse';
 import { asyncHandler } from '../../utils/asyncHandler';
 
 export const cartController = {
   create: asyncHandler(async (req, res) => {
-    const cart = await cartService.createOrReplaceCart(req.user!.id, req.user!.campus_id, req.body);
+    const user = await userRepository.findById(req.user!.id);
+    const cart = await cartService.createOrReplaceCart(
+      req.user!.id,
+      user?.campus_id ?? null,
+      req.body
+    );
     return sendSuccess(res, cart, 201);
   }),
 

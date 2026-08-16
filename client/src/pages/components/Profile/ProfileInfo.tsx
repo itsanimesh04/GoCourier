@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { campuses } from '../../../data/mockData';
 import { useAppDispatch, useAppSelector } from '../../../store';
+import { selectCampuses } from '../../../store/slices/catalogSlice';
+import { setUserCampus } from '../../../store/slices/authSlice';
 import {
   AVATAR_PRESETS,
   getAvatarUrl,
@@ -14,6 +15,7 @@ import { cn } from '../../../utils/utils';
 
 const ProfileInfo = () => {
   const profile = useAppSelector(selectProfile);
+  const campuses = useAppSelector(selectCampuses);
   const dispatch = useAppDispatch();
   const [editing, setEditing] = useState(false);
   const [pickingAvatar, setPickingAvatar] = useState(false);
@@ -36,6 +38,7 @@ const ProfileInfo = () => {
       })
     );
     dispatch(setSelectedCampusId(draft.campusId));
+    if (draft.campusId) void dispatch(setUserCampus(draft.campusId));
     setEditing(false);
   };
 

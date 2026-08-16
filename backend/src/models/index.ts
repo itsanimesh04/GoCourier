@@ -32,3 +32,5 @@ export { FoodAddon } from './food-addon.model';
 export type { IFoodAddon } from './food-addon.model';
 export { AppConfig } from './app-config.model';
 export type { IAppConfig, IFaqItem } from './app-config.model';
+export { ExtraProduct } from './extra-product.model';
+export type { IExtraProduct } from './extra-product.model';

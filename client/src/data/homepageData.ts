@@ -1,5 +1,3 @@
-import { menuItems } from './mockData';
-
 const food = (name: string) => `/food/${name}.jpg`;
 
 export const foodCategories = [
@@ -49,24 +47,6 @@ export const banners = [
     ctaLabel: 'Get started',
     ctaHref: '/signup'
   }
-];
-
-function dishesByCategory(category: string) {
-  return menuItems.filter((item) => item.category === category);
-}
-
-export const cuisineSectionsTop= [
-  { id: 'sec-south', title: 'South Indian favourites', dishes: dishesByCategory('South Indian') },
-  { id: 'sec-chinese', title: 'Chinese picks', dishes: dishesByCategory('Chinese') },
-  { id: 'sec-biryani', title: 'Biryani & rice bowls', dishes: dishesByCategory('Biryani') }
-];
-
-export const cuisineSectionsBottom = [
-  { id: 'sec-italian', title: 'Pizza & Italian', dishes: dishesByCategory('Italian') },
-  { id: 'sec-fast', title: 'Burgers & wraps', dishes: dishesByCategory('Fast Food') },
-  { id: 'sec-rolls', title: 'Rolls & wraps', dishes: dishesByCategory('Rolls') },
-  { id: 'sec-desserts', title: 'Sweet treats', dishes: dishesByCategory('Desserts') },
-  { id: 'sec-drinks', title: 'Drinks & coolers', dishes: dishesByCategory('Beverages') }
 ];
 
 export const foodCarouselImages = foodCategories.map((c) => c.imageUrl);

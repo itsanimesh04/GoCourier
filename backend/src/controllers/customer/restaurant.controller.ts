@@ -11,8 +11,18 @@ export const customerRestaurantController = {
     return sendSuccess(res, restaurants);
   }),
 
+  getById: asyncHandler(async (req, res) => {
+    const restaurant = await customerRestaurantService.getById(req.params.id as string);
+    return sendSuccess(res, restaurant);
+  }),
+
   menu: asyncHandler(async (req, res) => {
-    const menu = await customerRestaurantService.getMenu(req.user!.campus_id, req.params.id as string);
+    const menu = await customerRestaurantService.getMenu(req.params.id as string);
     return sendSuccess(res, menu);
+  }),
+
+  menuItem: asyncHandler(async (req, res) => {
+    const data = await customerRestaurantService.getMenuItem(req.params.id as string);
+    return sendSuccess(res, data);
   })
 };

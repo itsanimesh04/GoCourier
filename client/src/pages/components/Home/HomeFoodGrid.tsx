@@ -1,11 +1,21 @@
 import FoodCard from '../../../components/FoodCard';
-import { menuItems } from '../../../data/mockData';
+import { useAppSelector } from '../../../store';
+import { selectMenuItems } from '../../../store/slices/catalogSlice';
 import Section5 from './Section5';
 
 const HomeFoodGrid = () => {
+  const menuItems = useAppSelector(selectMenuItems);
   const mid = Math.ceil(menuItems.length / 2);
   const firstHalf = menuItems.slice(0, mid);
   const secondHalf = menuItems.slice(mid);
+
+  if (menuItems.length === 0) {
+    return (
+      <section className="w-full py-10 text-center font-sans text-sm text-muted">
+        No dishes yet for this campus. Add restaurants and menu items in admin.
+      </section>
+    );
+  }
 
   return (
     <section className="w-full py-6 sm:py-8">

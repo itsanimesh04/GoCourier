@@ -21,23 +21,9 @@ adminApi.interceptors.response.use(
     return response;
   },
   async (error) => {
-
-    // if (error.response?.status === 401 && !originalRequest._retry) {
-    //   originalRequest._retry = true;
-
-    //   try {
-    //     await axios.post(
-    //       `${import.meta.env.VITE_BACKEND_BASE_URL}/admin/refresh-token`,
-    //       {},
-    //       { withCredentials: true },
-    //     );
-
-    //     return adminApi(originalRequest);
-    //   } catch (refreshError) {
-    //     console.error("Token refresh failed:", refreshError);
-    //   }
-    // }
-
+    if (error.response?.status === 401 && window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
     return Promise.reject(error);
   },
 );

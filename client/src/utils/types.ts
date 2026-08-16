@@ -17,7 +17,7 @@ export interface Campus {
   id: string;
   name: string;
   city: string;
-  state: string;
+  state: string | null;
   cutoffTime: string;
   deliveryTime: string;
 }
@@ -50,6 +50,7 @@ export interface MenuItem {
   imageUrl: string;
   isAvailable: boolean;
   category?: string;
+  addons?: FoodAddon[];
 }
 
 export interface FoodAddon {
@@ -68,6 +69,7 @@ export interface SelectedAddon {
 export interface CartLineItem {
   cartKey: string;
   kind: 'food' | 'extra';
+  itemKind?: 'food' | 'extra' | 'custom_request' | 'parcel';
   menuItemId?: string;
   extrasProductId?: string;
   restaurantId?: string;
@@ -77,6 +79,9 @@ export interface CartLineItem {
   quantity: number;
   selectedAddons: SelectedAddon[];
   note?: string;
+  pickupPoint?: string;
+  dropPoint?: string;
+  size?: string;
 }
 
 export interface CartItem {
@@ -121,6 +126,7 @@ export interface User {
   name: string | null;
   role: 'student';
   campus_id: string | null;
+  drop_point?: string | null;
 }
 
 export interface Banner {
@@ -162,6 +168,31 @@ export interface FoodFilters {
   minRating: number | null;
   cuisine: string | null;
   query: string;
+}
+
+export interface ExtraProduct {
+  id: string;
+  campusId: string | null;
+  name: string;
+  unit: string;
+  price: number;
+  category: string;
+  storeName: string;
+  imageUrl: string | null;
+  available: boolean;
+  featured: boolean;
+}
+
+export interface AppConfig {
+  deliveryFee: number;
+  customRequestFee: number;
+  parcelFee: number;
+  faq: { question: string; answer: string }[];
+  appDownloadTitle: string;
+  appDownloadSubtitle: string;
+  playStoreHref: string;
+  appStoreHref: string;
+  marqueeStrings: string[];
 }
 
 export const DEFAULT_FOOD_FILTERS: FoodFilters = {

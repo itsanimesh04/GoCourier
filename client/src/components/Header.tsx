@@ -3,6 +3,7 @@ import { FiUser, FiSearch, FiShoppingBag, FiMenu, FiX, FiMoon, FiSun } from 'rea
 import { Link, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { selectCartCount } from '../store/slices/cartSlice';
+import { selectAuthUser, logoutUser } from '../store/slices/authSlice';
 import {
   selectHeaderSearchOpen,
   selectTheme,
@@ -17,6 +18,7 @@ import MobileNav from './MobileNav';
 
 export const Header: React.FC = () => {
   const cartCount = useAppSelector(selectCartCount);
+  const user = useAppSelector(selectAuthUser);
   const searchOpen = useAppSelector(selectHeaderSearchOpen);
   const theme = useAppSelector(selectTheme);
   const dispatch = useAppDispatch();
@@ -62,12 +64,22 @@ export const Header: React.FC = () => {
         )}
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <Link
-            to="/login"
-            className="hidden rounded-lg border border-on-primary/80 px-2.5 py-1 font-sans text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-on-primary hover:text-primary sm:inline-block"
-          >
-            Login
-          </Link>
+          {user ? (
+            <button
+              type="button"
+              onClick={() => void dispatch(logoutUser())}
+              className="hidden rounded-lg border border-on-primary/80 px-2.5 py-1 font-sans text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-on-primary hover:text-primary sm:inline-block"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden rounded-lg border border-on-primary/80 px-2.5 py-1 font-sans text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-on-primary hover:text-primary sm:inline-block"
+            >
+              Login
+            </Link>
+          )}
 
           <button
             type="button"

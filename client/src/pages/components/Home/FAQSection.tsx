@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { useAppSelector } from '../../../store';
+import { selectAppConfig } from '../../../store/slices/catalogSlice';
 
 interface FAQItem {
   id: number;
@@ -60,6 +62,15 @@ const faqData: FAQItem[] = [
 ];
 
 export const FAQSection: React.FC = () => {
+  const config = useAppSelector(selectAppConfig);
+  const items =
+    config?.faq && config.faq.length > 0
+      ? config.faq.map((item, index) => ({
+          id: index + 1,
+          question: item.question,
+          answer: item.answer,
+        }))
+      : faqData;
   const [openId, setOpenId] = useState<number | null>(1);
 
   const toggleFAQ = (id: number) => {
@@ -80,7 +91,7 @@ export const FAQSection: React.FC = () => {
         </div>
 
         <div className="mx-auto mt-6 max-w-3xl border-t border-border">
-          {faqData.map((item) => {
+          {items.map((item) => {
             const isOpen = openId === item.id;
 
             return (

@@ -95,7 +95,9 @@ export class DashboardService {
       ])
     ]);
 
-    const restaurantIds = [...new Set(recentOrders.map((o) => o.restaurant_id.toString()))];
+    const restaurantIds = [
+      ...new Set(recentOrders.map((o) => o.restaurant_id?.toString()).filter(Boolean))
+    ] as string[];
     const restaurants = await Restaurant.find({ _id: { $in: restaurantIds } }).exec();
     const restaurantMap = new Map(restaurants.map((r) => [r._id.toString(), r.name]));
 
@@ -127,7 +129,9 @@ export class DashboardService {
       available_menu_items: availableMenuItems,
       recent_orders: recentOrders.map((o) => ({
         id: o._id.toString(),
-        restaurant_name: restaurantMap.get(o.restaurant_id.toString()) ?? null,
+        restaurant_name: o.restaurant_id
+          ? restaurantMap.get(o.restaurant_id.toString()) ?? null
+          : 'Campus extras',
         order_status: o.order_status,
         payment_status: o.payment_status,
         total_amount: o.total_amount,

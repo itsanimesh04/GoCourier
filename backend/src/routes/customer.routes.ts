@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from 'express';
 import { uploadController } from '../controllers/admin/upload.controller';
 import { cartController } from '../controllers/customer/cart.controller';
 import { customerCampusController } from '../controllers/customer/campus.controller';
+import { customerCatalogController } from '../controllers/customer/catalog.controller';
 import { customerOrderController } from '../controllers/customer/order.controller';
 import { customerRestaurantController } from '../controllers/customer/restaurant.controller';
 import { authenticate } from '../middleware/authenticate';
@@ -12,6 +13,7 @@ import { idParamsSchema } from '../validators/common.validators';
 import {
   createCartSchema,
   createOrderSchema,
+  listExtrasSchema,
   listOrdersSchema,
   listRestaurantsSchema,
   restaurantIdSchema,
@@ -22,15 +24,29 @@ export const customerRouter = Router();
 
 const studentOnly: RequestHandler[] = [authenticate, authorizeRole('student')];
 
-customerRouter.get('/campuses', ...studentOnly, customerCampusController.list);
-customerRouter.post('/me/campus', ...studentOnly, validateRequest(setCampusSchema), customerCampusController.setDefault);
-customerRouter.get('/restaurants', ...studentOnly, validateRequest(listRestaurantsSchema), customerRestaurantController.list);
+customerRouter.get('/campuses', customerCampusController.list);
+customerRouter.get('/banners', customerCatalogController.banners);
+customerRouter.get('/categories', customerCatalogController.categories);
+customerRouter.get('/config', customerCatalogController.config);
+customerRouter.get(
+  '/extras-products',
+  validateRequest(listExtrasSchema),
+  customerCatalogController.extras
+);
+customerRouter.get('/restaurants', validateRequest(listRestaurantsSchema), customerRestaurantController.list);
+customerRouter.get(
+  '/restaurants/:id',
+  validateRequest(restaurantIdSchema),
+  customerRestaurantController.getById
+);
 customerRouter.get(
   '/restaurants/:id/menu',
-  ...studentOnly,
   validateRequest(restaurantIdSchema),
   customerRestaurantController.menu
 );
+customerRouter.get('/menu-items/:id', validateRequest(idParamsSchema), customerRestaurantController.menuItem);
+
+customerRouter.post('/me/campus', ...studentOnly, validateRequest(setCampusSchema), customerCampusController.setDefault);
 customerRouter.post('/cart', ...studentOnly, validateRequest(createCartSchema), cartController.create);
 customerRouter.get('/cart', ...studentOnly, cartController.get);
 customerRouter.get('/orders', ...studentOnly, validateRequest(listOrdersSchema), customerOrderController.list);

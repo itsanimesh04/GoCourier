@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
 import AddonPicker from '../../../components/AddonPicker';
 import QtyStepper from '../../../components/QtyStepper';
-import { getAddonsForMenuItem } from '../../../data/foodAddons';
 import { lineUnitTotal } from '../../../data/selectors';
-import { useAppDispatch } from '../../../store';
+import { useAppDispatch, useAppSelector } from '../../../store';
+import { selectMenuItems } from '../../../store/slices/catalogSlice';
 import { removeItem, setItemAddons, updateQty } from '../../../store/slices/cartSlice';
 import type { CartLineItem as CartLine } from '../../../utils/types';
 
@@ -14,9 +14,12 @@ interface CartLineItemProps {
 
 const CartLineItem = ({ item }: CartLineItemProps) => {
   const dispatch = useAppDispatch();
+  const menuItems = useAppSelector(selectMenuItems);
   const [editingAddons, setEditingAddons] = useState(false);
   const unit = lineUnitTotal(item.unitPrice, item.selectedAddons);
-  const addons = item.menuItemId ? getAddonsForMenuItem(item.menuItemId) : [];
+  const addons = item.menuItemId
+    ? menuItems.find((m) => m.id === item.menuItemId)?.addons ?? []
+    : [];
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 sm:flex-row">

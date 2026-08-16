@@ -2,17 +2,36 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthField from './components/Auth/AuthField';
 import AuthShell from './components/Auth/AuthShell';
+import { useAppDispatch, useAppSelector } from '../store';
+import { selectAuthError, signupUser } from '../store/slices/authSlice';
+import { fetchCart } from '../store/slices/cartSlice';
 
 const SignupPage = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const error = useAppSelector(selectAuthError);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/profile');
+    setSubmitting(true);
+    const result = await dispatch(
+      signupUser({
+        name,
+        password,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+      })
+    );
+    setSubmitting(false);
+    if (signupUser.fulfilled.match(result)) {
+      await dispatch(fetchCart());
+      navigate('/', { replace: true });
+    }
   };
 
   return (
@@ -52,7 +71,7 @@ const SignupPage = () => {
           type="tel"
           value={phone}
           onChange={setPhone}
-          placeholder="+91 98765 43210"
+          placeholder="9876543210"
           autoComplete="tel"
         />
         <AuthField
@@ -64,11 +83,13 @@ const SignupPage = () => {
           placeholder="••••••••"
           autoComplete="new-password"
         />
+        {error && <p className="font-sans text-sm text-red-400">{error}</p>}
         <button
           type="submit"
-          className="mt-2 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase tracking-wide text-on-primary transition-opacity hover:opacity-90"
+          disabled={submitting}
+          className="mt-2 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold uppercase tracking-wide text-on-primary transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          Create Account
+          {submitting ? 'Creating…' : 'Create Account'}
         </button>
       </form>
     </AuthShell>

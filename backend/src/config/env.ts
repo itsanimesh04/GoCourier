@@ -19,6 +19,9 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().min(16).optional().default('cookie-secret-dev-min-16-chars'),
   COOKIE_SECURE: z.coerce.boolean().optional().default(false),
   COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).optional().default('lax'),
+  CORS_ORIGINS: z.string().optional(),
+  CLIENT_ORIGIN: z.string().url().optional().default('http://localhost:5173'),
+  ADMIN_ORIGIN: z.string().url().optional().default('http://localhost:5174'),
   AWS_ACCESS_KEY_ID: z.string().min(1).optional(),
   AWS_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   AWS_REGION: z.string().min(1).default('ap-south-1'),
@@ -53,3 +56,17 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+const DEFAULT_CORS_ORIGINS = [
+  'https://admin.gocourierservice.com',
+  'https://gocourierservice.com'
+];
+
+export function corsOrigins(): string[] {
+  const fromCsv = (env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return [...new Set([...fromCsv, env.CLIENT_ORIGIN, env.ADMIN_ORIGIN, ...DEFAULT_CORS_ORIGINS])];
+}

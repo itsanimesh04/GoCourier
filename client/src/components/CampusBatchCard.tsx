@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../store';
+import { selectCampuses } from '../store/slices/catalogSlice';
 import { selectSelectedCampusId } from '../store/slices/uiSlice';
 import {
   formatClockLabel,
@@ -11,7 +12,8 @@ import { useTimerAccent } from '../utils/timerAccent';
 
 const CampusBatchCard = () => {
   const campusId = useAppSelector(selectSelectedCampusId);
-  const campus = getCampusById(campusId);
+  const campuses = useAppSelector(selectCampuses);
+  const campus = getCampusById(campuses, campusId);
   const { textClass, bgClass, pingClass } = useTimerAccent();
   const [now, setNow] = useState(() => Date.now());
 
@@ -19,6 +21,8 @@ const CampusBatchCard = () => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  if (!campus) return null;
 
   const cutoff = getNextCutoffDate(campus.cutoffTime, new Date(now));
   const remaining = cutoff.getTime() - now;
