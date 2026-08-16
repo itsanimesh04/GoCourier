@@ -86,7 +86,7 @@ jobs:
               apps: [
                 {
                   name: "backend",
-                  script: "dist/index.js",
+                  script: "dist/server.js",
                   cwd: "/home/ubuntu/gocourier/backend",
                   env_file: ".env",
                   exec_mode: "fork",
