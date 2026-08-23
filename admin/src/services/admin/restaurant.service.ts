@@ -2,7 +2,7 @@ import adminApi from "../../apis/adminApi";
 import type { Restaurant } from "../../types/admin.types";
 
 class RestaurantService {
-  list(params?: { campus_id?: string; search?: string; is_active?: boolean }) {
+  list(params?: { search?: string; is_active?: boolean }) {
     return adminApi.get<{ success: boolean; data: Restaurant[] }>("/restaurants", { params });
   }
 

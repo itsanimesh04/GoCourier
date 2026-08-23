@@ -4,10 +4,7 @@ import { asyncHandler } from '../../utils/asyncHandler';
 
 export const customerRestaurantController = {
   list: asyncHandler(async (req, res) => {
-    const restaurants = await customerRestaurantService.list(
-      req.query.campus_id as string,
-      req.query.q as string | undefined
-    );
+    const restaurants = await customerRestaurantService.list(req.query.q as string | undefined);
     return sendSuccess(res, restaurants);
   }),
 

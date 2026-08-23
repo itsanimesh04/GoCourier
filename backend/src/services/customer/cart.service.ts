@@ -263,7 +263,7 @@ export const cartService = {
     const restaurantId = data.restaurant_id ?? null;
 
     if (restaurantId) {
-      const restaurant = await restaurantRepository.findActiveByIdForCampus(restaurantId, campusId);
+      const restaurant = await restaurantRepository.findActiveById(restaurantId);
       if (!restaurant) {
         throw new NotFoundError('Restaurant not found');
       }

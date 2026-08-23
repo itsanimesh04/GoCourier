@@ -5,20 +5,12 @@ import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import ImageUpload from "@/components/ImageUpload";
 import restaurantService from "@/services/admin/restaurant.service";
-import campusService from "@/services/admin/campus.service";
-import type { Campus, Restaurant } from "@/types/admin.types";
+import type { Restaurant } from "@/types/admin.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -28,70 +20,48 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const emptyForm = {
+  name: "",
+  cuisine: "",
+  rating: 4.2,
+  address: "",
+  distance_km: 1,
+  eta_minutes: 30,
+  tags: "",
+  image_url: null as string | null,
+  image_key: null as string | null,
+  open_time: "10:00",
+  close_time: "22:00",
+  is_open: true,
+  is_active: true,
+  commission_rate: "0.00",
+};
+
 const Restaurants = () => {
   const [items, setItems] = useState<Restaurant[]>([]);
-  const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [campusFilter, setCampusFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Restaurant | null>(null);
-  const [form, setForm] = useState({
-    campus_id: "",
-    name: "",
-    cuisine: "",
-    rating: 4.2,
-    address: "",
-    distance_km: 1,
-    eta_minutes: 30,
-    tags: "",
-    image_url: null as string | null,
-    image_key: null as string | null,
-    open_time: "10:00",
-    close_time: "22:00",
-    is_open: true,
-    is_active: true,
-    commission_rate: "0.00",
-  });
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [r, c] = await Promise.all([
-      restaurantService.list(campusFilter !== "all" ? { campus_id: campusFilter } : undefined),
-      campusService.list(),
-    ]);
+    const r = await restaurantService.list();
     setItems(r.data.data);
-    setCampuses(c.data.data);
   };
 
   useEffect(() => {
     load().catch(() => undefined);
-  }, [campusFilter]);
+  }, []);
 
   const openCreate = () => {
     setEditing(null);
-    setForm({
-      campus_id: campuses[0]?.id ?? "",
-      name: "",
-      cuisine: "",
-      rating: 4.2,
-      address: "",
-      distance_km: 1,
-      eta_minutes: 30,
-      tags: "",
-      image_url: null,
-      image_key: null,
-      open_time: "10:00",
-      close_time: "22:00",
-      is_open: true,
-      is_active: true,
-      commission_rate: "0.00",
-    });
+    setForm(emptyForm);
     setOpen(true);
   };
 
   const openEdit = (r: Restaurant) => {
     setEditing(r);
     setForm({
-      campus_id: r.campus_id,
       name: r.name,
       cuisine: r.cuisine,
       rating: r.rating,
@@ -111,6 +81,10 @@ const Restaurants = () => {
   };
 
   const save = async () => {
+    if (!form.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -135,35 +109,17 @@ const Restaurants = () => {
     }
   };
 
-  const campusName = (id: string) => campuses.find((c) => c.id === id)?.name ?? id.slice(-6);
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Restaurants"
-        subtitle="Campus-linked restaurant catalog"
+        subtitle="Restaurant catalog"
         actions={
           <Button onClick={openCreate}>
             <Plus className="size-4" /> Add restaurant
           </Button>
         }
       />
-
-      <div className="max-w-xs">
-        <Select value={campusFilter} onValueChange={setCampusFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Filter campus" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All campuses</SelectItem>
-            {campuses.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
       <Card>
         <CardContent className="px-0 pt-0">
@@ -172,7 +128,6 @@ const Restaurants = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Campus</TableHead>
                   <TableHead className="hidden sm:table-cell">Cuisine</TableHead>
                   <TableHead>Open</TableHead>
                   <TableHead>Status</TableHead>
@@ -183,7 +138,6 @@ const Restaurants = () => {
                 {items.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{campusName(r.campus_id)}</TableCell>
                     <TableCell className="hidden sm:table-cell">{r.cuisine || "—"}</TableCell>
                     <TableCell>
                       <Badge variant={r.is_open ? "secondary" : "outline"}>
@@ -226,24 +180,6 @@ const Restaurants = () => {
               }
             />
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label>Campus</Label>
-            <Select
-              value={form.campus_id || undefined}
-              onValueChange={(v) => setForm((f) => ({ ...f, campus_id: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select campus" />
-              </SelectTrigger>
-              <SelectContent>
-                {campuses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           {(
             [
               ["name", "Name"],
@@ -283,7 +219,7 @@ const Restaurants = () => {
           <Button
             className="sm:col-span-2"
             onClick={() => void save()}
-            disabled={saving || !form.campus_id}
+            disabled={saving || !form.name.trim()}
           >
             {saving ? "Saving…" : "Save"}
           </Button>

@@ -49,7 +49,6 @@ export const setCampusSchema = z.object({
 export const listRestaurantsSchema = z.object({
   query: z
     .object({
-      campus_id: objectIdParam,
       q: z
         .string()
         .trim()

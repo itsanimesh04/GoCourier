@@ -7,8 +7,8 @@ class CatalogService {
     return (res.data.data as Parameters<typeof mapCampus>[0][]).map(mapCampus);
   }
 
-  async restaurants(campusId: string, q?: string) {
-    const res = await clientApi.get('/restaurants', { params: { campus_id: campusId, q } });
+  async restaurants(q?: string) {
+    const res = await clientApi.get('/restaurants', { params: q ? { q } : undefined });
     return (res.data.data as Parameters<typeof mapRestaurant>[0][]).map(mapRestaurant);
   }
 

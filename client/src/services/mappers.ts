@@ -29,7 +29,7 @@ export function mapCampus(row: {
 
 export function mapRestaurant(row: {
   id: string;
-  campus_id: string;
+  campus_id?: string | null;
   name: string;
   cuisine?: string;
   rating?: number;
@@ -44,7 +44,7 @@ export function mapRestaurant(row: {
 }): Restaurant {
   return {
     id: row.id,
-    campusId: row.campus_id,
+    campusId: row.campus_id ?? null,
     name: row.name,
     cuisine: row.cuisine ?? '',
     rating: row.rating ?? 0,

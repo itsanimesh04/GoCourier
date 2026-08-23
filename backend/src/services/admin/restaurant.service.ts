@@ -1,4 +1,3 @@
-import { Campus } from '../../models/campus.model';
 import { Restaurant } from '../../models/restaurant.model';
 import { NotFoundError } from '../../utils/errors';
 import { s3Service } from '../storage/s3.service';
@@ -6,7 +5,7 @@ import { s3Service } from '../storage/s3.service';
 function mapRestaurant(doc: InstanceType<typeof Restaurant>) {
   return {
     id: doc._id.toString(),
-    campus_id: doc.campus_id.toString(),
+    campus_id: doc.campus_id?.toString() ?? null,
     name: doc.name,
     cuisine: doc.cuisine,
     rating: doc.rating,
@@ -28,15 +27,9 @@ function mapRestaurant(doc: InstanceType<typeof Restaurant>) {
   };
 }
 
-async function ensureCampusExists(campusId: string) {
-  const campus = await Campus.findById(campusId);
-  if (!campus) throw new NotFoundError('Campus not found');
-}
-
 export class RestaurantService {
-  async list(query: { campus_id?: string; is_active?: boolean; search?: string } = {}) {
+  async list(query: { is_active?: boolean; search?: string } = {}) {
     const filter: Record<string, unknown> = {};
-    if (query.campus_id) filter.campus_id = query.campus_id;
     if (query.is_active !== undefined) filter.is_active = query.is_active;
     if (query.search) filter.name = { $regex: query.search, $options: 'i' };
     const docs = await Restaurant.find(filter).sort({ manual_priority: -1, name: 1 }).exec();
@@ -50,7 +43,6 @@ export class RestaurantService {
   }
 
   async create(data: {
-    campus_id: string;
     name: string;
     cuisine?: string;
     rating?: number;
@@ -68,9 +60,8 @@ export class RestaurantService {
     manual_priority?: number;
     refund_risk_penalty?: string;
   }) {
-    await ensureCampusExists(data.campus_id);
     const doc = await Restaurant.create({
-      campus_id: data.campus_id,
+      campus_id: null,
       name: data.name,
       cuisine: data.cuisine ?? '',
       rating: data.rating ?? 0,
@@ -94,7 +85,6 @@ export class RestaurantService {
   async update(
     id: string,
     data: Partial<{
-      campus_id: string;
       name: string;
       cuisine: string;
       rating: number;
@@ -113,7 +103,6 @@ export class RestaurantService {
       refund_risk_penalty: string;
     }>
   ) {
-    if (data.campus_id) await ensureCampusExists(data.campus_id);
     const existing = await Restaurant.findById(id).exec();
     if (!existing) throw new NotFoundError('Restaurant not found');
 

@@ -12,7 +12,7 @@ export interface Campus {
 
 export interface Restaurant {
   id: string;
-  campus_id: string;
+  campus_id: string | null;
   name: string;
   cuisine: string;
   rating: number;

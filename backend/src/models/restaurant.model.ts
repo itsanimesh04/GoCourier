@@ -2,7 +2,7 @@ import mongoose, { Schema, model, models } from 'mongoose';
 
 export interface IRestaurant {
   _id: mongoose.Types.ObjectId;
-  campus_id: mongoose.Types.ObjectId;
+  campus_id: mongoose.Types.ObjectId | null;
   name: string;
   cuisine: string;
   rating: number;
@@ -24,7 +24,7 @@ export interface IRestaurant {
 }
 
 const restaurantSchema = new Schema<IRestaurant>({
-  campus_id: { type: Schema.Types.ObjectId, ref: 'Campus', required: true, index: true },
+  campus_id: { type: Schema.Types.ObjectId, ref: 'Campus', default: null, index: true },
   name: { type: String, required: true },
   cuisine: { type: String, default: '' },
   rating: { type: Number, default: 0 },

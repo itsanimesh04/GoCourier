@@ -3,13 +3,12 @@ import { Category } from '../../models/category.model';
 import { FoodAddon } from '../../models/food-addon.model';
 import { MenuItem } from '../../models/menu-item.model';
 import { Restaurant } from '../../models/restaurant.model';
-import { campusRepository } from '../../repositories/campus.repository';
 import { NotFoundError } from '../../utils/errors';
 
 function mapRestaurant(doc: InstanceType<typeof Restaurant>) {
   return {
     id: doc._id.toString(),
-    campus_id: doc.campus_id.toString(),
+    campus_id: doc.campus_id?.toString() ?? null,
     name: doc.name,
     cuisine: doc.cuisine,
     rating: doc.rating,
@@ -27,15 +26,9 @@ function mapRestaurant(doc: InstanceType<typeof Restaurant>) {
 }
 
 export const customerRestaurantService = {
-  async list(campusId: string, query?: string) {
-    const campus = await campusRepository.findActiveById(campusId);
-
-    if (!campus) {
-      throw new NotFoundError('Campus not found');
-    }
-
+  async list(query?: string) {
     const trimmed = query?.trim();
-    const filter: Record<string, unknown> = { campus_id: campusId, is_active: true };
+    const filter: Record<string, unknown> = { is_active: true };
 
     if (trimmed) {
       const pattern = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

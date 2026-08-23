@@ -7,7 +7,6 @@ export const restaurantController = {
     const isActive =
       req.query.is_active === undefined ? undefined : req.query.is_active === 'true';
     const data = await restaurantService.list({
-      campus_id: typeof req.query.campus_id === 'string' ? req.query.campus_id : undefined,
       is_active: isActive,
       search: typeof req.query.search === 'string' ? req.query.search : undefined
     });

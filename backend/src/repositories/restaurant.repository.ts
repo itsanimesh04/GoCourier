@@ -3,7 +3,7 @@ import { MenuItem } from '../models/menu-item.model';
 
 export interface RestaurantRow {
   id: string;
-  campus_id: string;
+  campus_id: string | null;
   name: string;
   is_active: boolean;
   commission_rate: string;
@@ -14,7 +14,7 @@ export interface RestaurantRow {
 
 export interface CustomerRestaurantRow {
   id: string;
-  campus_id: string;
+  campus_id: string | null;
   name: string;
   is_active: boolean;
   manual_priority: number;
@@ -25,7 +25,7 @@ export interface CustomerRestaurantRow {
 function toRestaurantRow(doc: IRestaurant): RestaurantRow {
   return {
     id: doc._id.toString(),
-    campus_id: doc.campus_id.toString(),
+    campus_id: doc.campus_id?.toString() ?? null,
     name: doc.name,
     is_active: doc.is_active,
     commission_rate: doc.commission_rate,
@@ -41,19 +41,19 @@ export const restaurantRepository = {
     return doc ? toRestaurantRow(doc) : null;
   },
 
-  async findActiveByIdForCampus(id: string, campusId: string): Promise<RestaurantRow | null> {
-    const doc = await Restaurant.findOne({ _id: id, campus_id: campusId, is_active: true }).exec();
+  async findActiveById(id: string): Promise<RestaurantRow | null> {
+    const doc = await Restaurant.findOne({ _id: id, is_active: true }).exec();
     return doc ? toRestaurantRow(doc) : null;
   },
 
-  async listActiveByCampus(campusId: string, query?: string): Promise<CustomerRestaurantRow[]> {
+  async listActive(query?: string): Promise<CustomerRestaurantRow[]> {
     const trimmedQuery = query?.trim();
 
     if (!trimmedQuery) {
-      const docs = await Restaurant.find({ campus_id: campusId, is_active: true }).sort({ name: 1 }).exec();
+      const docs = await Restaurant.find({ is_active: true }).sort({ name: 1 }).exec();
       return docs.map(doc => ({
         id: doc._id.toString(),
-        campus_id: doc.campus_id.toString(),
+        campus_id: doc.campus_id?.toString() ?? null,
         name: doc.name,
         is_active: doc.is_active,
         manual_priority: doc.manual_priority,
@@ -62,11 +62,9 @@ export const restaurantRepository = {
       }));
     }
 
-    // For search, we need to check if query matches restaurant name or menu item name
-    const pattern = trimmedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special chars
-    
+    const pattern = trimmedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const docs = await Restaurant.find({
-      campus_id: campusId,
       is_active: true,
       $or: [
         { name: { $regex: pattern, $options: 'i' } },
@@ -76,7 +74,7 @@ export const restaurantRepository = {
 
     return docs.map(doc => ({
       id: doc._id.toString(),
-      campus_id: doc.campus_id.toString(),
+      campus_id: doc.campus_id?.toString() ?? null,
       name: doc.name,
       is_active: doc.is_active,
       manual_priority: doc.manual_priority,
@@ -87,7 +85,7 @@ export const restaurantRepository = {
 
   async create(data: Partial<RestaurantRow>): Promise<RestaurantRow> {
     const doc = await Restaurant.create({
-      campus_id: data.campus_id,
+      campus_id: data.campus_id ?? null,
       name: data.name,
       is_active: data.is_active ?? true,
       commission_rate: data.commission_rate ?? '0.00',

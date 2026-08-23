@@ -25,26 +25,20 @@ const initialState: CatalogState = {
 };
 
 export const loadCatalog = createAsyncThunk('catalog/load', async (campusId: string | undefined) => {
-  const [campuses, banners, categories, config] = await Promise.all([
+  const [campuses, banners, categories, config, restaurants] = await Promise.all([
     catalogService.campuses(),
     catalogService.banners(),
     catalogService.categories(),
     catalogService.config(),
+    catalogService.restaurants(),
   ]);
 
   const selected = campusId && campuses.some((c) => c.id === campusId) ? campusId : campuses[0]?.id;
-  let restaurants: Restaurant[] = [];
-  let extras: ExtraProduct[] = [];
-  let menuItems: MenuItem[] = [];
-
-  if (selected) {
-    [restaurants, extras] = await Promise.all([
-      catalogService.restaurants(selected),
-      catalogService.extras(selected),
-    ]);
-    const menus = await Promise.all(restaurants.map((r) => catalogService.menu(r.id).catch(() => ({ items: [] as MenuItem[] }))));
-    menuItems = menus.flatMap((menu) => menu.items);
-  }
+  const extras = selected ? await catalogService.extras(selected) : [];
+  const menus = await Promise.all(
+    restaurants.map((r) => catalogService.menu(r.id).catch(() => ({ items: [] as MenuItem[] })))
+  );
+  const menuItems = menus.flatMap((menu) => menu.items);
 
   return {
     campuses,

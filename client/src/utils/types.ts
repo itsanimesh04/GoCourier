@@ -24,7 +24,7 @@ export interface Campus {
 
 export interface Restaurant {
   id: string;
-  campusId: string;
+  campusId: string | null;
   name: string;
   cuisine: string;
   rating: number;

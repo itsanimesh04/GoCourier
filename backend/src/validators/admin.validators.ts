@@ -20,7 +20,6 @@ const campusUpdateBody = campusCreateBody.partial().refine((value) => Object.key
 
 const restaurantCreateBody = z
   .object({
-    campus_id: objectIdParam,
     name: z.string().trim().min(1),
     cuisine: z.string().optional(),
     rating: z.number().min(0).max(5).optional(),
