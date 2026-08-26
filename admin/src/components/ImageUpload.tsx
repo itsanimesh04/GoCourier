@@ -2,15 +2,31 @@ import { useState } from "react";
 import { Trash2, Upload } from "lucide-react";
 import uploadService from "@/services/admin/upload.service";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
   folder: string;
   imageUrl?: string | null;
   imageKey?: string | null;
   onChange: (next: { url: string | null; key: string | null }) => void;
+  /** Client cards use 4/3; product detail / addon thumbs use square */
+  aspect?: "4/3" | "square";
+  className?: string;
 }
 
-const ImageUpload = ({ folder, imageUrl, imageKey, onChange }: ImageUploadProps) => {
+const aspectClass: Record<"4/3" | "square", string> = {
+  "4/3": "aspect-[4/3]",
+  square: "aspect-square",
+};
+
+const ImageUpload = ({
+  folder,
+  imageUrl,
+  imageKey,
+  onChange,
+  aspect = "4/3",
+  className,
+}: ImageUploadProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,9 +63,14 @@ const ImageUpload = ({ folder, imageUrl, imageKey, onChange }: ImageUploadProps)
   };
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", className)}>
       {imageUrl ? (
-        <div className="relative h-36 w-full overflow-hidden rounded-xl border border-border">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded-xl border border-border",
+            aspectClass[aspect]
+          )}
+        >
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
           <Button
             type="button"
@@ -63,7 +84,12 @@ const ImageUpload = ({ folder, imageUrl, imageKey, onChange }: ImageUploadProps)
           </Button>
         </div>
       ) : (
-        <label className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border transition-colors hover:bg-accent/40">
+        <label
+          className={cn(
+            "flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border transition-colors hover:bg-accent/40",
+            aspectClass[aspect]
+          )}
+        >
           <Upload className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
             {loading ? "Uploading…" : "Upload image"}

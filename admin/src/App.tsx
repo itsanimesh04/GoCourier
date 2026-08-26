@@ -8,6 +8,7 @@ import Campuses from "./pages/Campuses";
 import Restaurants from "./pages/Restaurants";
 import MenuItems from "./pages/MenuItems";
 import Categories from "./pages/Categories";
+import Addons from "./pages/Addons";
 import Extras from "./pages/Extras";
 import Banners from "./pages/Banners";
 import Orders from "./pages/Orders";
@@ -28,6 +29,7 @@ function App() {
             <Route path="/restaurants" element={<Restaurants />} />
             <Route path="/menu-items" element={<MenuItems />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/addons" element={<Addons />} />
             <Route path="/extras" element={<Extras />} />
             <Route path="/banners" element={<Banners />} />
             <Route path="/orders" element={<Orders />} />

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import ImageUpload from "@/components/ImageUpload";
 import menuItemService from "@/services/admin/menuItem.service";
-import addonService, { type Addon } from "@/services/admin/addon.service";
+import addonService, { type AddonGroup } from "@/services/admin/addon.service";
 import restaurantService from "@/services/admin/restaurant.service";
 import categoryService from "@/services/admin/category.service";
 import type { Category, MenuItem, Restaurant } from "@/types/admin.types";
@@ -35,8 +35,9 @@ const MenuItems = () => {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [addons, setAddons] = useState<Addon[]>([]);
+  const [addonGroups, setAddonGroups] = useState<AddonGroup[]>([]);
   const [restaurantFilter, setRestaurantFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [form, setForm] = useState({
@@ -52,7 +53,7 @@ const MenuItems = () => {
     sort_order: 0,
     image_url: null as string | null,
     image_key: null as string | null,
-    addon_ids: [] as string[],
+    addon_group_ids: [] as string[],
   });
   const [saving, setSaving] = useState(false);
 
@@ -63,12 +64,12 @@ const MenuItems = () => {
       ),
       restaurantService.list(),
       categoryService.list(),
-      addonService.list(),
+      addonService.listGroups(),
     ]);
     setItems(m.data.data);
     setRestaurants(r.data.data);
     setCategories(c.data.data);
-    setAddons(a.data.data);
+    setAddonGroups(a.data.data);
   };
 
   useEffect(() => {
@@ -90,7 +91,7 @@ const MenuItems = () => {
       sort_order: 0,
       image_url: null,
       image_key: null,
-      addon_ids: [],
+      addon_group_ids: [],
     });
     setOpen(true);
   };
@@ -110,7 +111,7 @@ const MenuItems = () => {
       sort_order: item.sort_order,
       image_url: item.image_url,
       image_key: item.image_key,
-      addon_ids: item.addon_ids ?? [],
+      addon_group_ids: item.addon_group_ids ?? [],
     });
     setOpen(true);
   };
@@ -130,7 +131,7 @@ const MenuItems = () => {
         sort_order: Number(form.sort_order) || 0,
         image_url: form.image_url,
         image_key: form.image_key,
-        addon_ids: form.addon_ids,
+        addon_group_ids: form.addon_group_ids,
       };
       if (editing) {
         await menuItemService.update(editing.id, {
@@ -153,6 +154,16 @@ const MenuItems = () => {
   const restaurantName = (id: string) =>
     restaurants.find((r) => r.id === id)?.name ?? id.slice(-6);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        restaurantName(item.restaurant_id).toLowerCase().includes(q)
+    );
+  }, [items, search, restaurants]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -165,20 +176,29 @@ const MenuItems = () => {
         }
       />
 
-      <div className="max-w-xs">
-        <Select value={restaurantFilter} onValueChange={setRestaurantFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Filter restaurant" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All restaurants</SelectItem>
-            {restaurants.map((r) => (
-              <SelectItem key={r.id} value={r.id}>
-                {r.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap gap-3">
+        <div className="w-full max-w-xs">
+          <Select value={restaurantFilter} onValueChange={setRestaurantFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter restaurant" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All restaurants</SelectItem>
+              {restaurants.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full max-w-xs">
+          <Input
+            placeholder="Search food…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       <Card>
@@ -187,6 +207,7 @@ const MenuItems = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-14" />
                   <TableHead>Name</TableHead>
                   <TableHead className="hidden sm:table-cell">Restaurant</TableHead>
                   <TableHead>Price</TableHead>
@@ -196,8 +217,21 @@ const MenuItems = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {filtered.map((item) => (
                   <TableRow key={item.id}>
+                    <TableCell>
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt=""
+                          className="h-10 w-12 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-12 items-center justify-center rounded-md bg-muted text-[10px] text-muted-foreground">
+                          —
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {restaurantName(item.restaurant_id)}
@@ -234,6 +268,7 @@ const MenuItems = () => {
           <div className="sm:col-span-2">
             <ImageUpload
               folder="menu-items"
+              aspect="4/3"
               imageUrl={form.image_url}
               imageKey={form.image_key}
               onChange={({ url, key }) =>
@@ -334,30 +369,36 @@ const MenuItems = () => {
             Available
           </label>
           <div className="sm:col-span-2 space-y-2">
-            <Label>Add-ons</Label>
+            <Label>Addon groups</Label>
             <div className="flex flex-wrap gap-2">
-              {addons.map((addon) => {
-                const checked = form.addon_ids.includes(addon.id);
+              {addonGroups.map((group) => {
+                const checked = form.addon_group_ids.includes(group.id);
+                const count = group.subgroups.reduce((n, s) => n + s.addons.length, 0);
                 return (
-                  <label key={addon.id} className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs">
+                  <label
+                    key={group.id}
+                    className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs"
+                  >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() =>
                         setForm((f) => ({
                           ...f,
-                          addon_ids: checked
-                            ? f.addon_ids.filter((id) => id !== addon.id)
-                            : [...f.addon_ids, addon.id],
+                          addon_group_ids: checked
+                            ? f.addon_group_ids.filter((id) => id !== group.id)
+                            : [...f.addon_group_ids, group.id],
                         }))
                       }
                     />
-                    {addon.name} (₹{addon.price})
+                    {group.name} ({count})
                   </label>
                 );
               })}
-              {addons.length === 0 && (
-                <p className="text-xs text-muted-foreground">No add-ons yet. Create them via API or add later.</p>
+              {addonGroups.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No addon groups yet. Create them under Addons.
+                </p>
               )}
             </div>
           </div>

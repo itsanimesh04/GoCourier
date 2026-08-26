@@ -44,6 +44,7 @@ export interface MenuItem {
   is_available: boolean;
   sort_order: number;
   addon_ids: string[];
+  addon_group_ids?: string[];
 }
 
 export interface Category {

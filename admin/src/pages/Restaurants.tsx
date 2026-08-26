@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
@@ -39,6 +39,7 @@ const emptyForm = {
 
 const Restaurants = () => {
   const [items, setItems] = useState<Restaurant[]>([]);
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Restaurant | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -109,6 +110,17 @@ const Restaurants = () => {
     }
   };
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        (r.cuisine ?? "").toLowerCase().includes(q) ||
+        (r.address ?? "").toLowerCase().includes(q)
+    );
+  }, [items, search]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -121,12 +133,21 @@ const Restaurants = () => {
         }
       />
 
+      <div className="max-w-xs">
+        <Input
+          placeholder="Search restaurants…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       <Card>
         <CardContent className="px-0 pt-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-14" />
                   <TableHead>Name</TableHead>
                   <TableHead className="hidden sm:table-cell">Cuisine</TableHead>
                   <TableHead>Open</TableHead>
@@ -135,8 +156,21 @@ const Restaurants = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((r) => (
+                {filtered.map((r) => (
                   <TableRow key={r.id}>
+                    <TableCell>
+                      {r.image_url ? (
+                        <img
+                          src={r.image_url}
+                          alt=""
+                          className="h-10 w-12 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-12 items-center justify-center rounded-md bg-muted text-[10px] text-muted-foreground">
+                          —
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell className="hidden sm:table-cell">{r.cuisine || "—"}</TableCell>
                     <TableCell>
@@ -173,6 +207,7 @@ const Restaurants = () => {
             <Label className="mb-1.5">Image</Label>
             <ImageUpload
               folder="restaurants"
+              aspect="4/3"
               imageUrl={form.image_url}
               imageKey={form.image_key}
               onChange={({ url, key }) =>
