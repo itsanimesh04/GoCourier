@@ -56,7 +56,8 @@ const menuItemCreateBody = z
     image_url: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
     image_key: z.string().nullable().optional(),
     sort_order: z.number().int().optional(),
-    addon_ids: z.array(objectIdParam).optional()
+    addon_ids: z.array(objectIdParam).optional(),
+    addon_group_ids: z.array(objectIdParam).optional()
   })
   .strict();
 
@@ -96,6 +97,37 @@ const addonBody = z
     price: decimalString,
     is_veg: z.boolean().nullable().optional(),
     is_active: z.boolean().optional()
+  })
+  .strict();
+
+const nestedAddonBody = z
+  .object({
+    id: objectIdParam.optional(),
+    name: z.string().trim().min(1),
+    price: decimalString,
+    is_veg: z.boolean().nullable().optional(),
+    image_url: imageUrlField,
+    image_key: z.string().nullable().optional(),
+    sort_order: z.number().int().optional(),
+    is_active: z.boolean().optional()
+  })
+  .strict();
+
+const nestedSubGroupBody = z
+  .object({
+    id: objectIdParam.optional(),
+    name: z.string().optional(),
+    sort_order: z.number().int().optional(),
+    addons: z.array(nestedAddonBody).optional()
+  })
+  .strict();
+
+const addonGroupBody = z
+  .object({
+    name: z.string().trim().min(1),
+    is_active: z.boolean().optional(),
+    sort_order: z.number().int().optional(),
+    subgroups: z.array(nestedSubGroupBody).optional()
   })
   .strict();
 
@@ -162,6 +194,15 @@ export const updateAddonSchema = z.object({
     message: 'At least one field is required'
   })
 });
+
+export const createAddonGroupSchema = z.object({ body: addonGroupBody });
+export const updateAddonGroupSchema = z.object({
+  params: z.object({ id: objectIdParam }),
+  body: addonGroupBody.partial().refine((v) => Object.keys(v).length > 0, {
+    message: 'At least one field is required'
+  })
+});
+export const addonGroupIdSchema = z.object({ params: z.object({ id: objectIdParam }) });
 
 export const updateUserSchema = z.object({
   params: z.object({ id: objectIdParam }),

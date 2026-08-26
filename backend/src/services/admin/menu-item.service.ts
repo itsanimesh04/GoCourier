@@ -20,6 +20,7 @@ function mapMenuItem(doc: InstanceType<typeof MenuItem>) {
     is_available: doc.is_available,
     sort_order: doc.sort_order,
     addon_ids: (doc.addon_ids ?? []).map((id: { toString(): string }) => id.toString()),
+    addon_group_ids: (doc.addon_group_ids ?? []).map((id: { toString(): string }) => id.toString()),
     created_at: doc.created_at,
     updated_at: doc.updated_at
   };
@@ -67,6 +68,7 @@ export class MenuItemService {
       image_key?: string | null;
       sort_order?: number;
       addon_ids?: string[];
+      addon_group_ids?: string[];
     }
   ) {
     await ensureRestaurantExists(restaurantId);
@@ -83,7 +85,8 @@ export class MenuItemService {
       image_url: data.image_url ?? null,
       image_key: data.image_key ?? null,
       sort_order: data.sort_order ?? 0,
-      addon_ids: data.addon_ids ?? []
+      addon_ids: data.addon_ids ?? [],
+      addon_group_ids: data.addon_group_ids ?? []
     });
     return mapMenuItem(doc);
   }
@@ -103,6 +106,7 @@ export class MenuItemService {
       image_key: string | null;
       sort_order: number;
       addon_ids: string[];
+      addon_group_ids: string[];
       restaurant_id: string;
     }>
   ) {
@@ -135,6 +139,10 @@ export class MenuItemService {
       price: doc.price,
       is_veg: doc.is_veg,
       is_active: doc.is_active,
+      subgroup_id: doc.subgroup_id?.toString() ?? null,
+      image_url: doc.image_url,
+      image_key: doc.image_key,
+      sort_order: doc.sort_order,
       created_at: doc.created_at
     }));
   }

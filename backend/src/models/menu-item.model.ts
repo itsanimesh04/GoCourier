@@ -15,6 +15,7 @@ export interface IMenuItem {
   is_available: boolean;
   sort_order: number;
   addon_ids: mongoose.Types.ObjectId[];
+  addon_group_ids: mongoose.Types.ObjectId[];
   created_at: Date;
   updated_at: Date;
 }
@@ -33,6 +34,7 @@ const menuItemSchema = new Schema<IMenuItem>({
   is_available: { type: Boolean, required: true, default: true },
   sort_order: { type: Number, default: 0 },
   addon_ids: [{ type: Schema.Types.ObjectId, ref: 'FoodAddon' }],
+  addon_group_ids: [{ type: Schema.Types.ObjectId, ref: 'AddonGroup' }],
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

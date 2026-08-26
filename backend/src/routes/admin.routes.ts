@@ -19,9 +19,11 @@ import { validateRequest } from '../middleware/validateRequest';
 import { uploadImage } from '../middleware/upload';
 import {
   adminLoginSchema,
+  addonGroupIdSchema,
   bannerIdSchema,
   campusIdSchema,
   categoryIdSchema,
+  createAddonGroupSchema,
   createAddonSchema,
   createBannerSchema,
   createCampusSchema,
@@ -35,6 +37,7 @@ import {
   orderIdSchema,
   paymentIdSchema,
   restaurantIdSchema,
+  updateAddonGroupSchema,
   updateAddonSchema,
   updateBannerSchema,
   updateCampusSchema,
@@ -47,6 +50,7 @@ import {
   updateUserSchema,
   userIdSchema
 } from '../validators/admin.validators';
+import { addonGroupController } from '../controllers/admin/addon-group.controller';
 
 export const adminRouter = Router();
 
@@ -93,6 +97,24 @@ adminRouter.delete('/menu-items/:id', validateRequest(menuItemIdSchema), menuIte
 adminRouter.get('/addons', menuItemController.listAddons);
 adminRouter.post('/addons', validateRequest(createAddonSchema), menuItemController.createAddon);
 adminRouter.patch('/addons/:id', validateRequest(updateAddonSchema), menuItemController.updateAddon);
+
+adminRouter.get('/addon-groups', addonGroupController.list);
+adminRouter.get('/addon-groups/:id', validateRequest(addonGroupIdSchema), addonGroupController.getById);
+adminRouter.post(
+  '/addon-groups',
+  validateRequest(createAddonGroupSchema),
+  addonGroupController.create
+);
+adminRouter.patch(
+  '/addon-groups/:id',
+  validateRequest(updateAddonGroupSchema),
+  addonGroupController.update
+);
+adminRouter.delete(
+  '/addon-groups/:id',
+  validateRequest(addonGroupIdSchema),
+  addonGroupController.remove
+);
 
 adminRouter.get('/categories', categoryController.list);
 adminRouter.get('/categories/:id', validateRequest(categoryIdSchema), categoryController.getById);

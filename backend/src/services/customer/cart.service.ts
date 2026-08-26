@@ -3,6 +3,10 @@ import { ExtraProduct } from '../../models/extra-product.model';
 import { FoodAddon } from '../../models/food-addon.model';
 import { MenuItem } from '../../models/menu-item.model';
 import { adminConfigService } from '../admin/config.service';
+import {
+  flattenAddonsFromGroups,
+  hydrateAddonGroups
+} from '../admin/addon-group.service';
 import { orderRepository, type CartHeaderRow, type CartItemDetailRow, type OrderItemInsert } from '../../repositories/order.repository';
 import { paymentRepository } from '../../repositories/payment.repository';
 import { restaurantRepository } from '../../repositories/restaurant.repository';
@@ -120,9 +124,22 @@ async function resolveCartItems(
         throw new NotFoundError('Menu item not found');
       }
 
-      const allowedAddonIds = new Set(
-        ((menuItem.addon_ids ?? []) as import('mongoose').Types.ObjectId[]).map((addonId) => addonId.toString())
+      const groupIds = ((menuItem.addon_group_ids ?? []) as import('mongoose').Types.ObjectId[]).map(
+        (id) => id.toString()
       );
+      let allowedAddonIds = new Set<string>();
+
+      if (groupIds.length > 0) {
+        const groups = await hydrateAddonGroups(groupIds, true);
+        allowedAddonIds = new Set(flattenAddonsFromGroups(groups).map((a) => a.id));
+      } else {
+        allowedAddonIds = new Set(
+          ((menuItem.addon_ids ?? []) as import('mongoose').Types.ObjectId[]).map((addonId) =>
+            addonId.toString()
+          )
+        );
+      }
+
       const requestedAddonIds = item.addon_ids ?? [];
       if (requestedAddonIds.some((id) => !allowedAddonIds.has(id))) {
         throw new BadRequestError('Addon is not available for this menu item');

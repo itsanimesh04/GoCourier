@@ -4,6 +4,10 @@ import { FoodAddon } from '../../models/food-addon.model';
 import { MenuItem } from '../../models/menu-item.model';
 import { Restaurant } from '../../models/restaurant.model';
 import { NotFoundError } from '../../utils/errors';
+import {
+  flattenAddonsFromGroups,
+  hydrateAddonGroups
+} from '../admin/addon-group.service';
 
 function mapRestaurant(doc: InstanceType<typeof Restaurant>) {
   return {
@@ -66,36 +70,103 @@ export const customerRestaurantService = {
       .sort({ sort_order: 1, name: 1 })
       .exec();
 
-    const addonIds = [
+    const categoryIds = [
+      ...new Set(items.map((item) => item.category_id?.toString()).filter(Boolean))
+    ] as string[];
+
+    const categories = categoryIds.length
+      ? await Category.find({ _id: { $in: categoryIds } }).exec()
+      : [];
+    const categoryMap = new Map(categories.map((category) => [category._id.toString(), category.name]));
+
+    const allGroupIds = [
       ...new Set(
         items.flatMap((item) =>
-          ((item.addon_ids ?? []) as mongoose.Types.ObjectId[]).map((addonId) => addonId.toString())
+          ((item.addon_group_ids ?? []) as mongoose.Types.ObjectId[]).map((id) => id.toString())
         )
       )
     ];
-    const categoryIds = [...new Set(items.map((item) => item.category_id?.toString()).filter(Boolean))] as string[];
+    const hydratedGroups = await hydrateAddonGroups(allGroupIds, true);
+    const groupById = new Map(hydratedGroups.map((g) => [g.id, g]));
 
-    const [addons, categories] = await Promise.all([
-      addonIds.length ? FoodAddon.find({ _id: { $in: addonIds }, is_active: true }).exec() : [],
-      categoryIds.length ? Category.find({ _id: { $in: categoryIds } }).exec() : []
-    ]);
-
-    const addonMap = new Map(
-      addons.map((addon) => [
+    const legacyAddonIds = [
+      ...new Set(
+        items
+          .filter((item) => !(item.addon_group_ids ?? []).length)
+          .flatMap((item) =>
+            ((item.addon_ids ?? []) as mongoose.Types.ObjectId[]).map((id) => id.toString())
+          )
+      )
+    ];
+    const legacyDocs = legacyAddonIds.length
+      ? await FoodAddon.find({ _id: { $in: legacyAddonIds }, is_active: true }).exec()
+      : [];
+    const legacyMap = new Map(
+      legacyDocs.map((addon) => [
         addon._id.toString(),
         {
           id: addon._id.toString(),
           name: addon.name,
           price: Number(addon.price),
-          is_veg: addon.is_veg
+          is_veg: addon.is_veg,
+          image_url: addon.image_url
         }
       ])
     );
-    const categoryMap = new Map(categories.map((category) => [category._id.toString(), category.name]));
 
-    return {
-      restaurant: mapRestaurant(restaurant),
-      items: items.map((item) => ({
+    const mappedItems = items.map((item) => {
+      const groupIds = ((item.addon_group_ids ?? []) as mongoose.Types.ObjectId[]).map((id) =>
+        id.toString()
+      );
+      let addon_groups: Awaited<ReturnType<typeof hydrateAddonGroups>> = [];
+      let addons: ReturnType<typeof flattenAddonsFromGroups> = [];
+
+      if (groupIds.length > 0) {
+        addon_groups = groupIds
+          .map((id) => groupById.get(id))
+          .filter((g): g is NonNullable<typeof g> => Boolean(g));
+        addons = flattenAddonsFromGroups(addon_groups);
+      } else {
+        const ids = ((item.addon_ids ?? []) as mongoose.Types.ObjectId[]).map((id) =>
+          id.toString()
+        );
+        addons = ids
+          .map((id) => legacyMap.get(id))
+          .filter((a): a is NonNullable<typeof a> => Boolean(a));
+        if (addons.length > 0) {
+          addon_groups = [
+            {
+              id: 'legacy',
+              name: 'Add-ons',
+              is_active: true,
+              sort_order: 0,
+              created_at: new Date(),
+              updated_at: new Date(),
+              subgroups: [
+                {
+                  id: 'legacy-sub',
+                  group_id: 'legacy',
+                  name: '',
+                  sort_order: 0,
+                  addons: addons.map((a) => ({
+                    id: a.id,
+                    subgroup_id: 'legacy-sub',
+                    name: a.name,
+                    price: String(a.price),
+                    is_veg: a.is_veg,
+                    image_url: a.image_url,
+                    image_key: null,
+                    sort_order: 0,
+                    is_active: true
+                  }))
+                }
+              ]
+            }
+          ];
+        }
+      }
+
+      return {
         id: item._id.toString(),
         restaurant_id: item.restaurant_id.toString(),
         category_id: item.category_id?.toString() ?? null,
@@ -108,10 +179,14 @@ export const customerRestaurantService = {
         is_veg: item.is_veg,
         image_url: item.image_url,
         is_available: item.is_available,
-        addons: ((item.addon_ids ?? []) as mongoose.Types.ObjectId[])
-          .map((addonId: mongoose.Types.ObjectId) => addonMap.get(addonId.toString()))
-          .filter((addon): addon is NonNullable<typeof addon> => Boolean(addon))
-      }))
+        addon_groups,
+        addons
+      };
+    });
+
+    return {
+      restaurant: mapRestaurant(restaurant),
+      items: mappedItems
     };
   },
 
