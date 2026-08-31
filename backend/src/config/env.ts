@@ -59,7 +59,8 @@ export const env = parsed.data;
 
 const DEFAULT_CORS_ORIGINS = [
   'https://admin.gocourierservice.com',
-  'https://gocourierservice.com'
+  'https://gocourierservice.com',
+  'https://www.gocourierservice.com'
 ];
 
 export function corsOrigins(): string[] {
