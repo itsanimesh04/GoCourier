@@ -1,11 +1,13 @@
-import { useState } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
-import AddonPicker from '../../../components/AddonPicker';
 import QtyStepper from '../../../components/QtyStepper';
+import {
+  hasCustomizableAddons,
+  useAddonCustomize,
+} from '../../../components/AddonCustomizeSheet';
 import { lineUnitTotal } from '../../../data/selectors';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import { selectMenuItems } from '../../../store/slices/catalogSlice';
-import { removeItem, setItemAddons, updateQty } from '../../../store/slices/cartSlice';
+import { removeItem, updateQty } from '../../../store/slices/cartSlice';
 import type { CartLineItem as CartLine } from '../../../utils/types';
 
 interface CartLineItemProps {
@@ -15,11 +17,12 @@ interface CartLineItemProps {
 const CartLineItem = ({ item }: CartLineItemProps) => {
   const dispatch = useAppDispatch();
   const menuItems = useAppSelector(selectMenuItems);
-  const [editingAddons, setEditingAddons] = useState(false);
+  const { openCustomize } = useAddonCustomize();
   const unit = lineUnitTotal(item.unitPrice, item.selectedAddons);
-  const addons = item.menuItemId
-    ? menuItems.find((m) => m.id === item.menuItemId)?.addons ?? []
-    : [];
+  const menuItem = item.menuItemId
+    ? menuItems.find((m) => m.id === item.menuItemId)
+    : undefined;
+  const canEditAddons = menuItem ? hasCustomizableAddons(menuItem) : false;
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 sm:flex-row">
@@ -42,9 +45,13 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
               <p className="mt-1 font-sans text-xs text-muted sm:text-sm">{item.note}</p>
             )}
             {item.selectedAddons.length > 0 && (
-              <p className="mt-1 font-sans text-sm text-muted">
-                {item.selectedAddons.map((a) => a.name).join(', ')}
-              </p>
+              <ul className="mt-2 space-y-0.5">
+                {item.selectedAddons.map((a) => (
+                  <li key={a.id} className="font-sans text-sm text-muted">
+                    {a.name} · +₹{a.price}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
           <button
@@ -68,28 +75,22 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
           <span className="font-display text-lg font-semibold text-fg sm:text-xl">₹ {unit * item.quantity}</span>
         </div>
 
-        {item.kind === 'food' && addons.length > 0 && (
-          <div>
-            <button
-              type="button"
-              onClick={() => setEditingAddons((v) => !v)}
-              className="font-display text-base font-semibold uppercase text-primary underline-offset-2 hover:underline"
-            >
-              {editingAddons ? 'Hide add-ons' : 'Edit add-ons'}
-            </button>
-            {editingAddons && (
-              <div className="mt-3">
-                <AddonPicker
-                  addons={addons}
-                  selected={item.selectedAddons}
-                  onChange={(next) =>
-                    dispatch(setItemAddons({ cartKey: item.cartKey, selectedAddons: next }))
-                  }
-                />
-              </div>
-            )}
-          </div>
-        )}
+        {item.kind === 'food' && canEditAddons && menuItem ? (
+          <button
+            type="button"
+            onClick={() =>
+              openCustomize({
+                menuItem,
+                mode: 'edit',
+                cartKey: item.cartKey,
+                initialAddons: item.selectedAddons,
+              })
+            }
+            className="self-start font-display text-base font-semibold uppercase text-primary underline-offset-2 hover:underline"
+          >
+            {item.selectedAddons.length > 0 ? 'Edit add-ons' : 'Add add-ons'}
+          </button>
+        ) : null}
       </div>
     </article>
   );

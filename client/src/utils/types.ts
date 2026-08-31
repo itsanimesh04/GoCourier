@@ -51,6 +51,7 @@ export interface MenuItem {
   isAvailable: boolean;
   category?: string;
   addons?: FoodAddon[];
+  addonGroups?: AddonGroup[];
 }
 
 export interface FoodAddon {
@@ -58,6 +59,19 @@ export interface FoodAddon {
   name: string;
   price: number;
   isVeg?: boolean;
+  imageUrl?: string | null;
+}
+
+export interface AddonSubGroup {
+  id: string;
+  name: string;
+  addons: FoodAddon[];
+}
+
+export interface AddonGroup {
+  id: string;
+  name: string;
+  subgroups: AddonSubGroup[];
 }
 
 export interface SelectedAddon {

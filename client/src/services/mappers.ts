@@ -71,8 +71,61 @@ export function mapMenuItem(row: {
   image_url?: string | null;
   is_available?: boolean;
   category?: string | null;
-  addons?: { id: string; name: string; price: number; is_veg?: boolean | null }[];
+  addons?: {
+    id: string;
+    name: string;
+    price: number | string;
+    is_veg?: boolean | null;
+    image_url?: string | null;
+  }[];
+  addon_groups?: {
+    id: string;
+    name: string;
+    subgroups: {
+      id: string;
+      name: string;
+      addons: {
+        id: string;
+        name: string;
+        price: number | string;
+        is_veg?: boolean | null;
+        image_url?: string | null;
+      }[];
+    }[];
+  }[];
 }): MenuItem {
+  const addonGroups = (row.addon_groups ?? []).map((group) => ({
+    id: group.id,
+    name: group.name,
+    subgroups: (group.subgroups ?? []).map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      addons: (sub.addons ?? []).map(
+        (addon): FoodAddon => ({
+          id: addon.id,
+          name: addon.name,
+          price: Number(addon.price),
+          isVeg: addon.is_veg ?? undefined,
+          imageUrl: addon.image_url ?? null,
+        })
+      ),
+    })),
+  }));
+
+  const flatFromGroups = addonGroups.flatMap((g) => g.subgroups.flatMap((s) => s.addons));
+  const addons =
+    flatFromGroups.length > 0
+      ? flatFromGroups
+      : (row.addons ?? []).map(
+          (addon): FoodAddon => ({
+            id: addon.id,
+            name: addon.name,
+            price: Number(addon.price),
+            isVeg: addon.is_veg ?? undefined,
+            imageUrl: addon.image_url ?? null,
+          })
+        );
+
   return {
     id: row.id,
     restaurantId: row.restaurant_id,
@@ -85,14 +138,8 @@ export function mapMenuItem(row: {
     imageUrl: row.image_url ?? '',
     isAvailable: row.is_available ?? true,
     category: row.category ?? undefined,
-    addons: (row.addons ?? []).map(
-      (addon): FoodAddon => ({
-        id: addon.id,
-        name: addon.name,
-        price: Number(addon.price),
-        isVeg: addon.is_veg ?? undefined,
-      })
-    ),
+    addons,
+    addonGroups,
   };
 }
 

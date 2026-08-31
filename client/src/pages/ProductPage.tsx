@@ -10,10 +10,13 @@ import {
   selectIsFoodWishlisted,
   toggleFoodWishlist,
 } from '../store/slices/wishlistSlice';
-import type { SelectedAddon } from '../utils/types';
 import ProductActions from './components/product/ProductActions';
 import ProductGallery from './components/product/ProductGallery';
 import ProductInfo from './components/product/ProductInfo';
+import {
+  hasCustomizableAddons,
+  useAddonCustomize,
+} from '../components/AddonCustomizeSheet';
 
 const ProductPage = () => {
   const { id = '' } = useParams();
@@ -22,14 +25,12 @@ const ProductPage = () => {
   const item = menuItems.find((m) => m.id === id);
   const restaurant = item ? restaurants.find((r) => r.id === item.restaurantId) : undefined;
   const dispatch = useAppDispatch();
+  const { openCustomize } = useAddonCustomize();
   const wishlisted = useAppSelector(selectIsFoodWishlisted(id));
 
   const [quantity, setQuantity] = useState(1);
-  const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const [addedFlash, setAddedFlash] = useState(false);
 
-  const addons = item?.addons ?? [];
-  const unitTotal = item ? lineUnitTotal(item.price, selectedAddons) : 0;
   const related = useMemo(
     () => (item ? getRelatedFoods(item, menuItems) : []),
     [item, menuItems]
@@ -51,7 +52,14 @@ const ProductPage = () => {
     );
   }
 
+  const customizable = hasCustomizableAddons(item);
+  const unitTotal = lineUnitTotal(item.price, []) * quantity;
+
   const handleAdd = () => {
+    if (customizable) {
+      openCustomize({ menuItem: item, mode: 'add', initialQuantity: quantity });
+      return;
+    }
     dispatch(
       addFoodItem({
         menuItemId: item.id,
@@ -60,7 +68,7 @@ const ProductPage = () => {
         imageUrl: item.imageUrl,
         unitPrice: item.price,
         quantity,
-        selectedAddons,
+        selectedAddons: [],
       })
     );
     setAddedFlash(true);
@@ -95,14 +103,12 @@ const ProductPage = () => {
           <ProductActions
             quantity={quantity}
             onQuantityChange={setQuantity}
-            addons={addons}
-            selectedAddons={selectedAddons}
-            onAddonsChange={setSelectedAddons}
             onAddToCart={handleAdd}
             wishlisted={wishlisted}
             onToggleWishlist={() => dispatch(toggleFoodWishlist(item.id))}
             disabled={!item.isAvailable}
             unitTotal={unitTotal}
+            customizeLabel={customizable}
           />
           {addedFlash && (
             <p className="mt-3 font-display text-sm font-semibold uppercase text-primary">

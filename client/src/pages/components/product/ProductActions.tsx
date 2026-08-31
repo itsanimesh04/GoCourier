@@ -1,41 +1,35 @@
 import { BiHeart, BiSolidHeart } from 'react-icons/bi';
-import AddonPicker from '../../../components/AddonPicker';
 import QtyStepper from '../../../components/QtyStepper';
-import type { FoodAddon, SelectedAddon } from '../../../utils/types';
 import { cn } from '../../../utils/utils';
 
 interface ProductActionsProps {
   quantity: number;
   onQuantityChange: (n: number) => void;
-  addons: FoodAddon[];
-  selectedAddons: SelectedAddon[];
-  onAddonsChange: (next: SelectedAddon[]) => void;
   onAddToCart: () => void;
   wishlisted: boolean;
   onToggleWishlist: () => void;
   disabled?: boolean;
   unitTotal: number;
+  customizeLabel?: boolean;
 }
 
 const ProductActions = ({
   quantity,
   onQuantityChange,
-  addons,
-  selectedAddons,
-  onAddonsChange,
   onAddToCart,
   wishlisted,
   onToggleWishlist,
   disabled,
   unitTotal,
+  customizeLabel,
 }: ProductActionsProps) => {
   return (
     <div className="mt-8 space-y-6 border-t border-border pt-6">
-      <AddonPicker
-        addons={addons}
-        selected={selectedAddons}
-        onChange={onAddonsChange}
-      />
+      {customizeLabel ? (
+        <p className="font-sans text-sm text-muted">
+          Customize add-ons when you add this item to your cart.
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-4">
         <QtyStepper value={quantity} onChange={onQuantityChange} />
@@ -62,7 +56,11 @@ const ProductActions = ({
           disabled && 'cursor-not-allowed opacity-50 hover:opacity-50'
         )}
       >
-        {disabled ? 'Unavailable' : `Add to Cart · ₹ ${unitTotal * quantity}`}
+        {disabled
+          ? 'Unavailable'
+          : customizeLabel
+            ? `Customize · ₹ ${unitTotal}+`
+            : `Add to Cart · ₹ ${unitTotal}`}
       </button>
     </div>
   );

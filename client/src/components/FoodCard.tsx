@@ -16,10 +16,12 @@ import {
 import type { MenuItem } from '../utils/types';
 import PriceDisplay from './PriceDisplay';
 import VegBadge from './VegBadge';
+import { hasCustomizableAddons, useAddonCustomize } from './AddonCustomizeSheet';
 
 const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { openCustomize } = useAddonCustomize();
   const wishlisted = useAppSelector(selectIsFoodWishlisted(menuItem.id));
   const cartQty = useAppSelector(selectMenuItemQty(menuItem.id));
   const restaurants = useAppSelector(selectRestaurants);
@@ -29,6 +31,10 @@ const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
     e.stopPropagation();
     e.preventDefault();
     if (!menuItem.isAvailable) return;
+    if (hasCustomizableAddons(menuItem)) {
+      openCustomize({ menuItem, mode: 'add', initialQuantity: 1 });
+      return;
+    }
     dispatch(
       addFoodItem({
         menuItemId: menuItem.id,
