@@ -7,9 +7,9 @@ export const uploadImage = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowed.includes(file.mimetype)) {
-      cb(new BadRequestError('Only JPEG, PNG, WebP, and GIF images are allowed'));
+      cb(new BadRequestError('Only JPEG, JPG, PNG, WebP, and GIF images are allowed'));
       return;
     }
     cb(null, true);
