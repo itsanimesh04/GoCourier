@@ -131,6 +131,7 @@ export class AdminOrderService {
           note: item.note ?? null,
           image_url: item.image_url ?? null,
           addon_snapshot: item.addon_snapshot ?? [],
+          option_snapshot: item.option_snapshot ?? null,
           pickup_point: item.pickup_point ?? null,
           drop_point: item.drop_point ?? null,
           size: item.size ?? null

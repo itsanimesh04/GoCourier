@@ -2,6 +2,7 @@ import type { ClientSession } from 'mongoose';
 import { ExtraProduct } from '../../models/extra-product.model';
 import { FoodAddon } from '../../models/food-addon.model';
 import { MenuItem } from '../../models/menu-item.model';
+import { OptionSet } from '../../models/option-set.model';
 import { adminConfigService } from '../admin/config.service';
 import {
   flattenAddonsFromGroups,
@@ -21,6 +22,7 @@ export interface CartItemInput {
   menu_item_id?: string;
   extras_product_id?: string;
   addon_ids?: string[];
+  option_choice_id?: string | null;
   note?: string | null;
   image_url?: string | null;
   pickup_point?: string | null;
@@ -88,6 +90,7 @@ function formatCart(header: CartHeaderRow, items: CartItemDetailRow[]) {
       note: item.note,
       image_url: item.image_url,
       addon_snapshot: item.addon_snapshot,
+      option_snapshot: item.option_snapshot,
       pickup_point: item.pickup_point,
       drop_point: item.drop_point,
       size: item.size
@@ -159,24 +162,67 @@ async function resolveCartItems(
         price: addon.price
       }));
 
+      let basePrice = menuItem.price;
+      let optionSnapshot: { choice_id: string; name: string; price: string } | null = null;
+      const optionSetId = menuItem.option_set_id?.toString() ?? null;
+
+      if (optionSetId) {
+        if (!item.option_choice_id) {
+          throw new BadRequestError('Option choice is required for this menu item');
+        }
+
+        const optionSet = await OptionSet.findOne({ _id: optionSetId, is_active: true }).exec();
+        if (!optionSet) {
+          throw new NotFoundError('Option set not found');
+        }
+
+        const choice = optionSet.choices.find(
+          (entry: { _id: { toString(): string }; name: string }) =>
+            entry._id.toString() === item.option_choice_id
+        );
+        if (!choice) {
+          throw new BadRequestError('Option choice is not available for this menu item');
+        }
+
+        const priced = (menuItem.option_prices ?? []).find(
+          (entry: { choice_id: { toString(): string }; price: string }) =>
+            entry.choice_id.toString() === item.option_choice_id
+        );
+        if (!priced) {
+          throw new BadRequestError('Option price is not configured for this menu item');
+        }
+
+        basePrice = priced.price;
+        optionSnapshot = {
+          choice_id: choice._id.toString(),
+          name: choice.name,
+          price: priced.price
+        };
+      }
+
       const unitCents =
-        decimalToSubunits(menuItem.price) +
+        decimalToSubunits(basePrice) +
         addonSnapshot.reduce((sum, addon) => sum + decimalToSubunits(addon.price), 0);
+
+      const nameParts = [menuItem.name];
+      if (optionSnapshot) nameParts.push(optionSnapshot.name);
+      const addonSuffix =
+        addonSnapshot.length > 0
+          ? ` (+${addonSnapshot.map((addon) => addon.name).join(', ')})`
+          : '';
 
       subtotalCents += unitCents * item.quantity;
       orderItems.push({
         item_kind: 'food',
         menu_item_id: menuItem._id.toString(),
         extras_product_id: null,
-        item_name_snap:
-          addonSnapshot.length > 0
-            ? `${menuItem.name} (+${addonSnapshot.map((addon) => addon.name).join(', ')})`
-            : menuItem.name,
+        item_name_snap: `${nameParts.join(' · ')}${addonSuffix}`,
         price_snapshot: subunitsToDecimal(unitCents),
         quantity: item.quantity,
         note: item.note ?? null,
         image_url: menuItem.image_url,
         addon_snapshot: addonSnapshot,
+        option_snapshot: optionSnapshot,
         pickup_point: null,
         drop_point: null,
         size: null
@@ -206,6 +252,7 @@ async function resolveCartItems(
         note: item.note ?? null,
         image_url: product.image_url,
         addon_snapshot: [],
+        option_snapshot: null,
         pickup_point: null,
         drop_point: null,
         size: null
@@ -225,6 +272,7 @@ async function resolveCartItems(
         note: item.note ?? null,
         image_url: item.image_url ?? null,
         addon_snapshot: [],
+        option_snapshot: null,
         pickup_point: null,
         drop_point: null,
         size: null
@@ -247,6 +295,7 @@ async function resolveCartItems(
       note: item.note ?? null,
       image_url: item.image_url ?? null,
       addon_snapshot: [],
+      option_snapshot: null,
       pickup_point: item.pickup_point,
       drop_point: item.drop_point,
       size: item.size ?? 'Small'

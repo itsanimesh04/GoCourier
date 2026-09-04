@@ -129,6 +129,7 @@ export const customerOrderService = {
         note: item.note,
         image_url: item.image_url,
         addon_snapshot: item.addon_snapshot,
+        option_snapshot: item.option_snapshot,
         refunds: refundsByItemId.get(item.id) ?? []
       })),
       refunds,

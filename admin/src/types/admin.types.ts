@@ -45,6 +45,8 @@ export interface MenuItem {
   sort_order: number;
   addon_ids: string[];
   addon_group_ids?: string[];
+  option_set_id?: string | null;
+  option_prices?: { choice_id: string; price: string }[];
 }
 
 export interface Category {

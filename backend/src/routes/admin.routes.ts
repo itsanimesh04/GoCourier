@@ -30,10 +30,12 @@ import {
   createCategorySchema,
   createExtraProductSchema,
   createMenuItemSchema,
+  createOptionSetSchema,
   createRestaurantSchema,
   deleteUploadSchema,
   extraProductIdSchema,
   menuItemIdSchema,
+  optionSetIdSchema,
   orderIdSchema,
   paymentIdSchema,
   restaurantIdSchema,
@@ -45,12 +47,14 @@ import {
   updateConfigSchema,
   updateExtraProductSchema,
   updateMenuItemSchema,
+  updateOptionSetSchema,
   updateOrderStatusSchema,
   updateRestaurantSchema,
   updateUserSchema,
   userIdSchema
 } from '../validators/admin.validators';
 import { addonGroupController } from '../controllers/admin/addon-group.controller';
+import { optionSetController } from '../controllers/admin/option-set.controller';
 
 export const adminRouter = Router();
 
@@ -115,6 +119,16 @@ adminRouter.delete(
   validateRequest(addonGroupIdSchema),
   addonGroupController.remove
 );
+
+adminRouter.get('/option-sets', optionSetController.list);
+adminRouter.get('/option-sets/:id', validateRequest(optionSetIdSchema), optionSetController.getById);
+adminRouter.post('/option-sets', validateRequest(createOptionSetSchema), optionSetController.create);
+adminRouter.patch(
+  '/option-sets/:id',
+  validateRequest(updateOptionSetSchema),
+  optionSetController.update
+);
+adminRouter.delete('/option-sets/:id', validateRequest(optionSetIdSchema), optionSetController.remove);
 
 adminRouter.get('/categories', categoryController.list);
 adminRouter.get('/categories/:id', validateRequest(categoryIdSchema), categoryController.getById);

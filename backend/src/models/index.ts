@@ -34,6 +34,8 @@ export { AddonGroup } from './addon-group.model';
 export type { IAddonGroup } from './addon-group.model';
 export { AddonSubGroup } from './addon-subgroup.model';
 export type { IAddonSubGroup } from './addon-subgroup.model';
+export { OptionSet } from './option-set.model';
+export type { IOptionSet, IOptionChoice } from './option-set.model';
 export { AppConfig } from './app-config.model';
 export type { IAppConfig, IFaqItem } from './app-config.model';
 export { ExtraProduct } from './extra-product.model';

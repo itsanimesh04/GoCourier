@@ -9,6 +9,12 @@ export interface IAddonSnapshot {
   price: string;
 }
 
+export interface IOptionSnapshot {
+  choice_id: string;
+  name: string;
+  price: string;
+}
+
 export interface IOrderItem {
   _id: mongoose.Types.ObjectId;
   order_id: mongoose.Types.ObjectId;
@@ -23,6 +29,7 @@ export interface IOrderItem {
   note: string | null;
   image_url: string | null;
   addon_snapshot: IAddonSnapshot[];
+  option_snapshot: IOptionSnapshot | null;
   pickup_point: string | null;
   drop_point: string | null;
   size: string | null;
@@ -56,6 +63,14 @@ const orderItemSchema = new Schema<IOrderItem>({
       }
     ],
     default: []
+  },
+  option_snapshot: {
+    type: {
+      choice_id: { type: String, required: true },
+      name: { type: String, required: true },
+      price: { type: String, required: true }
+    },
+    default: null
   },
   pickup_point: { type: String, default: null },
   drop_point: { type: String, default: null },

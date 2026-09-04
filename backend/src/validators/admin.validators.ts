@@ -57,7 +57,18 @@ const menuItemCreateBody = z
     image_key: z.string().nullable().optional(),
     sort_order: z.number().int().optional(),
     addon_ids: z.array(objectIdParam).optional(),
-    addon_group_ids: z.array(objectIdParam).optional()
+    addon_group_ids: z.array(objectIdParam).optional(),
+    option_set_id: optionalObjectId,
+    option_prices: z
+      .array(
+        z
+          .object({
+            choice_id: objectIdParam,
+            price: decimalString
+          })
+          .strict()
+      )
+      .optional()
   })
   .strict();
 
@@ -128,6 +139,23 @@ const addonGroupBody = z
     is_active: z.boolean().optional(),
     sort_order: z.number().int().optional(),
     subgroups: z.array(nestedSubGroupBody).optional()
+  })
+  .strict();
+
+const optionChoiceBody = z
+  .object({
+    id: objectIdParam.optional(),
+    name: z.string().trim().min(1),
+    sort_order: z.number().int().optional()
+  })
+  .strict();
+
+const optionSetBody = z
+  .object({
+    name: z.string().trim().min(1),
+    is_active: z.boolean().optional(),
+    sort_order: z.number().int().optional(),
+    choices: z.array(optionChoiceBody).min(1).optional()
   })
   .strict();
 
@@ -203,6 +231,17 @@ export const updateAddonGroupSchema = z.object({
   })
 });
 export const addonGroupIdSchema = z.object({ params: z.object({ id: objectIdParam }) });
+
+export const createOptionSetSchema = z.object({
+  body: optionSetBody.extend({ choices: z.array(optionChoiceBody).min(1) })
+});
+export const updateOptionSetSchema = z.object({
+  params: z.object({ id: objectIdParam }),
+  body: optionSetBody.partial().refine((v) => Object.keys(v).length > 0, {
+    message: 'At least one field is required'
+  })
+});
+export const optionSetIdSchema = z.object({ params: z.object({ id: objectIdParam }) });
 
 export const updateUserSchema = z.object({
   params: z.object({ id: objectIdParam }),

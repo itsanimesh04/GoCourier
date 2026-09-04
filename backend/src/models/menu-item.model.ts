@@ -16,6 +16,8 @@ export interface IMenuItem {
   sort_order: number;
   addon_ids: mongoose.Types.ObjectId[];
   addon_group_ids: mongoose.Types.ObjectId[];
+  option_set_id: mongoose.Types.ObjectId | null;
+  option_prices: { choice_id: mongoose.Types.ObjectId; price: string }[];
   created_at: Date;
   updated_at: Date;
 }
@@ -35,6 +37,16 @@ const menuItemSchema = new Schema<IMenuItem>({
   sort_order: { type: Number, default: 0 },
   addon_ids: [{ type: Schema.Types.ObjectId, ref: 'FoodAddon' }],
   addon_group_ids: [{ type: Schema.Types.ObjectId, ref: 'AddonGroup' }],
+  option_set_id: { type: Schema.Types.ObjectId, ref: 'OptionSet', default: null, index: true },
+  option_prices: {
+    type: [
+      {
+        choice_id: { type: Schema.Types.ObjectId, required: true },
+        price: { type: String, required: true }
+      }
+    ],
+    default: []
+  }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

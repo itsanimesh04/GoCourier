@@ -6,6 +6,7 @@ import Modal from "@/components/Modal";
 import ImageUpload from "@/components/ImageUpload";
 import menuItemService from "@/services/admin/menuItem.service";
 import addonService, { type AddonGroup } from "@/services/admin/addon.service";
+import optionSetService, { type OptionSet } from "@/services/admin/optionSet.service";
 import restaurantService from "@/services/admin/restaurant.service";
 import categoryService from "@/services/admin/category.service";
 import type { Category, MenuItem, Restaurant } from "@/types/admin.types";
@@ -36,6 +37,7 @@ const MenuItems = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [addonGroups, setAddonGroups] = useState<AddonGroup[]>([]);
+  const [optionSets, setOptionSets] = useState<OptionSet[]>([]);
   const [restaurantFilter, setRestaurantFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -54,27 +56,36 @@ const MenuItems = () => {
     image_url: null as string | null,
     image_key: null as string | null,
     addon_group_ids: [] as string[],
+    option_set_id: "none",
+    option_prices: {} as Record<string, string>,
   });
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [m, r, c, a] = await Promise.all([
+    const [m, r, c, a, o] = await Promise.all([
       menuItemService.list(
         restaurantFilter !== "all" ? { restaurant_id: restaurantFilter } : undefined
       ),
       restaurantService.list(),
       categoryService.list(),
       addonService.listGroups(),
+      optionSetService.list(),
     ]);
     setItems(m.data.data);
     setRestaurants(r.data.data);
     setCategories(c.data.data);
     setAddonGroups(a.data.data);
+    setOptionSets(o.data.data.filter((set) => set.is_active));
   };
 
   useEffect(() => {
     load().catch(() => undefined);
   }, [restaurantFilter]);
+
+  const selectedOptionSet = useMemo(
+    () => optionSets.find((set) => set.id === form.option_set_id) ?? null,
+    [optionSets, form.option_set_id]
+  );
 
   const openCreate = () => {
     setEditing(null);
@@ -92,12 +103,18 @@ const MenuItems = () => {
       image_url: null,
       image_key: null,
       addon_group_ids: [],
+      option_set_id: "none",
+      option_prices: {},
     });
     setOpen(true);
   };
 
   const openEdit = (item: MenuItem) => {
     setEditing(item);
+    const prices: Record<string, string> = {};
+    for (const entry of item.option_prices ?? []) {
+      prices[entry.choice_id] = entry.price;
+    }
     setForm({
       restaurant_id: item.restaurant_id,
       category_id: item.category_id ?? "none",
@@ -112,11 +129,49 @@ const MenuItems = () => {
       image_url: item.image_url,
       image_key: item.image_key,
       addon_group_ids: item.addon_group_ids ?? [],
+      option_set_id: item.option_set_id ?? "none",
+      option_prices: prices,
     });
     setOpen(true);
   };
 
+  const selectOptionSet = (value: string) => {
+    setForm((f) => {
+      if (value === "none") {
+        return { ...f, option_set_id: "none", option_prices: {} };
+      }
+      const set = optionSets.find((entry) => entry.id === value);
+      const prices: Record<string, string> = {};
+      for (const choice of set?.choices ?? []) {
+        prices[choice.id] = f.option_prices[choice.id] ?? "";
+      }
+      return { ...f, option_set_id: value, option_prices: prices };
+    });
+  };
+
   const save = async () => {
+    const optionSetId = form.option_set_id === "none" ? null : form.option_set_id;
+    let option_prices: { choice_id: string; price: string }[] | undefined;
+
+    if (optionSetId) {
+      const set = optionSets.find((entry) => entry.id === optionSetId);
+      if (!set) {
+        toast.error("Selected option set was not found");
+        return;
+      }
+      const prices = set.choices.map((choice) => ({
+        choice_id: choice.id,
+        price: (form.option_prices[choice.id] ?? "").trim(),
+      }));
+      if (prices.some((entry) => !entry.price)) {
+        toast.error("Enter a price for every option choice");
+        return;
+      }
+      option_prices = prices;
+    } else {
+      option_prices = [];
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -132,6 +187,8 @@ const MenuItems = () => {
         image_url: form.image_url,
         image_key: form.image_key,
         addon_group_ids: form.addon_group_ids,
+        option_set_id: optionSetId,
+        option_prices,
       };
       if (editing) {
         await menuItemService.update(editing.id, {
@@ -333,6 +390,11 @@ const MenuItems = () => {
               value={form.price}
               onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
             />
+            {selectedOptionSet && (
+              <p className="text-xs text-muted-foreground">
+                Used as fallback. Customer price comes from the selected option below.
+              </p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Original price</Label>
@@ -368,6 +430,50 @@ const MenuItems = () => {
             />
             Available
           </label>
+
+          <div className="sm:col-span-2 space-y-2">
+            <Label>Food options</Label>
+            <Select value={form.option_set_id} onValueChange={selectOptionSet}>
+              <SelectTrigger>
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {optionSets.map((set) => (
+                  <SelectItem key={set.id} value={set.id}>
+                    {set.name} ({set.choices.map((c) => c.name).join(" / ")})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedOptionSet ? (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {selectedOptionSet.choices.map((choice) => (
+                  <div key={choice.id} className="space-y-1">
+                    <Label className="text-xs">{choice.name} price</Label>
+                    <Input
+                      placeholder="0.00"
+                      value={form.option_prices[choice.id] ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          option_prices: {
+                            ...f.option_prices,
+                            [choice.id]: e.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Optional. Create sets under Food Options, then attach and price them here.
+              </p>
+            )}
+          </div>
+
           <div className="sm:col-span-2 space-y-2">
             <Label>Addon groups</Label>
             <div className="flex flex-wrap gap-2">

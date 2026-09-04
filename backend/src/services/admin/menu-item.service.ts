@@ -1,8 +1,11 @@
 import { MenuItem } from '../../models/menu-item.model';
 import { Restaurant } from '../../models/restaurant.model';
 import { FoodAddon } from '../../models/food-addon.model';
-import { NotFoundError } from '../../utils/errors';
+import { OptionSet } from '../../models/option-set.model';
+import { BadRequestError, NotFoundError } from '../../utils/errors';
 import { s3Service } from '../storage/s3.service';
+
+type OptionPriceInput = { choice_id: string; price: string };
 
 function mapMenuItem(doc: InstanceType<typeof MenuItem>) {
   return {
@@ -21,6 +24,11 @@ function mapMenuItem(doc: InstanceType<typeof MenuItem>) {
     sort_order: doc.sort_order,
     addon_ids: (doc.addon_ids ?? []).map((id: { toString(): string }) => id.toString()),
     addon_group_ids: (doc.addon_group_ids ?? []).map((id: { toString(): string }) => id.toString()),
+    option_set_id: doc.option_set_id?.toString() ?? null,
+    option_prices: (doc.option_prices ?? []).map((entry: { choice_id: { toString(): string }; price: string }) => ({
+      choice_id: entry.choice_id.toString(),
+      price: entry.price
+    })),
     created_at: doc.created_at,
     updated_at: doc.updated_at
   };
@@ -29,6 +37,48 @@ function mapMenuItem(doc: InstanceType<typeof MenuItem>) {
 async function ensureRestaurantExists(restaurantId: string) {
   const restaurant = await Restaurant.findById(restaurantId);
   if (!restaurant) throw new NotFoundError('Restaurant not found');
+}
+
+async function normalizeOptionAttachment(
+  optionSetId: string | null | undefined,
+  optionPrices: OptionPriceInput[] | undefined
+): Promise<{ option_set_id: string | null; option_prices: OptionPriceInput[] }> {
+  if (optionSetId === undefined && optionPrices === undefined) {
+    return { option_set_id: null, option_prices: [] };
+  }
+
+  if (optionSetId === null || optionSetId === undefined || optionSetId === '') {
+    return { option_set_id: null, option_prices: [] };
+  }
+
+  const optionSet = await OptionSet.findById(optionSetId).exec();
+  if (!optionSet || !optionSet.is_active) {
+    throw new NotFoundError('Option set not found');
+  }
+
+  const choiceIds = new Set(optionSet.choices.map((choice: { _id: { toString(): string } }) => choice._id.toString()));
+  const prices = optionPrices ?? [];
+
+  if (prices.length !== choiceIds.size) {
+    throw new BadRequestError('A price is required for every option choice');
+  }
+
+  const seen = new Set<string>();
+  for (const entry of prices) {
+    if (!choiceIds.has(entry.choice_id)) {
+      throw new BadRequestError('Option price references an unknown choice');
+    }
+    if (seen.has(entry.choice_id)) {
+      throw new BadRequestError('Duplicate option choice price');
+    }
+    seen.add(entry.choice_id);
+  }
+
+  if (seen.size !== choiceIds.size) {
+    throw new BadRequestError('A price is required for every option choice');
+  }
+
+  return { option_set_id: optionSetId, option_prices: prices };
 }
 
 export class MenuItemService {
@@ -69,9 +119,12 @@ export class MenuItemService {
       sort_order?: number;
       addon_ids?: string[];
       addon_group_ids?: string[];
+      option_set_id?: string | null;
+      option_prices?: OptionPriceInput[];
     }
   ) {
     await ensureRestaurantExists(restaurantId);
+    const options = await normalizeOptionAttachment(data.option_set_id, data.option_prices);
     const doc = await MenuItem.create({
       restaurant_id: restaurantId,
       name: data.name,
@@ -86,7 +139,9 @@ export class MenuItemService {
       image_key: data.image_key ?? null,
       sort_order: data.sort_order ?? 0,
       addon_ids: data.addon_ids ?? [],
-      addon_group_ids: data.addon_group_ids ?? []
+      addon_group_ids: data.addon_group_ids ?? [],
+      option_set_id: options.option_set_id,
+      option_prices: options.option_prices
     });
     return mapMenuItem(doc);
   }
@@ -107,6 +162,8 @@ export class MenuItemService {
       sort_order: number;
       addon_ids: string[];
       addon_group_ids: string[];
+      option_set_id: string | null;
+      option_prices: OptionPriceInput[];
       restaurant_id: string;
     }>
   ) {
@@ -122,7 +179,26 @@ export class MenuItemService {
       await s3Service.delete(existing.image_key).catch(() => undefined);
     }
 
-    const doc = await MenuItem.findByIdAndUpdate(id, data, { new: true }).exec();
+    const updatePayload: Record<string, unknown> = { ...data };
+
+    if (data.option_set_id !== undefined || data.option_prices !== undefined) {
+      const nextSetId =
+        data.option_set_id !== undefined
+          ? data.option_set_id
+          : existing.option_set_id?.toString() ?? null;
+      const nextPrices =
+        data.option_prices !== undefined
+          ? data.option_prices
+          : (existing.option_prices ?? []).map((entry: { choice_id: { toString(): string }; price: string }) => ({
+              choice_id: entry.choice_id.toString(),
+              price: entry.price
+            }));
+      const options = await normalizeOptionAttachment(nextSetId, nextPrices);
+      updatePayload.option_set_id = options.option_set_id;
+      updatePayload.option_prices = options.option_prices;
+    }
+
+    const doc = await MenuItem.findByIdAndUpdate(id, updatePayload, { new: true }).exec();
     if (!doc) throw new NotFoundError('Menu item not found');
     return mapMenuItem(doc);
   }

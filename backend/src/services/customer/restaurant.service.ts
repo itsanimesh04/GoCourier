@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Category } from '../../models/category.model';
 import { FoodAddon } from '../../models/food-addon.model';
 import { MenuItem } from '../../models/menu-item.model';
+import { OptionSet } from '../../models/option-set.model';
 import { Restaurant } from '../../models/restaurant.model';
 import { NotFoundError } from '../../utils/errors';
 import {
@@ -114,6 +115,18 @@ export const customerRestaurantService = {
       ])
     );
 
+    const optionSetIds = [
+      ...new Set(
+        items
+          .map((item) => item.option_set_id?.toString())
+          .filter((id): id is string => Boolean(id))
+      )
+    ];
+    const optionSets = optionSetIds.length
+      ? await OptionSet.find({ _id: { $in: optionSetIds }, is_active: true }).exec()
+      : [];
+    const optionSetById = new Map(optionSets.map((set) => [set._id.toString(), set]));
+
     const mappedItems = items.map((item) => {
       const groupIds = ((item.addon_group_ids ?? []) as mongoose.Types.ObjectId[]).map((id) =>
         id.toString()
@@ -166,6 +179,39 @@ export const customerRestaurantService = {
         }
       }
 
+      const optionSetId = item.option_set_id?.toString() ?? null;
+      const optionSet = optionSetId ? optionSetById.get(optionSetId) : null;
+      const priceByChoice = new Map(
+        (item.option_prices ?? []).map((entry: { choice_id: { toString(): string }; price: string }) => [
+          entry.choice_id.toString(),
+          entry.price
+        ])
+      );
+      const option_set =
+        optionSet && optionSet.choices.length > 0
+          ? {
+              id: optionSet._id.toString(),
+              name: optionSet.name,
+              choices: [...optionSet.choices]
+                .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name))
+                .map((choice) => {
+                  const price = priceByChoice.get(choice._id.toString());
+                  if (!price) return null;
+                  return {
+                    id: choice._id.toString(),
+                    name: choice.name,
+                    price: Number(price)
+                  };
+                })
+                .filter((choice): choice is NonNullable<typeof choice> => Boolean(choice))
+            }
+          : null;
+
+      const displayPrice =
+        option_set && option_set.choices.length > 0
+          ? Math.min(...option_set.choices.map((choice) => choice.price))
+          : Number(item.price);
+
       return {
         id: item._id.toString(),
         restaurant_id: item.restaurant_id.toString(),
@@ -173,14 +219,15 @@ export const customerRestaurantService = {
         category: item.category_id ? categoryMap.get(item.category_id.toString()) ?? null : null,
         name: item.name,
         description: item.description,
-        price: Number(item.price),
+        price: displayPrice,
         original_price: item.original_price ? Number(item.original_price) : null,
         rating: item.rating,
         is_veg: item.is_veg,
         image_url: item.image_url,
         is_available: item.is_available,
         addon_groups,
-        addons
+        addons,
+        option_set: option_set && option_set.choices.length > 0 ? option_set : null
       };
     });
 

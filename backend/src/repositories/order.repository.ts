@@ -25,6 +25,12 @@ export interface AddonSnapshot {
   price: string;
 }
 
+export interface OptionSnapshot {
+  choice_id: string;
+  name: string;
+  price: string;
+}
+
 export interface OrderRow {
   id: string;
   student_id: string;
@@ -53,6 +59,7 @@ export interface OrderItemInsert {
   note: string | null;
   image_url: string | null;
   addon_snapshot: AddonSnapshot[];
+  option_snapshot: OptionSnapshot | null;
   pickup_point: string | null;
   drop_point: string | null;
   size: string | null;
@@ -92,6 +99,7 @@ export interface CartItemDetailRow {
   note: string | null;
   image_url: string | null;
   addon_snapshot: AddonSnapshot[];
+  option_snapshot: OptionSnapshot | null;
   pickup_point: string | null;
   drop_point: string | null;
   size: string | null;
@@ -124,6 +132,7 @@ export interface CustomerOrderItemRow {
   note: string | null;
   image_url: string | null;
   addon_snapshot: AddonSnapshot[];
+  option_snapshot: OptionSnapshot | null;
 }
 
 export interface CustomerRefundRow {
@@ -362,6 +371,7 @@ export const orderRepository = {
         note: item.note,
         image_url: item.image_url,
         addon_snapshot: item.addon_snapshot,
+        option_snapshot: item.option_snapshot ?? null,
         pickup_point: item.pickup_point,
         drop_point: item.drop_point,
         size: item.size
@@ -496,7 +506,8 @@ export const orderRepository = {
       is_veg: null,
       note: doc.note ?? null,
       image_url: doc.image_url ?? null,
-      addon_snapshot: doc.addon_snapshot ?? []
+      addon_snapshot: doc.addon_snapshot ?? [],
+      option_snapshot: doc.option_snapshot ?? null
     }));
   },
 
@@ -616,6 +627,7 @@ export const orderRepository = {
         note: doc.note ?? null,
         image_url: doc.image_url ?? null,
         addon_snapshot: doc.addon_snapshot ?? [],
+        option_snapshot: doc.option_snapshot ?? null,
         pickup_point: doc.pickup_point ?? null,
         drop_point: doc.drop_point ?? null,
         size: doc.size ?? null

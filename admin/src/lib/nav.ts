@@ -12,6 +12,7 @@ import {
   Settings,
   Package,
   Layers,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Menu Items", path: "/menu-items", icon: ShoppingBag },
   { title: "Categories", path: "/categories", icon: Grid3X3 },
   { title: "Addons", path: "/addons", icon: Layers },
+  { title: "Food Options", path: "/food-options", icon: ListChecks },
   { title: "Extras", path: "/extras", icon: Package },
   { title: "Banners", path: "/banners", icon: Image },
   { title: "Orders", path: "/orders", icon: ClipboardList },
@@ -44,6 +46,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/menu-items": "Menu Items",
   "/categories": "Categories",
   "/addons": "Addons",
+  "/food-options": "Food Options",
   "/extras": "Extras",
   "/banners": "Banners",
   "/orders": "Orders",

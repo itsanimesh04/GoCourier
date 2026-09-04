@@ -10,6 +10,7 @@ const cartItemBody = z
     menu_item_id: objectIdParam.optional(),
     extras_product_id: objectIdParam.optional(),
     addon_ids: z.array(objectIdParam).optional(),
+    option_choice_id: objectIdParam.nullable().optional(),
     note: z.string().trim().max(2000).nullable().optional(),
     image_url: z.string().nullable().optional(),
     pickup_point: z.string().trim().max(200).nullable().optional(),
