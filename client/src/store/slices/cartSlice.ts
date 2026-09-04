@@ -3,7 +3,7 @@ import { apiErrorMessage, isConflictError } from '../../apis/clientApi';
 import axios from 'axios';
 import cartApi, { lineToCartApiItem } from '../../services/cart.service';
 import { lineUnitTotal } from '../../data/selectors';
-import type { CartLineItem, Order, SelectedAddon } from '../../utils/types';
+import type { CartLineItem, Order, SelectedAddon, SelectedOption } from '../../utils/types';
 
 interface CartState {
   items: CartLineItem[];
@@ -23,9 +23,13 @@ const initialState: CartState = {
   error: null,
 };
 
-function makeFoodCartKey(menuItemId: string, addons: SelectedAddon[]): string {
+function makeFoodCartKey(
+  menuItemId: string,
+  addons: SelectedAddon[],
+  optionId?: string | null
+): string {
   const addonIds = [...addons.map((a) => a.id)].sort().join(',');
-  return `food:${menuItemId}:${addonIds}`;
+  return `food:${menuItemId}:${optionId ?? ''}:${addonIds}`;
 }
 
 function mapServerCart(data: {
@@ -42,6 +46,7 @@ function mapServerCart(data: {
     note?: string | null;
     image_url?: string | null;
     addon_snapshot?: { id: string; name: string; price: string }[];
+    option_snapshot?: { choice_id: string; name: string; price: string } | null;
     pickup_point?: string | null;
     drop_point?: string | null;
     size?: string | null;
@@ -57,6 +62,13 @@ function mapServerCart(data: {
         name: addon.name,
         price: Number(addon.price),
       }));
+      const selectedOption = item.option_snapshot
+        ? {
+            id: item.option_snapshot.choice_id,
+            name: item.option_snapshot.name,
+            price: Number(item.option_snapshot.price),
+          }
+        : undefined;
       const kind = item.item_kind === 'food' ? 'food' : 'extra';
       const extrasProductId =
         item.item_kind === 'custom_request'
@@ -66,7 +78,7 @@ function mapServerCart(data: {
             : item.extras_product_id ?? undefined;
       const cartKey =
         kind === 'food' && item.menu_item_id
-          ? makeFoodCartKey(item.menu_item_id, addons)
+          ? makeFoodCartKey(item.menu_item_id, addons, selectedOption?.id)
           : `extra:${extrasProductId ?? item.id}`;
       const addonTotal = addons.reduce((sum, addon) => sum + addon.price, 0);
       return {
@@ -81,6 +93,7 @@ function mapServerCart(data: {
         unitPrice: Number(item.price) - addonTotal,
         quantity: item.quantity,
         selectedAddons: addons,
+        selectedOption,
         note: item.note ?? undefined,
         pickupPoint: item.pickup_point ?? undefined,
         dropPoint: item.drop_point ?? undefined,
@@ -134,11 +147,16 @@ export const addFoodItem = createAsyncThunk(
       unitPrice: number;
       quantity: number;
       selectedAddons: SelectedAddon[];
+      selectedOption?: SelectedOption;
     },
     { getState, rejectWithValue }
   ) => {
     const state = getState() as { cart: CartState };
-    const cartKey = makeFoodCartKey(payload.menuItemId, payload.selectedAddons);
+    const cartKey = makeFoodCartKey(
+      payload.menuItemId,
+      payload.selectedAddons,
+      payload.selectedOption?.id
+    );
     const existing = state.cart.items.find((item) => item.cartKey === cartKey);
     const next = existing
       ? state.cart.items.map((item) =>
@@ -157,6 +175,7 @@ export const addFoodItem = createAsyncThunk(
             unitPrice: payload.unitPrice,
             quantity: payload.quantity,
             selectedAddons: payload.selectedAddons,
+            selectedOption: payload.selectedOption,
           },
         ];
     try {
@@ -258,7 +277,12 @@ export const updateQty = createAsyncThunk(
 export const setItemAddons = createAsyncThunk(
   'cart/addons',
   async (
-    payload: { cartKey: string; selectedAddons: SelectedAddon[] },
+    payload: {
+      cartKey: string;
+      selectedAddons: SelectedAddon[];
+      selectedOption?: SelectedOption;
+      unitPrice?: number;
+    },
     { getState, rejectWithValue }
   ) => {
     const state = getState() as { cart: CartState };
@@ -267,8 +291,14 @@ export const setItemAddons = createAsyncThunk(
         ? {
             ...item,
             selectedAddons: payload.selectedAddons,
+            selectedOption: payload.selectedOption ?? item.selectedOption,
+            unitPrice: payload.unitPrice ?? item.unitPrice,
             cartKey: item.menuItemId
-              ? makeFoodCartKey(item.menuItemId, payload.selectedAddons)
+              ? makeFoodCartKey(
+                  item.menuItemId,
+                  payload.selectedAddons,
+                  (payload.selectedOption ?? item.selectedOption)?.id
+                )
               : item.cartKey,
           }
         : item

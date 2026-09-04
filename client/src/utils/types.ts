@@ -52,6 +52,19 @@ export interface MenuItem {
   category?: string;
   addons?: FoodAddon[];
   addonGroups?: AddonGroup[];
+  optionSet?: FoodOptionSet | null;
+}
+
+export interface FoodOptionChoice {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface FoodOptionSet {
+  id: string;
+  name: string;
+  choices: FoodOptionChoice[];
 }
 
 export interface FoodAddon {
@@ -80,6 +93,12 @@ export interface SelectedAddon {
   price: number;
 }
 
+export interface SelectedOption {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface CartLineItem {
   cartKey: string;
   kind: 'food' | 'extra';
@@ -92,6 +111,7 @@ export interface CartLineItem {
   unitPrice: number;
   quantity: number;
   selectedAddons: SelectedAddon[];
+  selectedOption?: SelectedOption;
   note?: string;
   pickupPoint?: string;
   dropPoint?: string;

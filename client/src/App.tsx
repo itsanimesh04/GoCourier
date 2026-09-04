@@ -15,6 +15,11 @@ import CustomRequestPage from './pages/CustomRequestPage'
 import ExtrasListingPage from './pages/ExtrasListingPage'
 import FoodListingPage from './pages/FoodListingPage'
 import ParcelRequestPage from './pages/ParcelRequestPage'
+import PrivacyPage from './pages/PrivacyPage'
+import TermsPage from './pages/TermsPage'
+import RefundPolicyPage from './pages/RefundPolicyPage'
+import ShippingPolicyPage from './pages/ShippingPolicyPage'
+import ContactPage from './pages/ContactPage'
 
 const App = () => {
   return (
@@ -31,6 +36,11 @@ const App = () => {
               <Route path="food/restaurants/:id" element={<ResturantPage />} />
               <Route path="food/foods/:id" element={<ProductPage />} />
               <Route path="extras" element={<ExtrasListingPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
+              <Route path="terms" element={<TermsPage />} />
+              <Route path="refund-policy" element={<RefundPolicyPage />} />
+              <Route path="shipping-policy" element={<ShippingPolicyPage />} />
+              <Route path="contact" element={<ContactPage />} />
               <Route element={<RequireAuth />}>
                 <Route path="extras/custom-request" element={<CustomRequestPage />} />
                 <Route path="extras/parcel" element={<ParcelRequestPage />} />

@@ -41,6 +41,11 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
             <p className="font-sans text-xs uppercase text-muted">
               {item.kind === 'extra' ? 'Campus Extra' : 'Food'}
             </p>
+            {item.selectedOption && (
+              <p className="mt-1 font-sans text-sm text-muted">
+                {item.selectedOption.name} · ₹{item.selectedOption.price}
+              </p>
+            )}
             {item.note && (
               <p className="mt-1 font-sans text-xs text-muted sm:text-sm">{item.note}</p>
             )}
@@ -84,11 +89,12 @@ const CartLineItem = ({ item }: CartLineItemProps) => {
                 mode: 'edit',
                 cartKey: item.cartKey,
                 initialAddons: item.selectedAddons,
+                initialOption: item.selectedOption,
               })
             }
             className="self-start font-display text-base font-semibold uppercase text-primary underline-offset-2 hover:underline"
           >
-            {item.selectedAddons.length > 0 ? 'Edit add-ons' : 'Add add-ons'}
+            {item.selectedOption || item.selectedAddons.length > 0 ? 'Edit options' : 'Customize'}
           </button>
         ) : null}
       </div>

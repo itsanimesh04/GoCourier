@@ -41,6 +41,24 @@ export const Footer = () => {
           </Link>
         </nav>
 
+        <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium text-on-primary/90">
+          <Link to="/privacy" className="hover:opacity-80">
+            Privacy
+          </Link>
+          <Link to="/terms" className="hover:opacity-80">
+            Terms
+          </Link>
+          <Link to="/refund-policy" className="hover:opacity-80">
+            Refunds
+          </Link>
+          <Link to="/shipping-policy" className="hover:opacity-80">
+            Delivery
+          </Link>
+          <Link to="/contact" className="hover:opacity-80">
+            Contact
+          </Link>
+        </nav>
+
         <div className="flex flex-col items-center gap-2 text-sm text-on-primary/90">
           <a
             href="https://wa.me/919606081463"

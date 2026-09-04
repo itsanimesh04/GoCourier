@@ -59,6 +59,17 @@ const OrderSummary = ({
       >
         Place Order
       </button>
+      <p className="mt-3 text-center font-sans text-xs text-muted">
+        By placing an order you agree to our{' '}
+        <a href="/terms" className="text-primary underline">
+          Terms
+        </a>{' '}
+        and{' '}
+        <a href="/privacy" className="text-primary underline">
+          Privacy Policy
+        </a>
+        .
+      </p>
     </aside>
   );
 };

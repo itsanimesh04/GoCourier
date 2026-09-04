@@ -7,6 +7,7 @@ export interface CartApiItem {
   menu_item_id?: string;
   extras_product_id?: string;
   addon_ids?: string[];
+  option_choice_id?: string | null;
   note?: string | null;
   image_url?: string | null;
   pickup_point?: string | null;
@@ -31,6 +32,7 @@ export function lineToCartApiItem(line: CartLineItem): CartApiItem {
     menu_item_id: line.menuItemId,
     extras_product_id: kind === 'extra' ? line.extrasProductId : undefined,
     addon_ids: line.selectedAddons.map((addon) => addon.id),
+    option_choice_id: line.selectedOption?.id ?? null,
     note: line.note ?? null,
     image_url: line.imageUrl || null,
     pickup_point: line.pickupPoint ?? null,

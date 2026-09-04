@@ -93,6 +93,11 @@ export function mapMenuItem(row: {
       }[];
     }[];
   }[];
+  option_set?: {
+    id: string;
+    name: string;
+    choices: { id: string; name: string; price: number | string }[];
+  } | null;
 }): MenuItem {
   const addonGroups = (row.addon_groups ?? []).map((group) => ({
     id: group.id,
@@ -126,6 +131,18 @@ export function mapMenuItem(row: {
           })
         );
 
+  const optionSet = row.option_set
+    ? {
+        id: row.option_set.id,
+        name: row.option_set.name,
+        choices: (row.option_set.choices ?? []).map((choice) => ({
+          id: choice.id,
+          name: choice.name,
+          price: Number(choice.price),
+        })),
+      }
+    : null;
+
   return {
     id: row.id,
     restaurantId: row.restaurant_id,
@@ -140,6 +157,7 @@ export function mapMenuItem(row: {
     category: row.category ?? undefined,
     addons,
     addonGroups,
+    optionSet,
   };
 }
 
