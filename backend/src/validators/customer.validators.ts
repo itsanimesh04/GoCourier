@@ -94,4 +94,15 @@ export const listOrdersSchema = z.object({
     .strict()
 });
 
+export const searchCustomerSchema = z.object({
+  query: z
+    .object({
+      q: z.string().trim().default(''),
+      mode: z.enum(['food', 'extras']).optional(),
+      campus_id: objectIdParam.optional()
+    })
+    .strict()
+});
+
 export type CartBody = z.infer<typeof cartBody>;
+

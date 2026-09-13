@@ -239,3 +239,50 @@ export const DEFAULT_FOOD_FILTERS: FoodFilters = {
   cuisine: null,
   query: '',
 };
+
+export interface SearchDishItem {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice: number | null;
+  rating: number;
+  isVeg: boolean | null;
+  imageUrl: string | null;
+}
+
+export interface SearchRestaurantItem {
+  id: string;
+  name: string;
+  cuisine: string;
+  rating: number;
+  imageUrl: string | null;
+  address: string;
+  distanceKm: number;
+  etaMinutes: number;
+  isOpen: boolean;
+}
+
+export interface SearchCategoryItem {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+}
+
+export interface SearchExtraItem {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  imageUrl: string | null;
+}
+
+export interface SearchResults {
+  restaurants: SearchRestaurantItem[];
+  dishes: SearchDishItem[];
+  categories: SearchCategoryItem[];
+  extras: SearchExtraItem[];
+}
+

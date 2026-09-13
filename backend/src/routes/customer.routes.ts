@@ -5,6 +5,7 @@ import { customerCampusController } from '../controllers/customer/campus.control
 import { customerCatalogController } from '../controllers/customer/catalog.controller';
 import { customerOrderController } from '../controllers/customer/order.controller';
 import { customerRestaurantController } from '../controllers/customer/restaurant.controller';
+import { customerSearchController } from '../controllers/customer/search.controller';
 import { authenticate } from '../middleware/authenticate';
 import { authorizeRole } from '../middleware/authorizeRole';
 import { validateRequest } from '../middleware/validateRequest';
@@ -17,6 +18,7 @@ import {
   listOrdersSchema,
   listRestaurantsSchema,
   restaurantIdSchema,
+  searchCustomerSchema,
   setCampusSchema
 } from '../validators/customer.validators';
 
@@ -34,6 +36,8 @@ customerRouter.get(
   customerCatalogController.extras
 );
 customerRouter.get('/restaurants', validateRequest(listRestaurantsSchema), customerRestaurantController.list);
+customerRouter.get('/search', validateRequest(searchCustomerSchema), customerSearchController.search);
+
 customerRouter.get(
   '/restaurants/:id',
   validateRequest(restaurantIdSchema),
