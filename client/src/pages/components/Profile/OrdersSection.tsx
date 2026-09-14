@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import orderService from '../../../services/order.service';
+import { OrdersSkeleton } from '../../../components/skeletons';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import { selectOrders, setOrders } from '../../../store/slices/cartSlice';
 import type { Order } from '../../../utils/types';
@@ -7,6 +8,7 @@ import type { Order } from '../../../utils/types';
 const OrdersSection = () => {
   const orders = useAppSelector(selectOrders);
   const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void orderService
@@ -46,13 +48,16 @@ const OrdersSection = () => {
           )
         );
       })
-      .catch(() => dispatch(setOrders([])));
+      .catch(() => dispatch(setOrders([])))
+      .finally(() => setLoading(false));
   }, [dispatch]);
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-5">
       <h2 className="mb-4 font-display text-lg font-bold uppercase text-fg sm:text-xl">Past Orders</h2>
-      {orders.length === 0 ? (
+      {loading ? (
+        <OrdersSkeleton />
+      ) : orders.length === 0 ? (
         <p className="font-sans text-sm text-muted">No orders yet.</p>
       ) : (
         <ul className="space-y-4">

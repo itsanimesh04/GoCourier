@@ -5,7 +5,8 @@ import { SlidersHorizontal } from 'lucide-react-native';
 import FilterDrawer from '../components/FilterDrawer';
 import FoodCard from '../components/FoodCard';
 import RestaurantCard from '../components/RestaurantCard';
-import { EmptyState, ScreenLoader } from '../components/ui';
+import { FoodCardSkeleton, RestaurantCardSkeleton } from '../components/skeletons';
+import { EmptyState, SkeletonBlock } from '../components/ui';
 import { filterMenuItems, filterRestaurants } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
 import { loadCatalog, selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
@@ -70,7 +71,49 @@ export default function FoodListingScreen() {
   }, [foods, restoList]);
 
   if (status === 'loading' && menuItems.length === 0) {
-    return <ScreenLoader label="Loading food…" />;
+    return (
+      <View className="flex-1 bg-bg px-4 pt-4">
+        <View className="mb-5 flex-row items-end justify-between gap-3">
+          <View className="flex-1">
+            <SkeletonBlock className="h-7 w-32 rounded-lg" />
+            <SkeletonBlock className="mt-2 h-4 w-48 rounded-md" />
+          </View>
+          <SkeletonBlock className="h-10 w-20 rounded-xl" />
+        </View>
+
+        <View className="mb-8">
+          <SkeletonBlock className="mb-3 h-5 w-28 rounded" />
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <RestaurantCardSkeleton />
+            </View>
+            <View className="flex-1">
+              <RestaurantCardSkeleton />
+            </View>
+          </View>
+        </View>
+
+        <SkeletonBlock className="mb-3 h-5 w-24 rounded" />
+        <View className="gap-3 pb-8">
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <FoodCardSkeleton />
+            </View>
+            <View className="flex-1">
+              <FoodCardSkeleton />
+            </View>
+          </View>
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <FoodCardSkeleton />
+            </View>
+            <View className="flex-1">
+              <FoodCardSkeleton />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
   }
 
   return (

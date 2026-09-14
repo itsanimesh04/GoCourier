@@ -4,7 +4,8 @@ import { useLocalSearchParams } from 'expo-router';
 import CatalogModeTabs from '../components/CatalogModeTabs';
 import ExtraCard from '../components/ExtraCard';
 import ExtrasServiceCards from '../components/ExtrasServiceCards';
-import { EmptyState, ScreenLoader } from '../components/ui';
+import { ExtraCardSkeleton } from '../components/skeletons';
+import { EmptyState, SkeletonBlock } from '../components/ui';
 import { useAppDispatch, useAppSelector } from '../store';
 import { loadCatalog, selectCatalogStatus, selectExtras } from '../store/slices/catalogSlice';
 import { selectSelectedCampusId, setCatalogMode } from '../store/slices/uiSlice';
@@ -62,7 +63,51 @@ export default function ExtrasListingScreen() {
   }, [products]);
 
   if (status === 'loading' && extras.length === 0) {
-    return <ScreenLoader label="Loading extras…" />;
+    return (
+      <ScrollView className="flex-1 bg-bg px-4 pt-4" showsVerticalScrollIndicator={false}>
+        <View className="mb-4 gap-5">
+          <View>
+            <SkeletonBlock className="h-7 w-44 rounded-lg" />
+            <SkeletonBlock className="mt-2 h-4 w-60 rounded-md" />
+          </View>
+          <CatalogModeTabs navigateOnChange />
+          <ExtrasServiceCards />
+          <View className="flex-row gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonBlock key={i} className="h-8 w-16 rounded-full" />
+            ))}
+          </View>
+          <View>
+            <SkeletonBlock className="mb-3 h-5 w-20 rounded" />
+            <View className="flex-row gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonBlock key={i} className="h-10 w-24 rounded-2xl" />
+              ))}
+            </View>
+          </View>
+          <SkeletonBlock className="h-5 w-28 rounded" />
+        </View>
+
+        <View className="gap-3 pb-8">
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <ExtraCardSkeleton />
+            </View>
+            <View className="flex-1">
+              <ExtraCardSkeleton />
+            </View>
+          </View>
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <ExtraCardSkeleton />
+            </View>
+            <View className="flex-1">
+              <ExtraCardSkeleton />
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    );
   }
 
   return (

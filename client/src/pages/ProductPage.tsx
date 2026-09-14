@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
+import { ProductPageSkeleton } from '../components/skeletons';
 import { getRelatedFoods } from '../data/relatedFoods';
 import { lineUnitTotal } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { addFoodItem } from '../store/slices/cartSlice';
 import {
   selectIsFoodWishlisted,
@@ -36,7 +37,12 @@ const ProductPage = () => {
     [item, menuItems]
   );
 
+  const status = useAppSelector(selectCatalogStatus);
+
   if (!item) {
+    if (status === 'loading') {
+      return <ProductPageSkeleton />;
+    }
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">

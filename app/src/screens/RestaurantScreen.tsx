@@ -5,11 +5,12 @@ import { Heart, SlidersHorizontal, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import FilterDrawer from '../components/FilterDrawer';
 import FoodCard from '../components/FoodCard';
+import { RestaurantScreenSkeleton } from '../components/skeletons';
 import { RemoteImage } from '../components/VegBadge';
 import { EmptyState } from '../components/ui';
 import { filterMenuItems, getMenuByRestaurant, groupByCategory } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { openFilterDrawer } from '../store/slices/uiSlice';
 import { selectIsRestaurantWishlisted, toggleRestaurantWishlist } from '../store/slices/wishlistSlice';
 import { DEFAULT_FOOD_FILTERS, type FoodFilters } from '../utils/types';
@@ -42,7 +43,12 @@ export default function RestaurantScreen() {
       .map((cat) => ({ title: cat, data: grouped[cat] ?? [] }));
   }, [activeCategory, categories, grouped]);
 
+  const status = useAppSelector(selectCatalogStatus);
+
   if (!restaurant) {
+    if (status === 'loading') {
+      return <RestaurantScreenSkeleton />;
+    }
     return (
       <View className="flex-1 items-center justify-center bg-bg px-6">
         <Text className="font-display text-2xl font-bold text-fg">Restaurant not found</Text>

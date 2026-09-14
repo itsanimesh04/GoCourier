@@ -9,7 +9,8 @@ import ExtrasServiceCards from '../components/ExtrasServiceCards';
 import FoodCard from '../components/FoodCard';
 import HeroBannerRotator from '../components/HeroBannerRotator';
 import InfiniteTextBanner from '../components/InfiniteTextBanner';
-import { EmptyState, ScreenLoader, SkeletonBlock, TwoColGrid } from '../components/ui';
+import { ExtraCardSkeleton, FoodCardSkeleton } from '../components/skeletons';
+import { EmptyState, SkeletonBlock, TwoColGrid } from '../components/ui';
 import { RemoteImage } from '../components/VegBadge';
 import { extrasCategoryMeta } from '../data/homepageData';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -78,7 +79,36 @@ export default function HomeScreen() {
   const featuredFood = useMemo(() => menuItems.slice(0, 8), [menuItems]);
 
   if (showInitialLoader) {
-    return <ScreenLoader label="Loading campus menu…" />;
+    return (
+      <ScrollView className="flex-1 bg-bg" showsVerticalScrollIndicator={false}>
+        <View className="px-4 pb-2 pt-4">
+          <CatalogModeTabs />
+        </View>
+        <View className="px-4 pt-2">
+          <SkeletonBlock className="mb-4 h-[48px] w-full rounded-2xl" />
+          <View className="mb-5 flex-row gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <View key={i} className="items-center gap-1.5">
+                <SkeletonBlock className="h-[76px] w-[76px] rounded-2xl" />
+                <SkeletonBlock className="h-3 w-12 rounded" />
+              </View>
+            ))}
+          </View>
+          <View className="gap-3">
+            <SkeletonBlock className="h-[100px] w-full rounded-2xl" />
+            <SkeletonBlock className="h-[150px] w-full rounded-2xl" />
+          </View>
+        </View>
+        <View className="px-4 py-6 pb-10">
+          <SkeletonBlock className="mb-3 h-6 w-32 rounded-lg" />
+          <TwoColGrid>
+            {Array.from({ length: 4 }).map((_, i) =>
+              isExtras ? <ExtraCardSkeleton key={i} /> : <FoodCardSkeleton key={i} />
+            )}
+          </TwoColGrid>
+        </View>
+      </ScrollView>
+    );
   }
 
   return (
@@ -190,12 +220,32 @@ export default function HomeScreen() {
                   ))}
                 </TwoColGrid>
               </View>
+            ) : status === 'loading' ? (
+              <View>
+                <SkeletonBlock className="mb-3 h-6 w-32 rounded-lg" />
+                <TwoColGrid>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <ExtraCardSkeleton key={i} />
+                  ))}
+                </TwoColGrid>
+              </View>
             ) : (
               <EmptyState title="No extras yet" subtitle="Pull to refresh or check back later." />
             )}
           </View>
         ) : featuredFood.length === 0 ? (
-          <EmptyState title="No dishes yet for this campus" subtitle="Pull to refresh." />
+          status === 'loading' ? (
+            <View>
+              <SkeletonBlock className="mb-3 h-6 w-32 rounded-lg" />
+              <TwoColGrid>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <FoodCardSkeleton key={i} />
+                ))}
+              </TwoColGrid>
+            </View>
+          ) : (
+            <EmptyState title="No dishes yet for this campus" subtitle="Pull to refresh." />
+          )
         ) : (
           <View>
             <Text className="mb-3 font-display text-lg font-bold text-fg">Popular now</Text>

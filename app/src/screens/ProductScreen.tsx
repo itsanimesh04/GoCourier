@@ -5,13 +5,14 @@ import { Heart, Star } from 'lucide-react-native';
 import FoodCard from '../components/FoodCard';
 import PriceDisplay from '../components/PriceDisplay';
 import QtyStepper from '../components/QtyStepper';
+import { ProductScreenSkeleton } from '../components/skeletons';
 import VegBadge, { RemoteImage } from '../components/VegBadge';
 import { BottomBar, TwoColGrid } from '../components/ui';
 import { getRelatedFoods } from '../data/relatedFoods';
 import { lineUnitTotal } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addFoodItem } from '../store/slices/cartSlice';
-import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { selectIsFoodWishlisted, toggleFoodWishlist } from '../store/slices/wishlistSlice';
 import { usePalette } from '../theme/ThemeProvider';
 import { hasCustomizableAddons, useAddonCustomize } from '../components/AddonCustomizeSheet';
@@ -30,7 +31,12 @@ export default function ProductScreen() {
   const [addedFlash, setAddedFlash] = useState(false);
   const related = useMemo(() => (item ? getRelatedFoods(item, menuItems) : []), [item, menuItems]);
 
+  const status = useAppSelector(selectCatalogStatus);
+
   if (!item) {
+    if (status === 'loading') {
+      return <ProductScreenSkeleton />;
+    }
     return (
       <View className="flex-1 items-center justify-center bg-bg px-6">
         <Text className="font-display text-2xl font-bold text-fg">Item not found</Text>

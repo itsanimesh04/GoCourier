@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import Field from '../components/Field';
 import CampusPicker from '../components/CampusPicker';
+import { OrderCardSkeleton } from '../components/skeletons';
 import orderService from '../services/order.service';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logoutUser, selectAuthUser, setUserCampus } from '../store/slices/authSlice';
@@ -248,9 +249,10 @@ export default function ProfileScreen() {
       <View className="mt-5 rounded-2xl border border-border bg-surface p-5">
         <Text className="mb-4 font-display text-lg font-bold text-fg">Past Orders</Text>
         {ordersLoading ? (
-          <View className="items-center py-6">
-            <ActivityIndicator color={colors.primary} />
-            <Text className="mt-2 font-sans text-sm text-muted">Loading orders…</Text>
+          <View className="gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <OrderCardSkeleton key={i} />
+            ))}
           </View>
         ) : orders.length === 0 ? (
           <Text className="font-sans text-sm text-muted">No orders yet.</Text>

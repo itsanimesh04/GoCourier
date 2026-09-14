@@ -20,12 +20,20 @@ const ResturantCard = ({ restaurant }: { restaurant: Restaurant }) => {
         onClick={() => navigate(`/food/restaurants/${restaurant.id}`)}
       >
         <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-surface-2">
-          <img
-            src={restaurant.imageUrl}
-            alt={restaurant.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
+          {restaurant.imageUrl ? (
+            <img
+              src={restaurant.imageUrl}
+              alt={restaurant.name}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-surface-2 text-muted">
+              <span className="font-display text-sm font-bold uppercase tracking-wider text-muted">
+                {restaurant.name.slice(0, 2)}
+              </span>
+            </div>
+          )}
 
           <span
             className={`absolute left-2 top-2 z-10 rounded-lg px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider ${

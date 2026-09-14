@@ -1,5 +1,5 @@
-import { Children, type ReactNode } from 'react';
-import { ActivityIndicator, Text, View, type ViewProps } from 'react-native';
+import { Children, useEffect, useRef, type ReactNode } from 'react';
+import { ActivityIndicator, Animated, Text, View, type ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '../utils/utils';
 
@@ -21,8 +21,35 @@ export function EmptyState({ title, subtitle }: { title: string; subtitle?: stri
   );
 }
 
-export function SkeletonBlock({ className }: { className?: string }) {
-  return <View className={cn('rounded-xl bg-surface-2', className)} />;
+export function SkeletonBlock({ className, style, ...rest }: ViewProps & { className?: string }) {
+  const opacity = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.95,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.45,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      {...rest}
+      style={[{ opacity }, style]}
+      className={cn('rounded-xl bg-surface-2', className)}
+    />
+  );
 }
 
 export function BottomBar({ children, className, ...rest }: ViewProps & { children: ReactNode; className?: string }) {

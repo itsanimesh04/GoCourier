@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import CatalogModeTabs from '../components/CatalogModeTabs';
 import ExtraCard from '../components/ExtraCard';
 import ExtrasServiceCards from '../components/ExtrasServiceCards';
+import { ExtraCardSkeleton, Skeleton } from '../components/skeletons';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectExtras } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectExtras } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
 import { cn } from '../utils/utils';
 
@@ -56,6 +57,8 @@ const ExtrasListingPage = () => {
     setSearchParams(params, { replace: true });
   };
 
+  const status = useAppSelector(selectCatalogStatus);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -74,66 +77,100 @@ const ExtrasListingPage = () => {
         <ExtrasServiceCards />
       </div>
 
-      <div className="mb-8 flex flex-wrap gap-2">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => selectCategory(cat)}
-            className={cn(
-              'rounded-xl px-3 py-1.5 font-sans text-sm font-medium transition-colors',
-              category === cat
-                ? 'bg-primary text-on-primary'
-                : 'border border-border bg-surface text-muted hover:text-fg'
-            )}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {stores.length > 0 && (
-        <section className="mb-12">
-          <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
-            Stores
-          </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {stores.map((store) => {
-              const active = storeParam === store;
-              return (
-                <button
-                  key={store}
-                  type="button"
-                  onClick={() => selectStore(active ? null : store)}
-                  className={cn(
-                    'rounded-xl border px-3 py-3 text-left font-display text-sm font-semibold',
-                    active ? 'border-primary bg-primary/10' : 'border-border bg-surface'
-                  )}
-                >
-                  {store}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
-          Products · {products.length}
-        </h2>
-        {products.length === 0 ? (
-          <p className="rounded-2xl border border-border bg-surface p-8 text-center font-sans text-muted">
-            No extras match your filters.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((p) => (
-              <ExtraCard key={p.id} product={p} />
+      {status === 'loading' && extras.length === 0 ? (
+        <>
+          <div className="mb-8 flex flex-wrap gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-20 rounded-xl" />
             ))}
           </div>
-        )}
-      </section>
+
+          <section className="mb-12">
+            <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+              Stores
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-xl" />
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+              Products
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <ExtraCardSkeleton key={i} />
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          <div className="mb-8 flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => selectCategory(cat)}
+                className={cn(
+                  'rounded-xl px-3 py-1.5 font-sans text-sm font-medium transition-colors',
+                  category === cat
+                    ? 'bg-primary text-on-primary'
+                    : 'border border-border bg-surface text-muted hover:text-fg'
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {stores.length > 0 && (
+            <section className="mb-12">
+              <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+                Stores
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {stores.map((store) => {
+                  const active = storeParam === store;
+                  return (
+                    <button
+                      key={store}
+                      type="button"
+                      onClick={() => selectStore(active ? null : store)}
+                      className={cn(
+                        'rounded-xl border px-3 py-3 text-left font-display text-sm font-semibold',
+                        active ? 'border-primary bg-primary/10' : 'border-border bg-surface'
+                      )}
+                    >
+                      {store}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+              Products · {products.length}
+            </h2>
+            {products.length === 0 ? (
+              <p className="rounded-2xl border border-border bg-surface p-8 text-center font-sans text-muted">
+                No extras match your filters.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                {products.map((p) => (
+                  <ExtraCard key={p.id} product={p} />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 };

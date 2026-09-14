@@ -4,9 +4,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import FilterDrawer from '../components/FilterDrawer';
 import FoodCard from '../components/FoodCard';
 import ResturantCard from '../components/ResturantCard';
+import { FoodCardSkeleton, ResturantCardSkeleton } from '../components/skeletons';
 import { filterMenuItems, filterRestaurants } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { openFilterDrawer, setCatalogMode } from '../store/slices/uiSlice';
 import { DEFAULT_FOOD_FILTERS, type FoodFilters } from '../utils/types';
 
@@ -46,6 +47,8 @@ const FoodListingPage = () => {
     [filters, restaurants]
   );
 
+  const status = useAppSelector(selectCatalogStatus);
+
   const applyFilters = (next: FoodFilters) => {
     setFilters(next);
     const params = new URLSearchParams();
@@ -83,38 +86,66 @@ const FoodListingPage = () => {
         </button>
       </div>
 
-      {restoList.length > 0 && (
-        <section className="mb-12">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold uppercase text-fg sm:text-xl">Restaurants</h2>
-            <Link to="/food" className="font-sans text-sm uppercase text-primary">
-              {restoList.length} nearby
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {restoList.slice(0, 4).map((r) => (
-              <ResturantCard key={r.id} restaurant={r} />
-            ))}
-          </div>
-        </section>
-      )}
+      {status === 'loading' && menuItems.length === 0 ? (
+        <>
+          <section className="mb-12">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold uppercase text-fg sm:text-xl">Restaurants</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ResturantCardSkeleton key={i} />
+              ))}
+            </div>
+          </section>
 
-      <section>
-        <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
-          Dishes · {foods.length}
-        </h2>
-        {foods.length === 0 ? (
-          <p className="py-16 text-center font-sans text-sm font-semibold text-muted">
-            No dishes match your filters
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
-            {foods.map((item) => (
-              <FoodCard key={item.id} menuItem={item} />
-            ))}
-          </div>
-        )}
-      </section>
+          <section>
+            <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+              Dishes
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <FoodCardSkeleton key={i} />
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          {restoList.length > 0 && (
+            <section className="mb-12">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold uppercase text-fg sm:text-xl">Restaurants</h2>
+                <Link to="/food" className="font-sans text-sm uppercase text-primary">
+                  {restoList.length} nearby
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                {restoList.slice(0, 4).map((r) => (
+                  <ResturantCard key={r.id} restaurant={r} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="mb-4 font-display text-lg font-semibold uppercase text-fg sm:text-xl">
+              Dishes · {foods.length}
+            </h2>
+            {foods.length === 0 ? (
+              <p className="py-16 text-center font-sans text-sm font-semibold text-muted">
+                No dishes match your filters
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+                {foods.map((item) => (
+                  <FoodCard key={item.id} menuItem={item} />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       <FilterDrawer value={filters} onApply={applyFilters} showRating />
     </div>

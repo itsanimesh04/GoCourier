@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react';
 import { FiSliders } from 'react-icons/fi';
 import { Link, useParams } from 'react-router-dom';
 import FilterDrawer from '../components/FilterDrawer';
+import { RestaurantPageSkeleton } from '../components/skeletons';
 import {
   filterMenuItems,
   getMenuByRestaurant,
   groupByCategory,
 } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { openFilterDrawer } from '../store/slices/uiSlice';
 import {
   selectIsRestaurantWishlisted,
@@ -38,10 +39,14 @@ const ResturantPage = () => {
     [allItems, filters]
   );
 
+  const status = useAppSelector(selectCatalogStatus);
   const grouped = useMemo(() => groupByCategory(filtered), [filtered]);
   const categories = useMemo(() => Object.keys(grouped).sort(), [grouped]);
 
   if (!restaurant) {
+    if (status === 'loading') {
+      return <RestaurantPageSkeleton />;
+    }
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">

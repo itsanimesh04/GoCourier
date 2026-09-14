@@ -417,12 +417,20 @@ const Hero = () => {
                           className="group flex w-full flex-col overflow-hidden rounded-xl border border-border bg-surface text-left transition-all duration-200 hover:border-primary hover:shadow-md"
                         >
                           <div className="relative aspect-4/3 w-full overflow-hidden bg-surface-2">
-                            <img
-                              src={r.imageUrl}
-                              alt={r.name}
-                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              loading="lazy"
-                            />
+                            {r.imageUrl ? (
+                              <img
+                                src={r.imageUrl}
+                                alt={r.name}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-surface-2 text-muted">
+                                <span className="font-display text-xs font-bold uppercase tracking-wider text-muted">
+                                  {r.name.slice(0, 2)}
+                                </span>
+                              </div>
+                            )}
                             <span
                               className={`absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 font-sans text-[8px] font-bold uppercase tracking-wider ${
                                 r.isOpen ? 'bg-fg text-bg' : 'bg-surface-2 text-muted'
@@ -483,12 +491,18 @@ const Hero = () => {
                       className="group flex w-full flex-col items-center gap-1.5 text-center transition-opacity hover:opacity-80"
                     >
                       <div className="relative aspect-square w-full max-w-22 overflow-hidden rounded-xl border border-border bg-surface-2 transition-transform duration-200 group-hover:scale-105 sm:max-w-none">
-                        <img
-                          src={cat.imageUrl}
-                          alt={cat.name}
-                          className="absolute inset-0 h-full w-full object-cover"
-                          loading="lazy"
-                        />
+                        {cat.imageUrl ? (
+                          <img
+                            src={cat.imageUrl}
+                            alt={cat.name}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center font-display text-xs text-muted">
+                            🍽️
+                          </div>
+                        )}
                       </div>
                       <h3 className="w-full shrink-0 font-display text-[10px] font-semibold uppercase leading-tight tracking-tight text-fg sm:text-xs">
                         {cat.name}

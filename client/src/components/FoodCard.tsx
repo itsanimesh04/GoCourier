@@ -68,12 +68,20 @@ const FoodCard = ({ menuItem }: { menuItem: MenuItem }) => {
         onClick={() => navigate(`/food/foods/${menuItem.id}`)}
       >
         <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-surface-2">
-          <img
-            src={menuItem.imageUrl}
-            alt={menuItem.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
+          {menuItem.imageUrl ? (
+            <img
+              src={menuItem.imageUrl}
+              alt={menuItem.name}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-surface-2 text-muted">
+              <span className="font-display text-sm font-bold uppercase tracking-wider text-muted">
+                {menuItem.name.slice(0, 2)}
+              </span>
+            </div>
+          )}
           {!menuItem.isAvailable && (
             <span className="absolute left-2 top-2 z-10 rounded-lg bg-surface px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider text-fg">
               Sold out
