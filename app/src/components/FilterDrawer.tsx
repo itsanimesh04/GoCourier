@@ -9,6 +9,7 @@ import { DEFAULT_FOOD_FILTERS, type FoodFilters } from '../utils/types';
 import { cn } from '../utils/utils';
 import { usePalette } from '../theme/ThemeProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { haptic } from '../utils/haptics';
 
 function AccordionSection({
   title,
@@ -44,7 +45,13 @@ function RadioRow({
   struck?: boolean;
 }) {
   return (
-    <Pressable onPress={onSelect} className="flex-row items-center gap-3 py-1.5">
+    <Pressable
+      onPress={() => {
+        haptic.selection();
+        onSelect();
+      }}
+      className="flex-row items-center gap-3 py-1.5"
+    >
       <View className={cn('h-4 w-4 items-center justify-center rounded-full border border-fg', checked && 'bg-fg')}>
         {checked ? <View className="h-1.5 w-1.5 rounded-full bg-bg" /> : null}
       </View>
@@ -190,15 +197,16 @@ export default function FilterDrawer({
           </ScrollView>
           <View className="flex-row gap-2 border-t border-border p-4">
             <Pressable
-              onPress={() =>
+              onPress={() => {
+                haptic.light();
                 setDraft({
                   ...DEFAULT_FOOD_FILTERS,
                   query: value.query,
                   cuisine: value.cuisine,
                   priceTo: maxPrice,
-                })
-              }
-              className="flex-1 rounded-xl border border-border py-2.5"
+                });
+              }}
+              className="flex-1 rounded-xl border border-border py-2.5 active:scale-95"
             >
               <Text className="text-center font-display text-base font-semibold uppercase tracking-wide text-fg">
                 Reset
@@ -206,10 +214,11 @@ export default function FilterDrawer({
             </Pressable>
             <Pressable
               onPress={() => {
+                haptic.medium();
                 onApply(draft);
                 dispatch(closeFilterDrawer());
               }}
-              className="flex-[2] rounded-xl bg-primary py-2.5"
+              className="flex-[2] rounded-xl bg-primary py-2.5 active:scale-95"
             >
               <Text className="text-center font-display text-base font-semibold uppercase tracking-wide text-on-primary">
                 Apply

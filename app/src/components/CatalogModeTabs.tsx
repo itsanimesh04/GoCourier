@@ -3,37 +3,44 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { selectCatalogMode, setCatalogMode } from '../store/slices/uiSlice';
 import { cn } from '../utils/utils';
 import { router } from 'expo-router';
+import { haptic } from '../utils/haptics';
 
 export default function CatalogModeTabs({ navigateOnChange = false }: { navigateOnChange?: boolean }) {
   const dispatch = useAppDispatch();
   const mode = useAppSelector(selectCatalogMode);
 
   const select = (next: 'food' | 'extras') => {
+    if (next !== mode) {
+      haptic.selection();
+    }
     dispatch(setCatalogMode(next));
     if (navigateOnChange) router.push(next === 'extras' ? '/extras' : '/food');
   };
 
   return (
-    <View className="flex-row rounded-full border border-border bg-surface p-1">
-      {(['food', 'extras'] as const).map((item) => (
-        <Pressable
-          key={item}
-          onPress={() => select(item)}
-          className={cn(
-            'rounded-full px-5 py-2',
-            mode === item ? 'bg-primary' : 'bg-transparent'
-          )}
-        >
-          <Text
+    <View className="flex-row items-center rounded-2xl border border-border/80 bg-surface-2/80 p-1">
+      {(['food', 'extras'] as const).map((item) => {
+        const active = mode === item;
+        return (
+          <Pressable
+            key={item}
+            onPress={() => select(item)}
             className={cn(
-              'font-display text-xs font-semibold uppercase tracking-wide',
-              mode === item ? 'text-on-primary' : 'text-muted'
+              'flex-1 items-center justify-center rounded-xl py-2 transition-all',
+              active ? 'bg-primary shadow-sm' : 'bg-transparent'
             )}
           >
-            {item === 'food' ? 'Food' : 'Extras'}
-          </Text>
-        </Pressable>
-      ))}
+            <Text
+              className={cn(
+                'font-display text-xs font-bold uppercase tracking-wider',
+                active ? 'text-on-primary' : 'text-muted'
+              )}
+            >
+              {item === 'food' ? 'Food & Drinks' : 'Campus Extras'}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

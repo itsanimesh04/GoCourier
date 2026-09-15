@@ -38,6 +38,7 @@ import type {
 import { cn } from '../utils/utils';
 import VegBadge, { RemoteImage } from './VegBadge';
 import QtyStepper from './QtyStepper';
+import { haptic } from '../utils/haptics';
 
 const PREVIEW_COUNT = 4;
 
@@ -110,11 +111,12 @@ export function AddonCustomizeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const close = useCallback(() => {
-    Keyboard.dismiss();
+    haptic.light();
     sheetRef.current?.close();
   }, []);
 
   const toggleAddon = useCallback((addon: FoodAddon) => {
+    haptic.selection();
     setSelected((prev) => {
       const exists = prev.some((a) => a.id === addon.id);
       if (exists) return prev.filter((a) => a.id !== addon.id);
@@ -123,6 +125,7 @@ export function AddonCustomizeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const pickOption = useCallback((choice: FoodOptionChoice) => {
+    haptic.selection();
     setSelectedOption({ id: choice.id, name: choice.name, price: choice.price });
   }, []);
 
@@ -180,17 +183,14 @@ export function AddonCustomizeProvider({ children }: { children: ReactNode }) {
           }
 
           const isExpanded = expanded[sub.id] || !!q;
-          const visibleAddons = isExpanded ? addons : addons.slice(0, PREVIEW_COUNT);
-          for (const addon of visibleAddons) {
+          const visible = isExpanded ? addons : addons.slice(0, PREVIEW_COUNT);
+          for (const addon of visible) {
             result.push({ type: 'addon', key: `addon-${addon.id}`, addon });
           }
-          if (!isExpanded && addons.length > PREVIEW_COUNT) {
-            result.push({
-              type: 'more',
-              key: `more-${sub.id}`,
-              subgroupId: sub.id,
-              remaining: addons.length - PREVIEW_COUNT,
-            });
+
+          const remaining = addons.length - PREVIEW_COUNT;
+          if (!isExpanded && remaining > 0) {
+            result.push({ type: 'more', key: `more-${sub.id}`, subgroupId: sub.id, remaining });
           }
         }
       }
@@ -205,6 +205,7 @@ export function AddonCustomizeProvider({ children }: { children: ReactNode }) {
     const unitPrice = option?.price ?? menuItem.price;
     const displayName = option ? `${menuItem.name} · ${option.name}` : menuItem.name;
 
+    haptic.success();
     if (mode === 'edit' && cartKey) {
       void dispatch(
         setItemAddons({

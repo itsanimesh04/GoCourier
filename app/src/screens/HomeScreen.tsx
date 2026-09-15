@@ -24,6 +24,7 @@ import {
 } from '../store/slices/catalogSlice';
 import { selectCatalogMode, selectSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
+import { haptic } from '../utils/haptics';
 
 const foodBannerItems = [
   'Order before cutoff — hostel drop tonight',
@@ -128,20 +129,23 @@ export default function HomeScreen() {
       </View>
 
       <View className="px-4 pt-2">
-        <View className="mb-4 flex-row items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-1">
-          <Search size={18} color={colors.muted} />
+        <View className="mb-4 flex-row items-center gap-2.5 rounded-2xl border border-border/80 bg-surface-2/70 px-3.5 py-1.5 shadow-inner">
+          <Search size={18} color={colors.primary} />
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={isExtras ? 'Search stationery, snacks…' : 'Search restaurants, dishes…'}
+            placeholder={isExtras ? 'Search stationery, snacks, essentials…' : 'Search dishes, restaurants, cuisines…'}
             placeholderTextColor={colors.muted}
             returnKeyType="search"
             onSubmitEditing={submit}
-            className="min-h-[44px] flex-1 font-sans text-base text-fg"
+            className="min-h-[42px] flex-1 font-sans text-sm text-fg"
           />
           {query.trim() ? (
-            <Pressable onPress={submit} className="rounded-xl bg-primary px-3 py-2">
-              <Text className="font-sans text-xs font-bold text-on-primary">Go</Text>
+            <Pressable
+              onPress={submit}
+              className="rounded-xl bg-primary px-3 py-1.5 active:scale-95"
+            >
+              <Text className="font-display text-xs font-bold text-on-primary">Search</Text>
             </Pressable>
           ) : null}
         </View>
@@ -152,19 +156,20 @@ export default function HomeScreen() {
               {categories.map((cat) => (
                 <Pressable
                   key={cat.id}
-                  onPress={() =>
+                  onPress={() => {
+                    haptic.selection();
                     router.push(
                       isExtras
                         ? { pathname: '/extras', params: { category: cat.name } }
                         : { pathname: '/food', params: { q: cat.name } }
-                    )
-                  }
-                  className="w-[76px] items-center"
+                    );
+                  }}
+                  className="w-[76px] items-center active:scale-95"
                 >
-                  <View className="h-[76px] w-[76px] overflow-hidden rounded-2xl border border-border bg-surface-2">
+                  <View className="h-[74px] w-[74px] overflow-hidden rounded-3xl border border-border/80 bg-surface-2 shadow-sm">
                     <RemoteImage uri={cat.imageUrl} className="h-full w-full" />
                   </View>
-                  <Text numberOfLines={1} className="mt-1.5 text-center font-sans text-[11px] font-semibold text-fg">
+                  <Text numberOfLines={1} className="mt-1.5 text-center font-display text-[11px] font-bold text-fg">
                     {cat.name}
                   </Text>
                 </Pressable>
@@ -173,9 +178,10 @@ export default function HomeScreen() {
           </ScrollView>
         ) : status === 'loading' ? (
           <View className="mb-5 flex-row gap-3">
-            <SkeletonBlock className="h-[76px] w-[76px]" />
-            <SkeletonBlock className="h-[76px] w-[76px]" />
-            <SkeletonBlock className="h-[76px] w-[76px]" />
+            <SkeletonBlock className="h-[74px] w-[74px] rounded-3xl" />
+            <SkeletonBlock className="h-[74px] w-[74px] rounded-3xl" />
+            <SkeletonBlock className="h-[74px] w-[74px] rounded-3xl" />
+            <SkeletonBlock className="h-[74px] w-[74px] rounded-3xl" />
           </View>
         ) : null}
 

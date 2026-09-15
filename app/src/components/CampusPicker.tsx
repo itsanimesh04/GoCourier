@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import { ChevronDown } from 'lucide-react-native';
+import { Check, ChevronDown, MapPin } from 'lucide-react-native';
 import { useAppDispatch, useAppSelector } from '../store';
 import { selectCampuses } from '../store/slices/catalogSlice';
 import { selectAuthUser, setUserCampus } from '../store/slices/authSlice';
 import { selectSelectedCampusId, setSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
 import { cn } from '../utils/utils';
+import { haptic } from '../utils/haptics';
 
 function shortName(name: string) {
   return name.replace(/\s*University\s*/i, ' ').trim();
@@ -22,9 +23,15 @@ export default function CampusPicker({ variant = 'header' }: { variant?: 'header
   const [open, setOpen] = useState(false);
 
   const pick = (id: string) => {
+    haptic.selection();
     dispatch(setSelectedCampusId(id));
     if (user) void dispatch(setUserCampus(id));
     setOpen(false);
+  };
+
+  const handleOpen = () => {
+    haptic.light();
+    setOpen(true);
   };
 
   if (!selected) return null;
@@ -32,46 +39,89 @@ export default function CampusPicker({ variant = 'header' }: { variant?: 'header
   return (
     <>
       <Pressable
-        onPress={() => setOpen(true)}
+        onPress={handleOpen}
+        hitSlop={6}
         className={cn(
-          'flex-row items-center gap-1 rounded-lg px-2 py-1',
-          variant === 'header' ? 'border border-on-primary/40' : 'border border-border bg-surface'
+          'flex-row items-center gap-1.5',
+          variant === 'header'
+            ? 'py-0.5'
+            : 'rounded-xl border border-border bg-surface-2 px-3 py-2'
         )}
       >
-        <Text
-          numberOfLines={1}
-          className={cn(
-            'max-w-[120px] font-sans text-xs font-semibold',
-            variant === 'header' ? 'text-on-primary' : 'text-fg'
-          )}
-        >
-          {shortName(selected.name)}
-        </Text>
-        <ChevronDown size={14} color={variant === 'header' ? colors.onPrimary : colors.fg} />
-      </Pressable>
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable className="flex-1 justify-center bg-black/60 px-6" onPress={() => setOpen(false)}>
-          <Pressable className="max-h-[70%] overflow-hidden rounded-2xl border border-border bg-surface">
-            <Text className="border-b border-border px-4 py-3 font-display text-base font-bold uppercase text-fg">
-              Choose campus
+        <MapPin size={16} color={colors.primary} />
+        <View className="min-w-0">
+          {variant === 'header' && (
+            <Text className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted">
+              Delivering To
             </Text>
-            <ScrollView>
+          )}
+          <View className="flex-row items-center gap-1">
+            <Text
+              numberOfLines={1}
+              className="max-w-[160px] font-display text-sm font-bold text-fg"
+            >
+              {shortName(selected.name)}
+            </Text>
+            <ChevronDown size={14} color={colors.fg} />
+          </View>
+        </View>
+      </Pressable>
+
+      <Modal
+        visible={open}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOpen(false)}
+      >
+        <View className="flex-1 justify-end bg-black/60">
+          <Pressable className="flex-1" onPress={() => setOpen(false)} />
+          <View className="max-h-[75%] rounded-t-3xl border-t border-border bg-surface px-5 pb-8 pt-3">
+            {/* Grab handle bar */}
+            <View className="mx-auto mb-4 h-1 w-12 rounded-full bg-border" />
+
+            <View className="mb-4 flex-row items-center justify-between">
+              <View>
+                <Text className="font-display text-lg font-bold text-fg">Choose Campus</Text>
+                <Text className="font-sans text-xs text-muted">Select your delivery location</Text>
+              </View>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} className="divide-y divide-border/60">
               {campuses.map((campus) => {
                 const active = campus.id === selected.id;
                 return (
                   <Pressable
                     key={campus.id}
                     onPress={() => pick(campus.id)}
-                    className={cn('px-4 py-3', active && 'bg-primary/10')}
+                    className={cn(
+                      'my-1 flex-row items-center justify-between rounded-2xl p-3.5',
+                      active ? 'bg-primary/10' : 'bg-surface-2/60'
+                    )}
                   >
-                    <Text className="font-display text-sm font-semibold text-fg">{campus.name}</Text>
-                    <Text className="font-sans text-xs text-muted">{campus.city}</Text>
+                    <View className="flex-1 pr-2">
+                      <Text
+                        className={cn(
+                          'font-display text-sm font-bold',
+                          active ? 'text-primary' : 'text-fg'
+                        )}
+                      >
+                        {campus.name}
+                      </Text>
+                      <Text className="mt-0.5 font-sans text-xs text-muted">
+                        {campus.city}{campus.state ? `, ${campus.state}` : ''}
+                      </Text>
+                    </View>
+                    {active && (
+                      <View className="h-6 w-6 items-center justify-center rounded-full bg-primary">
+                        <Check size={14} color={colors.onPrimary} strokeWidth={3} />
+                      </View>
+                    )}
                   </Pressable>
                 );
               })}
             </ScrollView>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </>
   );
