@@ -96,8 +96,8 @@ export default function HomeScreen() {
             ))}
           </View>
           <View className="gap-3">
-            <SkeletonBlock className="h-[100px] w-full rounded-2xl" />
-            <SkeletonBlock className="h-[150px] w-full rounded-2xl" />
+            <SkeletonBlock className="h-[120px] w-full rounded-3xl" />
+            <SkeletonBlock className="h-[220px] w-full rounded-2xl" />
           </View>
         </View>
         <View className="px-4 py-6 pb-10">

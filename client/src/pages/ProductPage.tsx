@@ -82,7 +82,7 @@ const ProductPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
+    <div className="mx-auto min-h-[75vh] max-w-7xl px-4 py-6 sm:py-10 md:px-10">
       <nav className="mb-4 flex flex-wrap items-center gap-x-2 font-sans text-xs uppercase tracking-wide text-muted sm:mb-6 sm:text-sm">
         <Link to="/food" className="hover:text-primary">
           Food

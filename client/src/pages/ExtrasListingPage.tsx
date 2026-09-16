@@ -4,6 +4,7 @@ import CatalogModeTabs from '../components/CatalogModeTabs';
 import ExtraCard from '../components/ExtraCard';
 import ExtrasServiceCards from '../components/ExtrasServiceCards';
 import { ExtraCardSkeleton, Skeleton } from '../components/skeletons';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useAppDispatch, useAppSelector } from '../store';
 import { selectCatalogStatus, selectExtras } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
@@ -42,6 +43,18 @@ const ExtrasListingPage = () => {
     });
   }, [category, extras, query, storeParam]);
 
+  const { visibleCount, hasMore, isLoadingMore, sentinelRef } = useInfiniteScroll({
+    totalItems: products.length,
+    initialCount: 16,
+    step: 12,
+    resetKey: `${query}-${storeParam}-${category}`,
+  });
+
+  const displayedProducts = useMemo(
+    () => products.slice(0, visibleCount),
+    [products, visibleCount]
+  );
+
   const selectStore = (storeName: string | null) => {
     const params = new URLSearchParams(searchParams);
     if (storeName) params.set('store', storeName);
@@ -60,7 +73,7 @@ const ExtrasListingPage = () => {
   const status = useAppSelector(selectCatalogStatus);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
+    <div className="mx-auto min-h-[75vh] max-w-7xl px-4 py-6 sm:py-10 md:px-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
@@ -162,11 +175,26 @@ const ExtrasListingPage = () => {
                 No extras match your filters.
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                {products.map((p) => (
-                  <ExtraCard key={p.id} product={p} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                  {displayedProducts.map((p) => (
+                    <ExtraCard key={p.id} product={p} />
+                  ))}
+                </div>
+
+                {hasMore && (
+                  <div ref={sentinelRef} className="py-8 flex justify-center items-center">
+                    {isLoadingMore ? (
+                      <div className="flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-wider text-muted">
+                        <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
+                        Loading more products…
+                      </div>
+                    ) : (
+                      <div className="h-6 w-full" />
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </section>
         </>

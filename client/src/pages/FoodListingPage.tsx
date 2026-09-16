@@ -6,6 +6,7 @@ import FoodCard from '../components/FoodCard';
 import ResturantCard from '../components/ResturantCard';
 import { FoodCardSkeleton, ResturantCardSkeleton } from '../components/skeletons';
 import { filterMenuItems, filterRestaurants } from '../data/selectors';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useAppDispatch, useAppSelector } from '../store';
 import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
 import { openFilterDrawer, setCatalogMode } from '../store/slices/uiSlice';
@@ -49,6 +50,18 @@ const FoodListingPage = () => {
 
   const status = useAppSelector(selectCatalogStatus);
 
+  const { visibleCount, hasMore, isLoadingMore, sentinelRef } = useInfiniteScroll({
+    totalItems: foods.length,
+    initialCount: 16,
+    step: 12,
+    resetKey: `${filters.query}-${filters.cuisine}-${filters.diet}-${filters.priceTo}`,
+  });
+
+  const displayedFoods = useMemo(
+    () => foods.slice(0, visibleCount),
+    [foods, visibleCount]
+  );
+
   const applyFilters = (next: FoodFilters) => {
     setFilters(next);
     const params = new URLSearchParams();
@@ -62,7 +75,7 @@ const FoodListingPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 md:px-10">
+    <div className="mx-auto min-h-[75vh] max-w-7xl px-4 py-6 sm:py-10 md:px-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3 sm:mb-8 sm:gap-4">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
@@ -137,11 +150,26 @@ const FoodListingPage = () => {
                 No dishes match your filters
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
-                {foods.map((item) => (
-                  <FoodCard key={item.id} menuItem={item} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+                  {displayedFoods.map((item) => (
+                    <FoodCard key={item.id} menuItem={item} />
+                  ))}
+                </div>
+
+                {hasMore && (
+                  <div ref={sentinelRef} className="py-8 flex justify-center items-center">
+                    {isLoadingMore ? (
+                      <div className="flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-wider text-muted">
+                        <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
+                        Loading more dishes…
+                      </div>
+                    ) : (
+                      <div className="h-6 w-full" />
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </section>
         </>

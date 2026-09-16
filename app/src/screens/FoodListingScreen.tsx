@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
 import FilterDrawer from '../components/FilterDrawer';
@@ -19,7 +19,7 @@ function filtersFromParams(params: Record<string, string | string[] | undefined>
   const priceTo = typeof params.priceTo === 'string' ? params.priceTo : undefined;
   return {
     ...DEFAULT_FOOD_FILTERS,
-    query: typeof params.q === 'string' ? params.q : '',
+    query: typeof params.query === 'string' ? params.query : typeof params.q === 'string' ? params.q : '',
     cuisine: typeof params.cuisine === 'string' ? params.cuisine : null,
     diet: diet === 'veg' || diet === 'non_veg' ? diet : 'all',
     priceTo: priceTo ? Number(priceTo) : DEFAULT_FOOD_FILTERS.priceTo,
@@ -42,6 +42,7 @@ export default function FoodListingScreen() {
   const status = useAppSelector(selectCatalogStatus);
   const campusId = useAppSelector(selectSelectedCampusId);
   const [filters, setFilters] = useState<FoodFilters>(() => filtersFromParams(params));
+  const [visibleCount, setVisibleCount] = useState(16);
 
   useEffect(() => {
     dispatch(setCatalogMode('food'));
@@ -49,10 +50,20 @@ export default function FoodListingScreen() {
 
   useEffect(() => {
     setFilters(filtersFromParams(params));
+    setVisibleCount(16);
   }, [params.q, params.cuisine, params.diet, params.priceTo]);
 
   const foods = useMemo(() => filterMenuItems(menuItems, filters), [filters, menuItems]);
   const restoList = useMemo(() => filterRestaurants(restaurants, filters).slice(0, 4), [filters, restaurants]);
+
+  const displayedFoods = useMemo(() => foods.slice(0, visibleCount), [foods, visibleCount]);
+  const hasMore = visibleCount < foods.length;
+
+  const handleEndReached = () => {
+    if (hasMore) {
+      setVisibleCount((prev) => Math.min(prev + 10, foods.length));
+    }
+  };
 
   const rows = useMemo(() => {
     const out: Row[] = [{ type: 'header', key: 'header' }];
@@ -63,12 +74,12 @@ export default function FoodListingScreen() {
     if (foods.length === 0) {
       out.push({ type: 'empty', key: 'empty' });
     } else {
-      for (let i = 0; i < foods.length; i += 2) {
-        out.push({ type: 'food-pair', key: `f-${foods[i].id}`, items: foods.slice(i, i + 2) });
+      for (let i = 0; i < displayedFoods.length; i += 2) {
+        out.push({ type: 'food-pair', key: `f-${displayedFoods[i].id}`, items: displayedFoods.slice(i, i + 2) });
       }
     }
     return out;
-  }, [foods, restoList]);
+  }, [displayedFoods, foods.length, restoList]);
 
   if (status === 'loading' && menuItems.length === 0) {
     return (
@@ -187,6 +198,15 @@ export default function FoodListingScreen() {
             </View>
           );
         }}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          hasMore ? (
+            <View className="py-4 items-center justify-center">
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          ) : null
+        }
       />
       <FilterDrawer value={filters} onApply={setFilters} showRating />
     </View>

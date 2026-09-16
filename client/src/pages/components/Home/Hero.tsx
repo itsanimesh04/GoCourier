@@ -9,6 +9,7 @@ import SearchDropdown, { flattenSearchResults, type FlattenedSearchItem } from '
 import catalogService from '../../../services/catalog.service';
 import { useAppSelector } from '../../../store';
 import {
+  selectCatalogStatus,
   selectExtras,
   selectFoodCategories,
   selectMenuItems,
@@ -52,6 +53,7 @@ const Hero = () => {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   // Redux data
+  const status = useAppSelector(selectCatalogStatus);
   const apiCategories = useAppSelector(selectFoodCategories);
   const restaurants = useAppSelector(selectRestaurants);
   const menuItems = useAppSelector(selectMenuItems);
@@ -403,9 +405,26 @@ const Hero = () => {
             {activeTab === 'restaurants' && (
               <div id="panel-restaurants" role="tabpanel" aria-labelledby="tab-restaurants" className="w-full">
                 {featuredRestaurants.length === 0 ? (
-                  <p className="py-6 font-sans text-xs text-muted">
-                    No restaurants available yet. Check back soon!
-                  </p>
+                  status === 'loading' ? (
+                    <div className="grid w-full grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-surface animate-pulse"
+                        >
+                          <div className="aspect-4/3 w-full bg-surface-2" />
+                          <div className="space-y-1.5 p-2">
+                            <div className="h-3 w-3/4 rounded bg-surface-2" />
+                            <div className="h-2.5 w-1/2 rounded bg-surface-2" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-6 font-sans text-xs text-muted">
+                      No restaurants available yet. Check back soon!
+                    </p>
+                  )
                 ) : (
                   <>
                     <div className="grid w-full grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
@@ -476,40 +495,51 @@ const Hero = () => {
             {/* Tab 2: Categories Panel */}
             {activeTab === 'categories' && (
               <div id="panel-categories" role="tabpanel" aria-labelledby="tab-categories" className="w-full">
-                <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          isExtras
-                            ? `/extras?category=${encodeURIComponent(cat.name)}`
-                            : `/food?q=${encodeURIComponent(cat.name)}`
-                        )
-                      }
-                      className="group flex w-full flex-col items-center gap-1.5 text-center transition-opacity hover:opacity-80"
-                    >
-                      <div className="relative aspect-square w-full max-w-22 overflow-hidden rounded-xl border border-border bg-surface-2 transition-transform duration-200 group-hover:scale-105 sm:max-w-none">
-                        {cat.imageUrl ? (
-                          <img
-                            src={cat.imageUrl}
-                            alt={cat.name}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center font-display text-xs text-muted">
-                            🍽️
-                          </div>
-                        )}
+                {categories.length === 0 && status === 'loading' ? (
+                  <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1.5 animate-pulse">
+                        <div className="aspect-square w-full rounded-xl bg-surface-2" />
+                        <div className="h-2.5 w-12 rounded bg-surface-2" />
                       </div>
-                      <h3 className="w-full shrink-0 font-display text-[10px] font-semibold uppercase leading-tight tracking-tight text-fg sm:text-xs">
-                        {cat.name}
-                      </h3>
-                    </button>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            isExtras
+                              ? `/extras?category=${encodeURIComponent(cat.name)}`
+                              : `/food?q=${encodeURIComponent(cat.name)}`
+                          )
+                        }
+                        className="group flex w-full flex-col items-center gap-1.5 text-center transition-opacity hover:opacity-80"
+                      >
+                        <div className="relative aspect-square w-full max-w-22 overflow-hidden rounded-xl border border-border bg-surface-2 transition-transform duration-200 group-hover:scale-105 sm:max-w-none">
+                          {cat.imageUrl ? (
+                            <img
+                              src={cat.imageUrl}
+                              alt={cat.name}
+                              className="absolute inset-0 h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center font-display text-xs text-muted">
+                              🍽️
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="w-full shrink-0 font-display text-[10px] font-semibold uppercase leading-tight tracking-tight text-fg sm:text-xs">
+                          {cat.name}
+                        </h3>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

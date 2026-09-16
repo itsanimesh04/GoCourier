@@ -13,7 +13,7 @@ const ExtrasSections = () => {
 
   if (status === 'loading' && extras.length === 0) {
     return (
-      <>
+      <div className="min-h-[700px]">
         <section className="mx-auto max-w-7xl px-4 pt-4 pb-2 sm:pt-6">
           <ExtrasServiceCards />
         </section>
@@ -41,7 +41,7 @@ const ExtrasSections = () => {
             ))}
           </div>
         </section>
-      </>
+      </div>
     );
   }
 

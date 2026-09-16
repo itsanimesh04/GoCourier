@@ -5,9 +5,11 @@ import Header from "./components/Header"
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-bg font-sans text-fg">
+    <div className="flex min-h-screen flex-col bg-bg font-sans text-fg">
       <Header />
-      <Outlet />
+      <main className="flex-1 w-full min-h-[calc(100vh-140px)]">
+        <Outlet />
+      </main>
       <Footer />
       <FixedBottomRightStack />
     </div>

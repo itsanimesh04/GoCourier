@@ -1,8 +1,8 @@
 import clientApi from '../apis/clientApi';
 
 class OrderService {
-  list() {
-    return clientApi.get('/orders', { params: { page: 1, limit: 50 } });
+  list(page = 1, limit = 50) {
+    return clientApi.get('/orders', { params: { page, limit } });
   }
 
   getById(id: string) {

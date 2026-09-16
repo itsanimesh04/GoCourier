@@ -7,6 +7,7 @@ import { selectBanners } from '../store/slices/catalogSlice';
 import { setCatalogMode } from '../store/slices/uiSlice';
 import { RemoteImage } from './VegBadge';
 import { cn } from '../utils/utils';
+import { SkeletonBlock } from './ui';
 
 const INTERVAL_MS = 4500;
 
@@ -24,7 +25,16 @@ export default function HeroBannerRotator() {
     return () => clearInterval(id);
   }, [banners.length]);
 
-  if (!banner) return null;
+  if (!banner) {
+    return (
+      <View className="relative h-[220px] justify-end overflow-hidden rounded-2xl border border-border bg-surface p-4">
+        <SkeletonBlock className="mb-2 h-5 w-48 rounded-lg" />
+        <SkeletonBlock className="mb-1.5 h-3.5 w-64 rounded-md" />
+        <SkeletonBlock className="mb-3 h-3.5 w-40 rounded-md" />
+        <SkeletonBlock className="h-8 w-24 rounded-lg" />
+      </View>
+    );
+  }
 
   const onCta = () => {
     if (banner.ctaHref.startsWith('/extras')) dispatch(setCatalogMode('extras'));

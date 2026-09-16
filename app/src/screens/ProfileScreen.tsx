@@ -43,6 +43,7 @@ export default function ProfileScreen() {
   const [pickingAvatar, setPickingAvatar] = useState(false);
   const [draft, setDraft] = useState(profile);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [visibleOrdersCount, setVisibleOrdersCount] = useState(10);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const foodIds = useAppSelector(selectFoodWishlist);
   const restaurantIds = useAppSelector(selectRestaurantWishlist);
@@ -258,7 +259,7 @@ export default function ProfileScreen() {
           <Text className="font-sans text-sm text-muted">No orders yet.</Text>
         ) : (
           <View className="gap-4">
-            {orders.map((order) => (
+            {orders.slice(0, visibleOrdersCount).map((order) => (
               <View key={order.id} className="rounded-xl border border-border p-4">
                 <View className="flex-row items-start justify-between gap-2">
                   <View className="flex-1">
@@ -275,6 +276,16 @@ export default function ProfileScreen() {
                 </View>
               </View>
             ))}
+            {orders.length > visibleOrdersCount && (
+              <Pressable
+                onPress={() => setVisibleOrdersCount((prev) => prev + 10)}
+                className="mt-1 items-center rounded-xl bg-surface-2 py-2.5"
+              >
+                <Text className="font-sans text-xs font-semibold text-primary">
+                  Show more orders ({orders.length - visibleOrdersCount} remaining)
+                </Text>
+              </Pressable>
+            )}
           </View>
         )}
       </View>

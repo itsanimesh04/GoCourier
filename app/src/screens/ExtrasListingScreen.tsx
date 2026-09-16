@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import CatalogModeTabs from '../components/CatalogModeTabs';
 import ExtraCard from '../components/ExtraCard';
@@ -26,6 +26,7 @@ export default function ExtrasListingScreen() {
   const [category, setCategory] = useState(
     params.category && categories.includes(params.category) ? params.category : 'All'
   );
+  const [visibleCount, setVisibleCount] = useState(16);
 
   useEffect(() => {
     dispatch(setCatalogMode('extras'));
@@ -42,6 +43,10 @@ export default function ExtrasListingScreen() {
     setStore(storeParam ?? null);
   }, [storeParam]);
 
+  useEffect(() => {
+    setVisibleCount(16);
+  }, [query, store, category]);
+
   const products = useMemo(() => {
     const q = query.trim().toLowerCase();
     return extras.filter((p) => {
@@ -56,11 +61,20 @@ export default function ExtrasListingScreen() {
     });
   }, [category, extras, query, store]);
 
+  const displayedProducts = useMemo(() => products.slice(0, visibleCount), [products, visibleCount]);
+  const hasMore = visibleCount < products.length;
+
+  const handleEndReached = () => {
+    if (hasMore) {
+      setVisibleCount((prev) => Math.min(prev + 10, products.length));
+    }
+  };
+
   const pairs = useMemo(() => {
     const rows: ExtraProduct[][] = [];
-    for (let i = 0; i < products.length; i += 2) rows.push(products.slice(i, i + 2));
+    for (let i = 0; i < displayedProducts.length; i += 2) rows.push(displayedProducts.slice(i, i + 2));
     return rows;
-  }, [products]);
+  }, [displayedProducts]);
 
   if (status === 'loading' && extras.length === 0) {
     return (
@@ -194,6 +208,15 @@ export default function ExtrasListingScreen() {
           {row.length === 1 ? <View className="flex-1" /> : null}
         </View>
       )}
+      onEndReached={handleEndReached}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        hasMore ? (
+          <View className="py-4 items-center justify-center">
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : null
+      }
     />
   );
 }

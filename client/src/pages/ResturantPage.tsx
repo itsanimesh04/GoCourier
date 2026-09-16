@@ -48,7 +48,7 @@ const ResturantPage = () => {
       return <RestaurantPageSkeleton />;
     }
     return (
-      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+      <div className="mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center">
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-fg sm:text-3xl">
           Restaurant not found
         </h1>
@@ -63,7 +63,7 @@ const ResturantPage = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-[75vh]">
       <RestaurantHero
         restaurant={restaurant}
         wishlisted={wishlisted}

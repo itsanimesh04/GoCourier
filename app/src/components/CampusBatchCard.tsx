@@ -8,6 +8,7 @@ import { formatClockLabel, formatCountdown, getCampusById, getNextCutoffDate } f
 import { useTimerAccent } from '../utils/timerAccent';
 import { cn } from '../utils/utils';
 import { usePalette } from '../theme/ThemeProvider';
+import { SkeletonBlock } from './ui';
 
 export default function CampusBatchCard() {
   const campusId = useAppSelector(selectSelectedCampusId);
@@ -22,7 +23,27 @@ export default function CampusBatchCard() {
     return () => clearInterval(id);
   }, []);
 
-  if (!campus) return null;
+  if (!campus) {
+    return (
+      <View className="relative h-[120px] overflow-hidden rounded-3xl border border-border/80 bg-surface p-4 shadow-sm">
+        <View className="flex-row items-center justify-between">
+          <SkeletonBlock className="h-4 w-36 rounded-md" />
+          <SkeletonBlock className="h-4 w-20 rounded-full" />
+        </View>
+        <View className="mt-3 flex-row items-end justify-between">
+          <View className="gap-1.5">
+            <SkeletonBlock className="h-3 w-20 rounded" />
+            <SkeletonBlock className="h-7 w-28 rounded-lg" />
+          </View>
+          <View className="items-end gap-1.5">
+            <SkeletonBlock className="h-6 w-28 rounded-xl" />
+            <SkeletonBlock className="h-3 w-16 rounded" />
+          </View>
+        </View>
+        <SkeletonBlock className="mt-3.5 h-1 w-full rounded-full" />
+      </View>
+    );
+  }
 
   const cutoff = getNextCutoffDate(campus.cutoffTime, new Date(now));
   const remaining = cutoff.getTime() - now;

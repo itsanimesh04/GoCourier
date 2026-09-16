@@ -20,7 +20,18 @@ const HeroBannerRotator = () => {
     return () => window.clearInterval(id);
   }, [banners.length]);
 
-  if (!banner) return null;
+  if (!banner) {
+    return (
+      <div className="relative flex min-h-64 flex-col justify-end overflow-hidden rounded-2xl border border-border bg-surface p-4 animate-pulse sm:min-h-80 sm:p-5">
+        <div className="max-w-md space-y-2.5">
+          <div className="h-5 w-48 rounded bg-surface-2" />
+          <div className="h-3.5 w-64 rounded bg-surface-2" />
+          <div className="h-3.5 w-40 rounded bg-surface-2" />
+          <div className="mt-3 h-7 w-24 rounded-lg bg-surface-2" />
+        </div>
+      </div>
+    );
+  }
 
   const onCta = () => {
     if (banner.ctaHref.startsWith('/extras')) {

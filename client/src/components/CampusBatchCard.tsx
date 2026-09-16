@@ -22,7 +22,29 @@ const CampusBatchCard = () => {
     return () => window.clearInterval(id);
   }, []);
 
-  if (!campus) return null;
+  if (!campus) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-surface p-3.5 sm:p-4 min-h-[145px] animate-pulse">
+        <div className="flex items-start justify-between gap-2">
+          <div className="h-4 w-36 rounded bg-surface-2" />
+          <div className="h-3 w-20 rounded bg-surface-2" />
+        </div>
+        <div className="my-3 h-px bg-border" />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className="mb-1.5 h-3 w-16 rounded bg-surface-2" />
+            <div className="h-7 w-28 rounded bg-surface-2" />
+          </div>
+          <div>
+            <div className="mb-1.5 h-3 w-20 rounded bg-surface-2" />
+            <div className="mb-1 h-4 w-32 rounded bg-surface-2" />
+            <div className="h-3 w-24 rounded bg-surface-2" />
+          </div>
+        </div>
+        <div className="mt-3.5 h-1 rounded-full bg-surface-2" />
+      </div>
+    );
+  }
 
   const cutoff = getNextCutoffDate(campus.cutoffTime, new Date(now));
   const remaining = cutoff.getTime() - now;
