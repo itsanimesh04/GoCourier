@@ -5,6 +5,7 @@ import axios from 'axios';
 import cartApi, { lineToCartApiItem } from '../../services/cart.service';
 import { lineUnitTotal } from '../../data/selectors';
 import { notifyUnauthorized } from '../../lib/authRedirect';
+import { logoutUser } from './authSlice';
 import type { CartLineItem, Order, SelectedAddon, SelectedOption } from '../../utils/types';
 
 interface CartState {
@@ -394,7 +395,14 @@ const cartSlice = createSlice({
       .addCase(addFoodItem.rejected, fail)
       .addCase(addExtra.rejected, fail)
       .addCase(removeItem.rejected, fail)
-      .addCase(updateQty.rejected, fail);
+      .addCase(updateQty.rejected, fail)
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.items = [];
+        state.orders = [];
+        state.lastPlacedOrderId = null;
+        state.fee = 0;
+        state.error = null;
+      });
   },
 });
 

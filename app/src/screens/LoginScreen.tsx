@@ -4,14 +4,16 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import AuthShell from '../components/AuthShell';
 import Field from '../components/Field';
 import { useAppDispatch, useAppSelector } from '../store';
-import { loginUser, selectAuthError } from '../store/slices/authSlice';
+import { loginUser, selectAuthError, setUserCampus } from '../store/slices/authSlice';
 import { fetchCart } from '../store/slices/cartSlice';
 import { loadCatalog } from '../store/slices/catalogSlice';
+import { selectSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
 
 export default function LoginScreen() {
   const dispatch = useAppDispatch();
   const error = useAppSelector(selectAuthError);
+  const selectedCampusId = useAppSelector(selectSelectedCampusId);
   const colors = usePalette();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const [identifier, setIdentifier] = useState('');
@@ -23,7 +25,11 @@ export default function LoginScreen() {
     const result = await dispatch(loginUser({ identifier, password }));
     setSubmitting(false);
     if (loginUser.fulfilled.match(result)) {
-      const campusId = result.payload.campus_id ?? undefined;
+      let campusId = result.payload.campus_id ?? undefined;
+      if (!campusId && selectedCampusId) {
+        await dispatch(setUserCampus(selectedCampusId));
+        campusId = selectedCampusId;
+      }
       await dispatch(loadCatalog(campusId));
       await dispatch(fetchCart());
       router.replace(((from as string) || '/') as Href);

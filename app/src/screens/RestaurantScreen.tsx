@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, SectionList, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Heart, SlidersHorizontal, Star } from 'lucide-react-native';
+import { ArrowLeft, Heart, SlidersHorizontal, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import FilterDrawer from '../components/FilterDrawer';
 import FoodCard from '../components/FoodCard';
@@ -94,6 +94,13 @@ export default function RestaurantScreen() {
                   </Text>
                 </View>
               </View>
+              <Pressable
+                onPress={() => (router.canGoBack() ? router.back() : router.replace('/food'))}
+                hitSlop={8}
+                className="absolute left-4 top-4 z-10 rounded-xl bg-surface/90 p-2.5 active:scale-95"
+              >
+                <ArrowLeft size={18} color={colors.fg} />
+              </Pressable>
               <Pressable
                 onPress={() => dispatch(toggleRestaurantWishlist(restaurant.id))}
                 className="absolute right-4 top-4 rounded-xl bg-surface/90 p-2.5"

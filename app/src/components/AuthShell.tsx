@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const heroImage = require('../../assets/food/chicken-biryani.jpg');
@@ -27,6 +28,13 @@ export default function AuthShell({
           colors={['rgba(255,0,64,0.35)', 'rgba(255,0,64,0.92)']}
           style={{ position: 'absolute', inset: 0 }}
         />
+        <Pressable
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          className="absolute left-4 top-4 z-10 rounded-xl bg-black/30 p-2 active:scale-95"
+          hitSlop={8}
+        >
+          <ArrowLeft size={18} color="#ffffff" />
+        </Pressable>
         <View className="mt-auto px-5 pb-5">
           <Pressable onPress={() => router.push('/')}>
             <Text className="font-display text-xl font-bold tracking-tight text-on-primary">GoCourier</Text>

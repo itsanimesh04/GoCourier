@@ -15,6 +15,13 @@ export function getNextCutoffDate(cutoffTime: string, now = new Date()): Date {
   return target;
 }
 
+export function isTodayCutoffPassed(cutoffTime: string, now = new Date()): boolean {
+  const [h, m] = cutoffTime.split(':').map(Number);
+  const target = new Date(now);
+  target.setHours(h || 0, m || 0, 0, 0);
+  return now.getTime() >= target.getTime();
+}
+
 export function formatCountdown(ms: number): string {
   if (ms <= 0) return '00:00';
   const totalSec = Math.floor(ms / 1000);

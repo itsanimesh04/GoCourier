@@ -39,6 +39,13 @@ export function apiErrorMessage(error: unknown): string {
     if (typeof message === 'string' && message.length > 0) return message;
     return error.message;
   }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (typeof error === 'object' && error !== null && 'description' in error) {
+    const desc = (error as { description?: unknown }).description;
+    if (typeof desc === 'string' && desc.length > 0) return desc;
+  }
   return 'Something went wrong';
 }
 

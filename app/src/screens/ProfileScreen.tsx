@@ -67,29 +67,35 @@ export default function ProfileScreen() {
           order_status: Order['orderStatus'];
           payment_status: Order['paymentStatus'];
           drop_point: string | null;
+          subtotal?: string;
+          fee?: string;
           total_amount: string;
           placed_at: string | null;
+          created_at?: string | null;
           restaurant?: { id?: string | null; name?: string | null };
           campus?: { id?: string };
         }[];
         dispatch(
           setOrders(
-            rows.map((row) => ({
-              id: row.id,
-              displayId: row.id.slice(-8).toUpperCase(),
-              restaurantId: row.restaurant?.id ?? '',
-              restaurantName: row.restaurant?.name ?? 'Campus extras',
-              campusId: row.campus?.id ?? '',
-              dropPoint: row.drop_point ?? '',
-              orderStatus: row.order_status,
-              paymentStatus: row.payment_status,
-              subtotal: 0,
-              fee: 0,
-              totalAmount: Number(row.total_amount),
-              eta: '',
-              placedAt: row.placed_at ? new Date(row.placed_at).toLocaleString('en-IN') : '—',
-              items: [],
-            }))
+            rows.map((row) => {
+              const dateString = row.placed_at ?? row.created_at;
+              return {
+                id: row.id,
+                displayId: row.id.slice(-8).toUpperCase(),
+                restaurantId: row.restaurant?.id ?? '',
+                restaurantName: row.restaurant?.name ?? 'Campus extras',
+                campusId: row.campus?.id ?? '',
+                dropPoint: row.drop_point ?? '',
+                orderStatus: row.order_status,
+                paymentStatus: row.payment_status,
+                subtotal: Number(row.subtotal ?? 0),
+                fee: Number(row.fee ?? 0),
+                totalAmount: Number(row.total_amount),
+                eta: '',
+                placedAt: dateString ? new Date(dateString).toLocaleString('en-IN') : '—',
+                items: [],
+              };
+            })
           )
         );
       })

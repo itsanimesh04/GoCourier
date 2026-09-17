@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Heart, Star } from 'lucide-react-native';
+import { ArrowLeft, Heart, Star } from 'lucide-react-native';
 import FoodCard from '../components/FoodCard';
 import PriceDisplay from '../components/PriceDisplay';
 import QtyStepper from '../components/QtyStepper';
@@ -78,8 +78,15 @@ export default function ProductScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView className="flex-1" contentContainerClassName="pb-4">
-        <View className="aspect-[4/3] overflow-hidden bg-surface-2">
+        <View className="relative aspect-[4/3] overflow-hidden bg-surface-2">
           <RemoteImage uri={item.imageUrl} className="h-full w-full" />
+          <Pressable
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/food'))}
+            hitSlop={8}
+            className="absolute left-4 top-4 z-10 rounded-xl bg-surface/90 p-2.5 shadow-sm active:scale-95"
+          >
+            <ArrowLeft size={18} color={colors.fg} />
+          </Pressable>
         </View>
 
         <View className="px-4 pt-5">

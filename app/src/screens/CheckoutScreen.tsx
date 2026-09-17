@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Redirect, router } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { apiErrorMessage } from '../apis/clientApi';
 import CampusPicker from '../components/CampusPicker';
 import Field from '../components/Field';
@@ -147,16 +148,22 @@ export default function CheckoutScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-bg">
       <ScrollView contentContainerClassName="px-4 py-5 pb-10" keyboardShouldPersistTaps="handled">
-        <Text className="mb-5 font-display text-2xl font-bold text-fg">Checkout</Text>
+        <View className="mb-5 flex-row items-center gap-3">
+          <Pressable
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/cart'))}
+            className="rounded-xl border border-border bg-surface p-2 active:scale-95"
+            hitSlop={8}
+          >
+            <ArrowLeft size={18} color={colors.fg} />
+          </Pressable>
+          <Text className="font-display text-2xl font-bold text-fg">Checkout</Text>
+        </View>
         {error ? <Text className="mb-4 font-sans text-sm text-red-400">{error}</Text> : null}
 
         <View className="rounded-2xl border border-border bg-surface p-4">
           <Text className="mb-3 font-display text-base font-semibold text-fg">Delivery</Text>
           <Text className="mb-1 font-sans text-xs text-muted">Campus</Text>
           <CampusPicker variant="panel" />
-          {selectedCampusId ? (
-            <Pressable onPress={() => dispatch(setSelectedCampusId(selectedCampusId))} />
-          ) : null}
           <View className="mt-4">
             <Field
               label="Drop point"

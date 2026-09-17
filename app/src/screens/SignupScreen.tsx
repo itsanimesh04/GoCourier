@@ -4,13 +4,15 @@ import { router } from 'expo-router';
 import AuthShell from '../components/AuthShell';
 import Field from '../components/Field';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectAuthError, signupUser } from '../store/slices/authSlice';
+import { selectAuthError, signupUser, setUserCampus } from '../store/slices/authSlice';
 import { fetchCart } from '../store/slices/cartSlice';
+import { selectSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
 
 export default function SignupScreen() {
   const dispatch = useAppDispatch();
   const error = useAppSelector(selectAuthError);
+  const selectedCampusId = useAppSelector(selectSelectedCampusId);
   const colors = usePalette();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -30,6 +32,9 @@ export default function SignupScreen() {
     );
     setSubmitting(false);
     if (signupUser.fulfilled.match(result)) {
+      if (selectedCampusId) {
+        await dispatch(setUserCampus(selectedCampusId));
+      }
       await dispatch(fetchCart());
       router.replace('/');
     }

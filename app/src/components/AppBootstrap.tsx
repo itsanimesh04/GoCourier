@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { loadJSON } from '../lib/persist';
 import { useAppDispatch, useAppSelector } from '../store';
-import { bootstrapAuth, selectAuthStatus, selectAuthUser } from '../store/slices/authSlice';
+import { bootstrapAuth, selectAuthStatus, selectAuthUser, setUserCampus } from '../store/slices/authSlice';
 import { fetchCart } from '../store/slices/cartSlice';
 import { loadCatalog } from '../store/slices/catalogSlice';
 import { hydrateProfile, updateProfile, type ProfileState } from '../store/slices/profileSlice';
@@ -55,7 +55,11 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
     if (profileSyncedForUserRef.current === user.id) return;
     profileSyncedForUserRef.current = user.id;
 
-    if (user.campus_id) dispatch(setSelectedCampusId(user.campus_id));
+    if (user.campus_id) {
+      dispatch(setSelectedCampusId(user.campus_id));
+    } else if (campusId) {
+      void dispatch(setUserCampus(campusId));
+    }
     dispatch(
       updateProfile({
         name: user.name ?? 'Student',
@@ -86,8 +90,11 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
       // Align ref before dispatch so the campusId update does not re-fetch the same campus.
       lastCatalogKeyRef.current = selected;
       dispatch(setSelectedCampusId(selected));
+      if (user && !user.campus_id) {
+        void dispatch(setUserCampus(selected));
+      }
     });
-  }, [authStatus, user?.campus_id, campusId, dispatch]);
+  }, [authStatus, user, campusId, dispatch]);
 
   if (authStatus !== 'ready') {
     return <ScreenLoader label="Starting GoCourier…" />;
