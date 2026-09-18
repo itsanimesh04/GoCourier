@@ -24,33 +24,44 @@ const initialState: CatalogState = {
   status: 'idle',
 };
 
-export const loadCatalog = createAsyncThunk('catalog/load', async (campusId: string | undefined) => {
-  const [campuses, banners, categories, config, restaurants] = await Promise.all([
-    catalogService.campuses(),
-    catalogService.banners(),
-    catalogService.categories(),
-    catalogService.config(),
-    catalogService.restaurants(),
-  ]);
+export const loadCatalog = createAsyncThunk(
+  'catalog/load',
+  async (campusId: string | undefined) => {
+    const [campuses, banners, categories, config, restaurants] = await Promise.all([
+      catalogService.campuses(),
+      catalogService.banners(),
+      catalogService.categories(),
+      catalogService.config(),
+      catalogService.restaurants(),
+    ]);
 
-  const selected = campusId && campuses.some((c) => c.id === campusId) ? campusId : campuses[0]?.id;
-  const extras = selected ? await catalogService.extras(selected) : [];
-  const menus = await Promise.all(
-    restaurants.map((r) => catalogService.menu(r.id).catch(() => ({ items: [] as MenuItem[] })))
-  );
-  const menuItems = menus.flatMap((menu) => menu.items);
+    const selected = campusId && campuses.some((c) => c.id === campusId) ? campusId : campuses[0]?.id;
+    const extras = selected ? await catalogService.extras(selected) : [];
+    const menus = await Promise.all(
+      restaurants.map((r) => catalogService.menu(r.id).catch(() => ({ items: [] as MenuItem[] })))
+    );
+    const menuItems = menus.flatMap((menu) => menu.items);
 
-  return {
-    campuses,
-    banners,
-    categories: categories.map((c) => ({ id: c.id, name: c.name, imageUrl: c.image_url ?? '' })),
-    config,
-    restaurants,
-    extras,
-    menuItems,
-    selectedCampusId: selected ?? '',
-  };
-});
+    return {
+      campuses,
+      banners,
+      categories: categories.map((c) => ({ id: c.id, name: c.name, imageUrl: c.image_url ?? '' })),
+      config,
+      restaurants,
+      extras,
+      menuItems,
+      selectedCampusId: selected ?? '',
+    };
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { catalog: CatalogState };
+      // Skip if already loading to prevent duplicate concurrent fetches
+      if (state.catalog.status === 'loading') return false;
+      return true;
+    },
+  }
+);
 
 const catalogSlice = createSlice({
   name: 'catalog',
@@ -86,4 +97,16 @@ export const selectFoodCategories = (state: { catalog: CatalogState }) => state.
 export const selectAppConfig = (state: { catalog: CatalogState }) => state.catalog.config;
 export const selectCatalogStatus = (state: { catalog: CatalogState }) => state.catalog.status;
 
+// Memoized factory selector — same restaurantId returns the same selector reference.
+const _restaurantByIdSelectors = new Map<string, (state: { catalog: CatalogState }) => Restaurant | undefined>();
+export const selectRestaurantById = (id: string) => {
+  let sel = _restaurantByIdSelectors.get(id);
+  if (!sel) {
+    sel = (state: { catalog: CatalogState }) => state.catalog.restaurants.find((r) => r.id === id);
+    _restaurantByIdSelectors.set(id, sel);
+  }
+  return sel;
+};
+
 export default catalogSlice.reducer;
+

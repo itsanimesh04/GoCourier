@@ -41,7 +41,6 @@ export default function TabsLayout() {
         listeners={{
           tabPress: () => {
             haptic.selection();
-            dispatch(setCatalogMode('food'));
           },
         }}
       />
@@ -54,7 +53,6 @@ export default function TabsLayout() {
         listeners={{
           tabPress: () => {
             haptic.selection();
-            dispatch(setCatalogMode('food'));
           },
         }}
       />
@@ -67,7 +65,6 @@ export default function TabsLayout() {
         listeners={{
           tabPress: () => {
             haptic.selection();
-            dispatch(setCatalogMode('extras'));
           },
         }}
       />

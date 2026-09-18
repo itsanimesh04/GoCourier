@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { Check, ChevronDown, MapPin } from 'lucide-react-native';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectCampuses } from '../store/slices/catalogSlice';
+import { loadCatalog, selectCampuses } from '../store/slices/catalogSlice';
 import { selectAuthUser, setUserCampus } from '../store/slices/authSlice';
 import { selectSelectedCampusId, setSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
@@ -26,6 +26,8 @@ export default function CampusPicker({ variant = 'header' }: { variant?: 'header
     haptic.selection();
     dispatch(setSelectedCampusId(id));
     if (user) void dispatch(setUserCampus(id));
+    // Directly load catalog for the new campus
+    void dispatch(loadCatalog(id));
     setOpen(false);
   };
 

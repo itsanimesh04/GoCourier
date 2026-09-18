@@ -6,7 +6,7 @@ export default function ProductScreenSkeleton() {
     <View className="flex-1 bg-bg">
       <ScrollView className="flex-1" contentContainerClassName="pb-4" showsVerticalScrollIndicator={false}>
         {/* Product Image Skeleton */}
-        <View className="aspect-[4/3] overflow-hidden bg-surface-2">
+        <View style={{ aspectRatio: 4 / 3, width: '100%' }} className="overflow-hidden bg-surface-2">
           <SkeletonBlock className="h-full w-full rounded-none" />
         </View>
 

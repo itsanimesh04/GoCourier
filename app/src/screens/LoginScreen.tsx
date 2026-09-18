@@ -5,7 +5,7 @@ import AuthShell from '../components/AuthShell';
 import Field from '../components/Field';
 import { useAppDispatch, useAppSelector } from '../store';
 import { loginUser, selectAuthError, setUserCampus } from '../store/slices/authSlice';
-import { fetchCart } from '../store/slices/cartSlice';
+import { fetchCart, syncGuestCartToServer } from '../store/slices/cartSlice';
 import { loadCatalog } from '../store/slices/catalogSlice';
 import { selectSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
@@ -31,7 +31,7 @@ export default function LoginScreen() {
         campusId = selectedCampusId;
       }
       await dispatch(loadCatalog(campusId));
-      await dispatch(fetchCart());
+      await dispatch(syncGuestCartToServer());
       router.replace(((from as string) || '/') as Href);
     }
   };
@@ -45,7 +45,10 @@ export default function LoginScreen() {
           footer={
             <Text className="font-sans text-sm text-muted">
               New here?{' '}
-              <Text onPress={() => router.push('/signup')} className="font-semibold text-primary">
+              <Text
+                onPress={() => router.push({ pathname: '/signup', params: from ? { from } : undefined })}
+                className="font-semibold text-primary"
+              >
                 Create account
               </Text>
             </Text>

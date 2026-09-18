@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import AuthShell from '../components/AuthShell';
 import Field from '../components/Field';
 import { useAppDispatch, useAppSelector } from '../store';
 import { selectAuthError, signupUser, setUserCampus } from '../store/slices/authSlice';
-import { fetchCart } from '../store/slices/cartSlice';
+import { fetchCart, syncGuestCartToServer } from '../store/slices/cartSlice';
 import { selectSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
 
@@ -14,6 +14,7 @@ export default function SignupScreen() {
   const error = useAppSelector(selectAuthError);
   const selectedCampusId = useAppSelector(selectSelectedCampusId);
   const colors = usePalette();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -35,8 +36,8 @@ export default function SignupScreen() {
       if (selectedCampusId) {
         await dispatch(setUserCampus(selectedCampusId));
       }
-      await dispatch(fetchCart());
-      router.replace('/');
+      await dispatch(syncGuestCartToServer());
+      router.replace(((from as string) || '/') as Href);
     }
   };
 
@@ -49,7 +50,10 @@ export default function SignupScreen() {
           footer={
             <Text className="font-sans text-sm text-muted">
               Already have an account?{' '}
-              <Text onPress={() => router.push('/login')} className="font-semibold text-primary">
+              <Text
+                onPress={() => router.push({ pathname: '/login', params: from ? { from } : undefined })}
+                className="font-semibold text-primary"
+              >
                 Login
               </Text>
             </Text>

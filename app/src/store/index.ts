@@ -16,6 +16,15 @@ export const store = configureStore({
     ui: uiReducer,
     profile: profileReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        warnAfter: 128,
+      },
+      immutableCheck: {
+        warnAfter: 128,
+      },
+    }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
@@ -43,6 +43,9 @@ export default function FoodListingScreen() {
   const campusId = useAppSelector(selectSelectedCampusId);
   const [filters, setFilters] = useState<FoodFilters>(() => filtersFromParams(params));
   const [visibleCount, setVisibleCount] = useState(16);
+  // Track if we ever received data — prevents showing full skeleton on re-fetches
+  const hadDataRef = useRef(menuItems.length > 0);
+  if (menuItems.length > 0) hadDataRef.current = true;
 
   useEffect(() => {
     dispatch(setCatalogMode('food'));
@@ -81,7 +84,7 @@ export default function FoodListingScreen() {
     return out;
   }, [displayedFoods, foods.length, restoList]);
 
-  if (status === 'loading' && menuItems.length === 0) {
+  if (status === 'loading' && menuItems.length === 0 && !hadDataRef.current) {
     return (
       <View className="flex-1 bg-bg px-4 pt-4">
         <View className="mb-5 flex-row items-end justify-between gap-3">
@@ -133,6 +136,7 @@ export default function FoodListingScreen() {
         data={rows}
         keyExtractor={(item) => item.key}
         contentContainerClassName="px-4 pb-8 pt-4"
+        removeClippedSubviews
         refreshControl={
           <RefreshControl
             refreshing={status === 'loading'}
@@ -188,13 +192,13 @@ export default function FoodListingScreen() {
             return <EmptyState title="No dishes match your filters" />;
           }
           return (
-            <View className="mb-3 flex-row gap-3">
+            <View className="mb-3 flex-row items-stretch gap-3">
               {item.items.map((food) => (
-                <View key={food.id} className="flex-1">
+                <View key={food.id} className="flex-1 min-w-0">
                   <FoodCard menuItem={food} />
                 </View>
               ))}
-              {item.items.length === 1 ? <View className="flex-1" /> : null}
+              {item.items.length === 1 ? <View className="flex-1 min-w-0" /> : null}
             </View>
           );
         }}

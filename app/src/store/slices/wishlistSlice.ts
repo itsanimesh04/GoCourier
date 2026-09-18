@@ -50,9 +50,26 @@ export const { hydrateWishlist, toggleFoodWishlist, toggleRestaurantWishlist } =
 export const selectFoodWishlist = (state: { wishlist: WishlistState }) => state.wishlist.foodIds;
 export const selectRestaurantWishlist = (state: { wishlist: WishlistState }) =>
   state.wishlist.restaurantIds;
-export const selectIsFoodWishlisted = (id: string) => (state: { wishlist: WishlistState }) =>
-  state.wishlist.foodIds.includes(id);
-export const selectIsRestaurantWishlisted = (id: string) => (state: { wishlist: WishlistState }) =>
-  state.wishlist.restaurantIds.includes(id);
+// Memoized factory selectors — same id always returns the same selector reference,
+// preventing unnecessary re-renders in memo'd components like FoodCard.
+const _foodWishlistSelectors = new Map<string, (state: { wishlist: WishlistState }) => boolean>();
+export const selectIsFoodWishlisted = (id: string) => {
+  let sel = _foodWishlistSelectors.get(id);
+  if (!sel) {
+    sel = (state: { wishlist: WishlistState }) => state.wishlist.foodIds.includes(id);
+    _foodWishlistSelectors.set(id, sel);
+  }
+  return sel;
+};
+
+const _restaurantWishlistSelectors = new Map<string, (state: { wishlist: WishlistState }) => boolean>();
+export const selectIsRestaurantWishlisted = (id: string) => {
+  let sel = _restaurantWishlistSelectors.get(id);
+  if (!sel) {
+    sel = (state: { wishlist: WishlistState }) => state.wishlist.restaurantIds.includes(id);
+    _restaurantWishlistSelectors.set(id, sel);
+  }
+  return sel;
+};
 
 export default wishlistSlice.reducer;

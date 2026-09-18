@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Heart, Star } from 'lucide-react-native';
+import { ArrowLeft, Heart, Star, UtensilsCrossed } from 'lucide-react-native';
 import FoodCard from '../components/FoodCard';
 import PriceDisplay from '../components/PriceDisplay';
 import QtyStepper from '../components/QtyStepper';
@@ -12,7 +12,7 @@ import { getRelatedFoods } from '../data/relatedFoods';
 import { lineUnitTotal } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addFoodItem } from '../store/slices/cartSlice';
-import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurantById } from '../store/slices/catalogSlice';
 import { selectIsFoodWishlisted, toggleFoodWishlist } from '../store/slices/wishlistSlice';
 import { usePalette } from '../theme/ThemeProvider';
 import { hasCustomizableAddons, useAddonCustomize } from '../components/AddonCustomizeSheet';
@@ -20,9 +20,8 @@ import { hasCustomizableAddons, useAddonCustomize } from '../components/AddonCus
 export default function ProductScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const menuItems = useAppSelector(selectMenuItems);
-  const restaurants = useAppSelector(selectRestaurants);
   const item = menuItems.find((m) => m.id === id);
-  const restaurant = item ? restaurants.find((r) => r.id === item.restaurantId) : undefined;
+  const restaurant = useAppSelector(selectRestaurantById(item?.restaurantId ?? ''));
   const dispatch = useAppDispatch();
   const colors = usePalette();
   const { openCustomize } = useAddonCustomize();
@@ -78,8 +77,17 @@ export default function ProductScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView className="flex-1" contentContainerClassName="pb-4">
-        <View className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-          <RemoteImage uri={item.imageUrl} className="h-full w-full" />
+        <View style={{ aspectRatio: 4 / 3, width: '100%', minHeight: 220 }} className="relative overflow-hidden bg-surface-2">
+          {item.imageUrl ? (
+            <RemoteImage uri={item.imageUrl} className="h-full w-full" />
+          ) : (
+            <View className="h-full w-full items-center justify-center bg-surface-2">
+              <UtensilsCrossed size={48} color={colors.muted} opacity={0.6} />
+              <Text className="mt-2 font-display text-sm font-bold uppercase tracking-wider text-muted">
+                {item.name ? item.name.slice(0, 2) : 'FD'}
+              </Text>
+            </View>
+          )}
           <Pressable
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/food'))}
             hitSlop={8}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import CatalogModeTabs from '../components/CatalogModeTabs';
@@ -76,7 +76,11 @@ export default function ExtrasListingScreen() {
     return rows;
   }, [displayedProducts]);
 
-  if (status === 'loading' && extras.length === 0) {
+  // Track if we ever received data — prevents showing full skeleton on re-fetches
+  const hadDataRef = useRef(extras.length > 0);
+  if (extras.length > 0) hadDataRef.current = true;
+
+  if (status === 'loading' && extras.length === 0 && !hadDataRef.current) {
     return (
       <ScrollView className="flex-1 bg-bg px-4 pt-4" showsVerticalScrollIndicator={false}>
         <View className="mb-4 gap-5">

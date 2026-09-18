@@ -1,4 +1,5 @@
-import { Heart, Star, Clock } from 'lucide-react-native';
+import { memo } from 'react';
+import { Heart, Star, Clock, Store } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -9,7 +10,7 @@ import { usePalette } from '../theme/ThemeProvider';
 import { cn } from '../utils/utils';
 import { haptic } from '../utils/haptics';
 
-export default function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
+function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
   const dispatch = useAppDispatch();
   const colors = usePalette();
   const wishlisted = useAppSelector(selectIsRestaurantWishlisted(restaurant.id));
@@ -27,8 +28,17 @@ export default function RestaurantCard({ restaurant }: { restaurant: Restaurant 
       }}
       className="relative min-w-0 flex-1 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm active:scale-[0.98]"
     >
-      <View className="relative aspect-[4/3] w-full overflow-hidden bg-surface-2">
-        <RemoteImage uri={restaurant.imageUrl} className="h-full w-full" recyclingKey={restaurant.id} />
+      <View style={{ aspectRatio: 4 / 3, width: '100%', minHeight: 120 }} className="relative overflow-hidden bg-surface-2">
+        {restaurant.imageUrl ? (
+          <RemoteImage uri={restaurant.imageUrl} className="h-full w-full" recyclingKey={restaurant.id} />
+        ) : (
+          <View className="h-full w-full items-center justify-center bg-surface-2">
+            <Store size={28} color={colors.muted} opacity={0.6} />
+            <Text className="mt-1 font-display text-xs font-bold uppercase tracking-wider text-muted">
+              {restaurant.name ? restaurant.name.slice(0, 2) : 'RT'}
+            </Text>
+          </View>
+        )}
 
         {/* Status Pill */}
         <View
@@ -93,3 +103,5 @@ export default function RestaurantCard({ restaurant }: { restaurant: Restaurant 
     </Pressable>
   );
 }
+
+export default memo(RestaurantCard);

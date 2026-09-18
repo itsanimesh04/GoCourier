@@ -4,7 +4,8 @@ import { apiErrorMessage, isConflictError } from '../../apis/clientApi';
 import axios from 'axios';
 import cartApi, { lineToCartApiItem } from '../../services/cart.service';
 import { lineUnitTotal } from '../../data/selectors';
-import { notifyUnauthorized } from '../../lib/authRedirect';
+import { getToken } from '../../lib/secureToken';
+import { saveJSON } from '../../lib/persist';
 import { logoutUser } from './authSlice';
 import type { CartLineItem, Order, SelectedAddon, SelectedOption } from '../../utils/types';
 
@@ -123,6 +124,11 @@ function confirmReplaceCart(): Promise<boolean> {
 }
 
 async function postItems(items: CartLineItem[], force = false) {
+  const token = await getToken();
+  if (!token) {
+    saveJSON('gcs-cart', items);
+    return { items, fee: items.length > 0 ? 15 : 0 };
+  }
   const food = items.find((item) => item.kind === 'food');
   try {
     const res = await cartApi.save({
@@ -130,10 +136,13 @@ async function postItems(items: CartLineItem[], force = false) {
       items: items.map(lineToCartApiItem),
       force_replace: force,
     });
-    return mapServerCart(res.data.data);
+    const serverCart = mapServerCart(res.data.data);
+    saveJSON('gcs-cart', serverCart.items);
+    return serverCart;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      notifyUnauthorized('/cart');
+      saveJSON('gcs-cart', items);
+      return { items, fee: items.length > 0 ? 15 : 0 };
     }
     if (isConflictError(error) && !force) {
       const replace = await confirmReplaceCart();
@@ -143,17 +152,62 @@ async function postItems(items: CartLineItem[], force = false) {
           items: items.map(lineToCartApiItem),
           force_replace: true,
         });
-        return mapServerCart(res.data.data);
+        const serverCart = mapServerCart(res.data.data);
+        saveJSON('gcs-cart', serverCart.items);
+        return serverCart;
       }
     }
     throw error;
   }
 }
 
-export const fetchCart = createAsyncThunk('cart/fetch', async () => {
-  const res = await cartApi.get();
-  return mapServerCart(res.data.data);
+export const fetchCart = createAsyncThunk('cart/fetch', async (_, { getState }) => {
+  const token = await getToken();
+  if (!token) {
+    const state = getState() as { cart: CartState };
+    return { items: state.cart.items, fee: state.cart.items.length > 0 ? 15 : 0 };
+  }
+  try {
+    const res = await cartApi.get();
+    const serverCart = mapServerCart(res.data.data);
+    saveJSON('gcs-cart', serverCart.items);
+    return serverCart;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      const state = getState() as { cart: CartState };
+      return { items: state.cart.items, fee: state.cart.fee };
+    }
+    throw error;
+  }
 });
+
+export const syncGuestCartToServer = createAsyncThunk(
+  'cart/syncGuest',
+  async (_, { getState }) => {
+    const token = await getToken();
+    if (!token) return;
+    const state = getState() as { cart: CartState };
+    const items = state.cart.items;
+    if (items.length === 0) {
+      const res = await cartApi.get().catch(() => null);
+      if (res?.data?.data) {
+        const serverCart = mapServerCart(res.data.data);
+        saveJSON('gcs-cart', serverCart.items);
+        return serverCart;
+      }
+      return { items: [], fee: 0 };
+    }
+    const food = items.find((item) => item.kind === 'food');
+    const res = await cartApi.save({
+      restaurant_id: food?.restaurantId ?? null,
+      items: items.map(lineToCartApiItem),
+      force_replace: true,
+    });
+    const serverCart = mapServerCart(res.data.data);
+    saveJSON('gcs-cart', serverCart.items);
+    return serverCart;
+  }
+);
 
 export const addFoodItem = createAsyncThunk(
   'cart/addFood',
@@ -367,6 +421,13 @@ const cartSlice = createSlice({
     clearCartLocal(state) {
       state.items = [];
       state.fee = 0;
+      saveJSON('gcs-cart', []);
+    },
+    hydrateCart(state, action: PayloadAction<CartLineItem[]>) {
+      if (state.items.length === 0 && action.payload && action.payload.length > 0) {
+        state.items = action.payload;
+        state.fee = 15;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -386,6 +447,7 @@ const cartSlice = createSlice({
     };
     builder
       .addCase(fetchCart.fulfilled, apply)
+      .addCase(syncGuestCartToServer.fulfilled, apply)
       .addCase(addFoodItem.fulfilled, apply)
       .addCase(addExtra.fulfilled, apply)
       .addCase(removeItem.fulfilled, apply)
@@ -402,22 +464,39 @@ const cartSlice = createSlice({
         state.lastPlacedOrderId = null;
         state.fee = 0;
         state.error = null;
+        saveJSON('gcs-cart', []);
       });
   },
 });
 
-export const { clearLastPlaced, setLastPlacedOrderId, setOrders, clearCartLocal } = cartSlice.actions;
+export const { clearLastPlaced, setLastPlacedOrderId, setOrders, clearCartLocal, hydrateCart } =
+  cartSlice.actions;
 
 export const selectCartItems = (state: { cart: CartState }) => state.cart.items;
 export const selectCartCount = (state: { cart: CartState }) =>
   state.cart.items.reduce((sum, i) => sum + i.quantity, 0);
-export const selectMenuItemQty = (menuItemId: string) => (state: { cart: CartState }) =>
-  state.cart.items
-    .filter((i) => i.kind === 'food' && i.menuItemId === menuItemId)
-    .reduce((sum, i) => sum + i.quantity, 0);
+// Memoized factory selector — same menuItemId returns the same selector reference.
+const _menuItemQtySelectors = new Map<string, (state: { cart: CartState }) => number>();
+export const selectMenuItemQty = (menuItemId: string) => {
+  let sel = _menuItemQtySelectors.get(menuItemId);
+  if (!sel) {
+    sel = (state: { cart: CartState }) =>
+      state.cart.items
+        .filter((i) => i.kind === 'food' && i.menuItemId === menuItemId)
+        .reduce((sum, i) => sum + i.quantity, 0);
+    _menuItemQtySelectors.set(menuItemId, sel);
+  }
+  return sel;
+};
 export const selectCartSubtotal = (state: { cart: CartState }) =>
   state.cart.items.reduce((sum, i) => sum + lineUnitTotal(i.unitPrice, i.selectedAddons) * i.quantity, 0);
-export const selectDeliveryFee = (state: { cart: CartState }) => state.cart.fee;
+export const selectDeliveryFee = (state: {
+  cart: CartState;
+  catalog?: { config?: { deliveryFee?: number } | null };
+}) => {
+  if (state.cart.items.length === 0) return 0;
+  return state.cart.fee > 0 ? state.cart.fee : (state.catalog?.config?.deliveryFee ?? 15);
+};
 export const selectOrders = (state: { cart: CartState }) => state.cart.orders;
 export const selectLastPlacedOrderId = (state: { cart: CartState }) => state.cart.lastPlacedOrderId;
 

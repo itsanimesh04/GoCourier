@@ -3,7 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { loadJSON } from '../lib/persist';
 import { useAppDispatch, useAppSelector } from '../store';
 import { bootstrapAuth, selectAuthStatus, selectAuthUser, setUserCampus } from '../store/slices/authSlice';
-import { fetchCart } from '../store/slices/cartSlice';
+import { fetchCart, hydrateCart, syncGuestCartToServer } from '../store/slices/cartSlice';
 import { loadCatalog } from '../store/slices/catalogSlice';
 import { hydrateProfile, updateProfile, type ProfileState } from '../store/slices/profileSlice';
 import { hydrateWishlist } from '../store/slices/wishlistSlice';
@@ -14,7 +14,7 @@ import {
   type CatalogMode,
   type ThemeMode,
 } from '../store/slices/uiSlice';
-import { ScreenLoader } from './ui';
+import type { CartLineItem } from '../utils/types';
 
 export function AppBootstrap({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -23,20 +23,27 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
   const campusId = useAppSelector(selectSelectedCampusId);
   const lastCatalogKeyRef = useRef<string | null>(null);
   const profileSyncedForUserRef = useRef<string | null>(null);
+  // Track campusId in a ref so the catalog-load effect doesn't re-fire on every change.
+  const campusIdRef = useRef(campusId);
+  campusIdRef.current = campusId;
 
   useEffect(() => {
     void (async () => {
-      const [ui, profile, wishlist] = await Promise.all([
+      const [ui, profile, wishlist, cartItems] = await Promise.all([
         loadJSON<{ catalogMode?: CatalogMode; selectedCampusId?: string; theme?: ThemeMode }>('gcs-ui', {}),
         loadJSON<Partial<ProfileState>>('gcs-profile', {}),
         loadJSON<{ foodIds: string[]; restaurantIds: string[] }>('gcs-wishlist', {
           foodIds: [],
           restaurantIds: [],
         }),
+        loadJSON<CartLineItem[]>('gcs-cart', []),
       ]);
       dispatch(hydrateUi(ui));
       dispatch(hydrateProfile(profile));
       dispatch(hydrateWishlist(wishlist));
+      if (cartItems && cartItems.length > 0) {
+        dispatch(hydrateCart(cartItems));
+      }
       void dispatch(bootstrapAuth());
     })();
   }, [dispatch]);
@@ -55,27 +62,29 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
     if (profileSyncedForUserRef.current === user.id) return;
     profileSyncedForUserRef.current = user.id;
 
+    const currentCampus = campusIdRef.current;
     if (user.campus_id) {
       dispatch(setSelectedCampusId(user.campus_id));
-    } else if (campusId) {
-      void dispatch(setUserCampus(campusId));
+    } else if (currentCampus) {
+      void dispatch(setUserCampus(currentCampus));
     }
     dispatch(
       updateProfile({
         name: user.name ?? 'Student',
         email: user.email ?? '',
         phone: user.phone ?? '',
-        campusId: user.campus_id ?? campusId,
+        campusId: user.campus_id ?? currentCampus,
       })
     );
-    void dispatch(fetchCart());
-  }, [authStatus, user, campusId, dispatch]);
+    void dispatch(syncGuestCartToServer());
+  }, [authStatus, user, dispatch]);
 
-  // Load catalog once per resolved campus key after auth is ready.
+  // Load catalog exactly once after auth is ready, and again only if user identity changes.
+  // campusId is read from the ref to avoid re-triggering this effect on campus selection.
   useEffect(() => {
     if (authStatus !== 'ready') return;
 
-    const preferred = user?.campus_id || campusId || undefined;
+    const preferred = user?.campus_id || campusIdRef.current || undefined;
     const key = preferred || '__default__';
     if (lastCatalogKeyRef.current === key) return;
     lastCatalogKeyRef.current = key;
@@ -89,16 +98,13 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
       if (!selected) return;
       // Align ref before dispatch so the campusId update does not re-fetch the same campus.
       lastCatalogKeyRef.current = selected;
+      campusIdRef.current = selected;
       dispatch(setSelectedCampusId(selected));
       if (user && !user.campus_id) {
         void dispatch(setUserCampus(selected));
       }
     });
-  }, [authStatus, user, campusId, dispatch]);
+  }, [authStatus, user, dispatch]);
 
-  if (authStatus !== 'ready') {
-    return <ScreenLoader label="Starting GoCourier…" />;
-  }
-
-  return children;
+  return <>{children}</>;
 }

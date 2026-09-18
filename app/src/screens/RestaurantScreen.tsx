@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, SectionList, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Heart, SlidersHorizontal, Star } from 'lucide-react-native';
+import { ArrowLeft, Heart, SlidersHorizontal, Star, Store } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import FilterDrawer from '../components/FilterDrawer';
 import FoodCard from '../components/FoodCard';
@@ -10,18 +10,25 @@ import { RemoteImage } from '../components/VegBadge';
 import { EmptyState } from '../components/ui';
 import { filterMenuItems, getMenuByRestaurant, groupByCategory } from '../data/selectors';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectCatalogStatus, selectMenuItems, selectRestaurants } from '../store/slices/catalogSlice';
+import { selectCatalogStatus, selectMenuItems, selectRestaurantById } from '../store/slices/catalogSlice';
 import { openFilterDrawer } from '../store/slices/uiSlice';
 import { selectIsRestaurantWishlisted, toggleRestaurantWishlist } from '../store/slices/wishlistSlice';
 import { DEFAULT_FOOD_FILTERS, type FoodFilters } from '../utils/types';
 import { usePalette } from '../theme/ThemeProvider';
 import { cn } from '../utils/utils';
 
+function chunkPairs<T>(items: T[]): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += 2) {
+    rows.push(items.slice(i, i + 2));
+  }
+  return rows;
+}
+
 export default function RestaurantScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
-  const restaurants = useAppSelector(selectRestaurants);
+  const restaurant = useAppSelector(selectRestaurantById(id));
   const menuItems = useAppSelector(selectMenuItems);
-  const restaurant = restaurants.find((r) => r.id === id);
   const dispatch = useAppDispatch();
   const colors = usePalette();
   const wishlisted = useAppSelector(selectIsRestaurantWishlisted(id));
@@ -40,7 +47,7 @@ export default function RestaurantScreen() {
     const cats = activeCategory ? [activeCategory] : categories;
     return cats
       .filter((cat) => (grouped[cat] ?? []).length > 0)
-      .map((cat) => ({ title: cat, data: grouped[cat] ?? [] }));
+      .map((cat) => ({ title: cat, data: chunkPairs(grouped[cat] ?? []) }));
   }, [activeCategory, categories, grouped]);
 
   const status = useAppSelector(selectCatalogStatus);
@@ -63,13 +70,26 @@ export default function RestaurantScreen() {
     <View className="flex-1 bg-bg">
       <SectionList
         sections={sections}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => (item[0]?.id ? `row-${item[0].id}` : `row-${index}`)}
+        initialNumToRender={6}
+        maxToRenderPerBatch={8}
+        windowSize={5}
         stickySectionHeadersEnabled={false}
+        removeClippedSubviews
         ListHeaderComponent={
           <View>
-            <View className="relative min-h-[220px]">
-              <RemoteImage uri={restaurant.imageUrl} className="absolute inset-0 h-full w-full" />
-              <LinearGradient colors={['rgba(10,10,11,0.15)', '#0a0a0b']} style={{ position: 'absolute', inset: 0 }} />
+            <View className="relative min-h-[220px] bg-surface-2 justify-center items-center">
+              {restaurant.imageUrl ? (
+                <RemoteImage uri={restaurant.imageUrl} className="absolute inset-0 h-full w-full" />
+              ) : (
+                <View className="absolute inset-0 items-center justify-center bg-surface-2">
+                  <Store size={48} color={colors.muted} opacity={0.6} />
+                  <Text className="mt-2 font-display text-sm font-bold uppercase tracking-wider text-muted">
+                    {restaurant.name ? restaurant.name.slice(0, 2) : 'RT'}
+                  </Text>
+                </View>
+              )}
+              <LinearGradient colors={['rgba(10,10,11,0.2)', '#0a0a0b']} style={{ position: 'absolute', inset: 0 }} />
               <View className="mt-auto p-4">
                 <View
                   className={cn(
@@ -168,8 +188,13 @@ export default function RestaurantScreen() {
           <Text className="bg-bg px-4 pb-2 pt-2 font-display text-base font-bold text-fg">{section.title}</Text>
         )}
         renderItem={({ item }) => (
-          <View className="px-4 pb-3">
-            <FoodCard menuItem={item} />
+          <View className="mb-3 px-4 flex-row items-stretch gap-3">
+            {item.map((food) => (
+              <View key={food.id} className="flex-1 min-w-0">
+                <FoodCard menuItem={food} />
+              </View>
+            ))}
+            {item.length === 1 ? <View className="flex-1 min-w-0" /> : null}
           </View>
         )}
         ListEmptyComponent={

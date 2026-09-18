@@ -1,8 +1,9 @@
-import { Heart, Minus, Plus, Star, Store } from 'lucide-react-native';
+import { memo } from 'react';
+import { Heart, Minus, Plus, Star, Store, UtensilsCrossed } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '../store';
-import { selectRestaurants } from '../store/slices/catalogSlice';
+import { selectRestaurantById } from '../store/slices/catalogSlice';
 import { addFoodItem, decrementFoodItem, selectMenuItemQty } from '../store/slices/cartSlice';
 import { selectIsFoodWishlisted, toggleFoodWishlist } from '../store/slices/wishlistSlice';
 import type { MenuItem } from '../utils/types';
@@ -12,14 +13,13 @@ import { usePalette } from '../theme/ThemeProvider';
 import { hasCustomizableAddons, useAddonCustomize } from './AddonCustomizeSheet';
 import { haptic } from '../utils/haptics';
 
-export default function FoodCard({ menuItem }: { menuItem: MenuItem }) {
+function FoodCard({ menuItem }: { menuItem: MenuItem }) {
   const dispatch = useAppDispatch();
   const colors = usePalette();
   const { openCustomize } = useAddonCustomize();
   const wishlisted = useAppSelector(selectIsFoodWishlisted(menuItem.id));
   const cartQty = useAppSelector(selectMenuItemQty(menuItem.id));
-  const restaurants = useAppSelector(selectRestaurants);
-  const restaurant = restaurants.find((r) => r.id === menuItem.restaurantId);
+  const restaurant = useAppSelector(selectRestaurantById(menuItem.restaurantId));
 
   const handleAdd = () => {
     if (!menuItem.isAvailable) return;
@@ -57,15 +57,28 @@ export default function FoodCard({ menuItem }: { menuItem: MenuItem }) {
   };
 
   return (
-    <View className="relative min-w-0 flex-1 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm">
+    <View className="relative min-w-0 flex-1 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm flex-col">
       <Pressable
         onPress={() => {
           haptic.selection();
           router.push(`/food/foods/${menuItem.id}`);
         }}
+        className="w-full"
       >
-        <View className="relative aspect-[4/3] w-full overflow-hidden bg-surface-2">
-          <RemoteImage uri={menuItem.imageUrl} className="h-full w-full" recyclingKey={menuItem.id} />
+        <View
+          style={{ aspectRatio: 4 / 3, width: '100%', minHeight: 120 }}
+          className="relative overflow-hidden bg-surface-2"
+        >
+          {menuItem.imageUrl ? (
+            <RemoteImage uri={menuItem.imageUrl} className="h-full w-full" recyclingKey={menuItem.id} />
+          ) : (
+            <View className="h-full w-full items-center justify-center bg-surface-2">
+              <UtensilsCrossed size={28} color={colors.muted} opacity={0.6} />
+              <Text className="mt-1 font-display text-xs font-bold uppercase tracking-wider text-muted">
+                {menuItem.name ? menuItem.name.slice(0, 2) : 'FD'}
+              </Text>
+            </View>
+          )}
 
           {/* Floating Veg Badge */}
           <View className="absolute left-2.5 top-2.5 rounded-full bg-surface/90 px-1.5 py-1 shadow-sm">
@@ -91,7 +104,7 @@ export default function FoodCard({ menuItem }: { menuItem: MenuItem }) {
           )}
         </View>
 
-        <View className="p-3.5">
+        <View className="p-3.5 pb-2">
           <Text numberOfLines={1} className="font-display text-sm font-bold text-fg">
             {menuItem.name}
           </Text>
@@ -108,18 +121,18 @@ export default function FoodCard({ menuItem }: { menuItem: MenuItem }) {
           <Text numberOfLines={2} className="mt-1 font-sans text-xs leading-relaxed text-muted">
             {menuItem.description}
           </Text>
-
-          <PriceDisplay
-            price={menuItem.price}
-            originalPrice={menuItem.originalPrice}
-            size="md"
-            className="mt-2"
-          />
         </View>
       </Pressable>
 
-      {/* Action button */}
-      <View className="mt-auto px-3.5 pb-3.5">
+      {/* Bottom section: Price and Action button grouped so they NEVER overlap */}
+      <View className="mt-auto px-3.5 pb-3.5 pt-1">
+        <PriceDisplay
+          price={menuItem.price}
+          originalPrice={menuItem.originalPrice}
+          size="md"
+          className="mb-2"
+        />
+
         {!menuItem.isAvailable ? (
           <View className="rounded-2xl border border-border bg-surface-2/60 px-3 py-2 opacity-50">
             <Text className="text-center font-display text-xs font-bold uppercase text-muted">
@@ -173,3 +186,5 @@ export default function FoodCard({ menuItem }: { menuItem: MenuItem }) {
     </View>
   );
 }
+
+export default memo(FoodCard);

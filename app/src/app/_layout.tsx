@@ -17,7 +17,13 @@ import {
 } from '@expo-google-fonts/source-sans-3';
 import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import { store } from '../store';
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 import { AppBootstrap } from '../components/AppBootstrap';
 import { AddonCustomizeProvider } from '../components/AddonCustomizeSheet';
 import { AppThemeProvider } from '../theme/ThemeProvider';

@@ -13,8 +13,11 @@ export default function CatalogModeTabs({ navigateOnChange = false }: { navigate
     if (next !== mode) {
       haptic.selection();
     }
-    dispatch(setCatalogMode(next));
-    if (navigateOnChange) router.push(next === 'extras' ? '/extras' : '/food');
+    if (navigateOnChange) {
+      router.push(next === 'extras' ? '/extras' : '/food');
+    } else {
+      dispatch(setCatalogMode(next));
+    }
   };
 
   return (
@@ -26,7 +29,7 @@ export default function CatalogModeTabs({ navigateOnChange = false }: { navigate
             key={item}
             onPress={() => select(item)}
             className={cn(
-              'flex-1 items-center justify-center rounded-xl py-2 transition-all',
+              'flex-1 items-center justify-center rounded-xl py-2',
               active ? 'bg-primary shadow-sm' : 'bg-transparent'
             )}
           >

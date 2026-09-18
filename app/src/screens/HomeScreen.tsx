@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -71,6 +71,9 @@ export default function HomeScreen() {
   const featuredExtras = extras.filter((p) => p.featured && p.available);
   const stores = [...new Set(extras.map((p) => p.storeName))];
   const showInitialLoader = status === 'loading' && menuItems.length === 0 && extras.length === 0;
+  // Track if we ever received data — prevents showing full skeleton on re-fetches
+  const hadDataRef = useRef(menuItems.length > 0 || extras.length > 0);
+  if (menuItems.length > 0 || extras.length > 0) hadDataRef.current = true;
 
   const submit = () => {
     const q = query.trim();
@@ -79,7 +82,7 @@ export default function HomeScreen() {
 
   const featuredFood = useMemo(() => menuItems.slice(0, 8), [menuItems]);
 
-  if (showInitialLoader) {
+  if (showInitialLoader && !hadDataRef.current) {
     return (
       <ScrollView className="flex-1 bg-bg" showsVerticalScrollIndicator={false}>
         <View className="px-4 pb-2 pt-4">

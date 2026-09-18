@@ -30,13 +30,24 @@ export function RemoteImage({
   uri,
   className,
   recyclingKey,
+  style,
+  fallback,
 }: {
   uri?: string | null;
   className?: string;
   recyclingKey?: string;
+  style?: any;
+  fallback?: React.ReactNode;
 }) {
   if (!uri) {
-    return <View className={cn('bg-surface-2', className)} />;
+    return (
+      <View
+        className={cn('bg-surface-2 items-center justify-center', className)}
+        style={[{ width: '100%', height: '100%' }, style]}
+      >
+        {fallback}
+      </View>
+    );
   }
   return (
     <Image
@@ -45,6 +56,7 @@ export function RemoteImage({
       contentFit="cover"
       transition={200}
       className={className}
+      style={[{ width: '100%', height: '100%' }, style]}
     />
   );
 }

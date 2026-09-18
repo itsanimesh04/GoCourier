@@ -3,8 +3,8 @@ import { SkeletonBlock } from '../ui';
 
 export default function FoodCardSkeleton() {
   return (
-    <View className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface">
-      <View className="aspect-[4/3] w-full overflow-hidden bg-surface-2">
+    <View style={{ minHeight: 280 }} className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface">
+      <View style={{ aspectRatio: 4 / 3, width: '100%', minHeight: 120 }} className="overflow-hidden bg-surface-2">
         <SkeletonBlock className="h-full w-full rounded-none" />
       </View>
 

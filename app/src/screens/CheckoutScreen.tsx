@@ -59,6 +59,10 @@ export default function CheckoutScreen() {
   }, [user?.drop_point]);
 
   const pay = async () => {
+    if (!user) {
+      router.push({ pathname: '/login', params: { from: '/checkout' } });
+      return;
+    }
     if (!dropPoint.trim()) {
       setError('Enter a drop point');
       return;
