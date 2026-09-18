@@ -36,6 +36,21 @@ const lightSurfaces = {
   border: '#e4e4e7',
 };
 
+/** Convert `#rgb` / `#rrggbb` to space-separated RGB channels for NativeWind alpha utilities. */
+function hexToRgbChannels(hex: string): string {
+  const raw = hex.replace('#', '');
+  const full =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : raw;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n)) return '0 0 0';
+  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
+}
+
 export function getPalette(theme: ThemeMode, catalogMode: CatalogMode): Palette {
   const surfaces = theme === 'light' ? lightSurfaces : darkSurfaces;
   const extras = catalogMode === 'extras';
@@ -49,13 +64,13 @@ export function getPalette(theme: ThemeMode, catalogMode: CatalogMode): Palette 
 
 export function themeVars(palette: Palette) {
   return vars({
-    '--color-primary': palette.primary,
-    '--color-on-primary': palette.onPrimary,
-    '--color-bg': palette.bg,
-    '--color-surface': palette.surface,
-    '--color-surface-2': palette.surface2,
-    '--color-fg': palette.fg,
-    '--color-muted': palette.muted,
-    '--color-border': palette.border,
+    '--color-primary': hexToRgbChannels(palette.primary),
+    '--color-on-primary': hexToRgbChannels(palette.onPrimary),
+    '--color-bg': hexToRgbChannels(palette.bg),
+    '--color-surface': hexToRgbChannels(palette.surface),
+    '--color-surface-2': hexToRgbChannels(palette.surface2),
+    '--color-fg': hexToRgbChannels(palette.fg),
+    '--color-muted': hexToRgbChannels(palette.muted),
+    '--color-border': hexToRgbChannels(palette.border),
   });
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
@@ -62,11 +62,11 @@ export default function FoodListingScreen() {
   const displayedFoods = useMemo(() => foods.slice(0, visibleCount), [foods, visibleCount]);
   const hasMore = visibleCount < foods.length;
 
-  const handleEndReached = () => {
+  const handleEndReached = useCallback(() => {
     if (hasMore) {
       setVisibleCount((prev) => Math.min(prev + 10, foods.length));
     }
-  };
+  }, [hasMore, foods.length]);
 
   const rows = useMemo(() => {
     const out: Row[] = [{ type: 'header', key: 'header' }];
@@ -83,6 +83,70 @@ export default function FoodListingScreen() {
     }
     return out;
   }, [displayedFoods, foods.length, restoList]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Row }) => {
+      if (item.type === 'header') {
+        return (
+          <View className="mb-5 flex-row items-end justify-between gap-3">
+            <View className="min-w-0 flex-1">
+              <Text className="font-display text-2xl font-bold text-fg">All Food</Text>
+              <Text className="mt-1 font-sans text-sm text-muted">
+                {filters.query
+                  ? `Results for “${filters.query}”`
+                  : filters.cuisine
+                    ? filters.cuisine
+                    : 'Browse campus favourites'}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => dispatch(openFilterDrawer())}
+              className="flex-row items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2.5"
+            >
+              <SlidersHorizontal size={16} color={colors.fg} />
+              <Text className="font-sans text-sm font-semibold text-fg">Filter</Text>
+            </Pressable>
+          </View>
+        );
+      }
+      if (item.type === 'restaurants') {
+        return (
+          <View className="mb-8">
+            <View className="mb-3 flex-row items-center justify-between">
+              <Text className="font-display text-lg font-bold text-fg">Restaurants</Text>
+              <Text className="font-sans text-sm text-primary">{item.items.length} nearby</Text>
+            </View>
+            <View className="flex-row flex-wrap gap-3">
+              {item.items.map((r) => (
+                <View key={r.id} className="w-[47%] flex-grow">
+                  <RestaurantCard restaurant={r} />
+                </View>
+              ))}
+            </View>
+          </View>
+        );
+      }
+      if (item.type === 'section') {
+        return <Text className="mb-3 font-display text-lg font-semibold text-fg">{item.title}</Text>;
+      }
+      if (item.type === 'empty') {
+        return <EmptyState title="No dishes match your filters" />;
+      }
+      return (
+        <View className="mb-3 flex-row items-start gap-3">
+          {item.items.map((food) => (
+            <View key={food.id} className="min-w-0 flex-1">
+              <FoodCard menuItem={food} />
+            </View>
+          ))}
+          {item.items.length === 1 ? <View className="min-w-0 flex-1" /> : null}
+        </View>
+      );
+    },
+    [colors.fg, dispatch, filters.cuisine, filters.query]
+  );
+
+  const keyExtractor = useCallback((item: Row) => item.key, []);
 
   if (status === 'loading' && menuItems.length === 0 && !hadDataRef.current) {
     return (
@@ -134,9 +198,12 @@ export default function FoodListingScreen() {
     <View className="flex-1 bg-bg">
       <FlatList
         data={rows}
-        keyExtractor={(item) => item.key}
+        keyExtractor={keyExtractor}
         contentContainerClassName="px-4 pb-8 pt-4"
-        removeClippedSubviews
+        removeClippedSubviews={false}
+        windowSize={11}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
         refreshControl={
           <RefreshControl
             refreshing={status === 'loading'}
@@ -144,64 +211,7 @@ export default function FoodListingScreen() {
             tintColor={colors.primary}
           />
         }
-        renderItem={({ item }) => {
-          if (item.type === 'header') {
-            return (
-              <View className="mb-5 flex-row items-end justify-between gap-3">
-                <View className="min-w-0 flex-1">
-                  <Text className="font-display text-2xl font-bold text-fg">All Food</Text>
-                  <Text className="mt-1 font-sans text-sm text-muted">
-                    {filters.query
-                      ? `Results for “${filters.query}”`
-                      : filters.cuisine
-                        ? filters.cuisine
-                        : 'Browse campus favourites'}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => dispatch(openFilterDrawer())}
-                  className="flex-row items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2.5"
-                >
-                  <SlidersHorizontal size={16} color={colors.fg} />
-                  <Text className="font-sans text-sm font-semibold text-fg">Filter</Text>
-                </Pressable>
-              </View>
-            );
-          }
-          if (item.type === 'restaurants') {
-            return (
-              <View className="mb-8">
-                <View className="mb-3 flex-row items-center justify-between">
-                  <Text className="font-display text-lg font-bold text-fg">Restaurants</Text>
-                  <Text className="font-sans text-sm text-primary">{item.items.length} nearby</Text>
-                </View>
-                <View className="flex-row flex-wrap gap-3">
-                  {item.items.map((r) => (
-                    <View key={r.id} className="w-[47%] flex-grow">
-                      <RestaurantCard restaurant={r} />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            );
-          }
-          if (item.type === 'section') {
-            return <Text className="mb-3 font-display text-lg font-semibold text-fg">{item.title}</Text>;
-          }
-          if (item.type === 'empty') {
-            return <EmptyState title="No dishes match your filters" />;
-          }
-          return (
-            <View className="mb-3 flex-row items-stretch gap-3">
-              {item.items.map((food) => (
-                <View key={food.id} className="flex-1 min-w-0">
-                  <FoodCard menuItem={food} />
-                </View>
-              ))}
-              {item.items.length === 1 ? <View className="flex-1 min-w-0" /> : null}
-            </View>
-          );
-        }}
+        renderItem={renderItem}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
         ListFooterComponent={

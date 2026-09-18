@@ -1,8 +1,8 @@
 import 'react-native-gesture-handler';
 import '../../global.css';
 import '../theme/nativewind';
-import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { LogBox, Platform, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,11 +33,10 @@ import { selectTheme } from '../store/slices/uiSlice';
 
 export { ErrorBoundary } from 'expo-router';
 
+// NativeWind's css-interop imports RN SafeAreaView at startup — ignore that known false-positive.
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
+
 SplashScreen.preventAutoHideAsync();
-void SystemUI.setBackgroundColorAsync('#0a0a0b');
-if (Platform.OS === 'android') {
-  NavigationBar.setStyle('light');
-}
 
 export const unstable_settings = {
   initialRouteName: '(main)',
@@ -45,18 +44,28 @@ export const unstable_settings = {
 
 function ThemedStatusBar() {
   const theme = useAppSelector(selectTheme);
+  const bg = theme === 'dark' ? '#0a0a0b' : '#f4f4f5';
+
   useEffect(() => {
-    void SystemUI.setBackgroundColorAsync(theme === 'dark' ? '#0a0a0b' : '#f4f4f5');
+    void SystemUI.setBackgroundColorAsync(bg);
     if (Platform.OS === 'android') {
-      NavigationBar.setStyle(theme === 'dark' ? 'light' : 'dark');
+      // Expo SDK 57: style is bar appearance ('light' | 'dark'), not icon color.
+      NavigationBar.setStyle(theme);
     }
-  }, [theme]);
+  }, [theme, bg]);
+
   return (
     <>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      {Platform.OS === 'android' ? <NavigationBar style={theme === 'dark' ? 'light' : 'dark'} /> : null}
+      {Platform.OS === 'android' ? <NavigationBar style={theme} /> : null}
     </>
   );
+}
+
+function ThemedRoot({ children }: { children: ReactNode }) {
+  const theme = useAppSelector(selectTheme);
+  const bg = theme === 'dark' ? '#0a0a0b' : '#f4f4f5';
+  return <View style={{ flex: 1, backgroundColor: bg }}>{children}</View>;
 }
 
 function RootNav() {
@@ -74,7 +83,7 @@ function RootNav() {
 }
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [, error] = useFonts({
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
@@ -95,14 +104,16 @@ export default function RootLayout() {
     });
   }, []);
 
-  if (!loaded) return null;
-
+  // Always mount the root navigator so Expo Router's NavigationContainer exists on first paint.
+  // Splash stays up via AppBootstrap until auth is ready; fonts apply when loaded.
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0a0a0b' }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
-        <AppBootstrap>
-          <RootNav />
-        </AppBootstrap>
+        <ThemedRoot>
+          <AppBootstrap>
+            <RootNav />
+          </AppBootstrap>
+        </ThemedRoot>
       </Provider>
     </GestureHandlerRootView>
   );

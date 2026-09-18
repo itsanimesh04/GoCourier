@@ -74,13 +74,19 @@ export function TwoColGrid({ children }: { children: ReactNode }) {
   return (
     <View className="gap-3">
       {rows.map((row, idx) => (
-        <View key={idx} className="flex-row gap-3">
-          {row.map((cell, i) => (
-            <View key={i} className="flex-1">
-              {cell}
-            </View>
-          ))}
-          {row.length === 1 ? <View className="flex-1" /> : null}
+        <View key={idx} className="flex-row items-start gap-3">
+          {row.map((cell, i) => {
+            const key =
+              cell && typeof cell === 'object' && 'key' in cell && cell.key != null
+                ? String(cell.key)
+                : `cell-${idx}-${i}`;
+            return (
+              <View key={key} className="min-w-0 flex-1">
+                {cell}
+              </View>
+            );
+          })}
+          {row.length === 1 ? <View className="min-w-0 flex-1" /> : null}
         </View>
       ))}
     </View>

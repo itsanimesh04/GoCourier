@@ -26,7 +26,7 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
         haptic.selection();
         router.push(`/food/restaurants/${restaurant.id}`);
       }}
-      className="relative min-w-0 flex-1 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm active:scale-[0.98]"
+      className="relative w-full min-w-0 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm active:scale-[0.98]"
     >
       <View style={{ aspectRatio: 4 / 3, width: '100%', minHeight: 120 }} className="relative overflow-hidden bg-surface-2">
         {restaurant.imageUrl ? (

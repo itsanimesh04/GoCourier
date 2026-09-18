@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import CatalogModeTabs from '../components/CatalogModeTabs';
@@ -12,6 +12,87 @@ import { selectSelectedCampusId, setCatalogMode } from '../store/slices/uiSlice'
 import { cn } from '../utils/utils';
 import { usePalette } from '../theme/ThemeProvider';
 import type { ExtraProduct } from '../utils/types';
+
+const ExtrasListHeader = memo(function ExtrasListHeader({
+  query,
+  categories,
+  category,
+  stores,
+  store,
+  productCount,
+  onSelectCategory,
+  onSelectStore,
+}: {
+  query: string;
+  categories: string[];
+  category: string;
+  stores: string[];
+  store: string | null;
+  productCount: number;
+  onSelectCategory: (cat: string) => void;
+  onSelectStore: (store: string | null) => void;
+}) {
+  return (
+    <View className="mb-4 gap-5">
+      <View>
+        <Text className="font-display text-2xl font-bold text-fg">Campus extras</Text>
+        <Text className="mt-1 font-sans text-sm text-muted">
+          {query ? `Results for “${query}”` : 'Stationery, snacks, and essentials'}
+        </Text>
+      </View>
+      <CatalogModeTabs navigateOnChange />
+      <ExtrasServiceCards />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4">
+        <View className="flex-row gap-2 px-4">
+          {categories.map((cat) => (
+            <Pressable
+              key={cat}
+              onPress={() => onSelectCategory(cat)}
+              className={cn(
+                'rounded-full px-3.5 py-2',
+                category === cat ? 'bg-primary' : 'border border-border bg-surface'
+              )}
+            >
+              <Text
+                className={cn(
+                  'font-sans text-sm font-medium',
+                  category === cat ? 'text-on-primary' : 'text-muted'
+                )}
+              >
+                {cat}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+      {stores.length > 0 ? (
+        <View>
+          <Text className="mb-3 font-display text-base font-semibold text-fg">Stores</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4">
+            <View className="flex-row gap-2 px-4">
+              {stores.map((s) => {
+                const active = store === s;
+                return (
+                  <Pressable
+                    key={s}
+                    onPress={() => onSelectStore(active ? null : s)}
+                    className={cn(
+                      'rounded-2xl border px-3.5 py-2.5',
+                      active ? 'border-primary bg-primary/10' : 'border-border bg-surface'
+                    )}
+                  >
+                    <Text className="font-sans text-sm font-semibold text-fg">{s}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      ) : null}
+      <Text className="font-display text-base font-semibold text-fg">Products · {productCount}</Text>
+    </View>
+  );
+});
 
 export default function ExtrasListingScreen() {
   const params = useLocalSearchParams<{ q?: string; store?: string; category?: string }>();
@@ -64,17 +145,51 @@ export default function ExtrasListingScreen() {
   const displayedProducts = useMemo(() => products.slice(0, visibleCount), [products, visibleCount]);
   const hasMore = visibleCount < products.length;
 
-  const handleEndReached = () => {
+  const handleEndReached = useCallback(() => {
     if (hasMore) {
       setVisibleCount((prev) => Math.min(prev + 10, products.length));
     }
-  };
+  }, [hasMore, products.length]);
 
   const pairs = useMemo(() => {
-    const rows: ExtraProduct[][] = [];
-    for (let i = 0; i < displayedProducts.length; i += 2) rows.push(displayedProducts.slice(i, i + 2));
+    const rows: { key: string; items: ExtraProduct[] }[] = [];
+    for (let i = 0; i < displayedProducts.length; i += 2) {
+      const items = displayedProducts.slice(i, i + 2);
+      rows.push({ key: `e-${items[0].id}`, items });
+    }
     return rows;
   }, [displayedProducts]);
+
+  const listHeader = useMemo(
+    () => (
+      <ExtrasListHeader
+        query={query}
+        categories={categories}
+        category={category}
+        stores={stores}
+        store={store}
+        productCount={products.length}
+        onSelectCategory={setCategory}
+        onSelectStore={setStore}
+      />
+    ),
+    [query, categories, category, stores, store, products.length]
+  );
+
+  const renderItem = useCallback(({ item }: { item: { key: string; items: ExtraProduct[] } }) => {
+    return (
+      <View className="mb-3 flex-row items-start gap-3">
+        {item.items.map((p) => (
+          <View key={p.id} className="min-w-0 flex-1">
+            <ExtraCard product={p} />
+          </View>
+        ))}
+        {item.items.length === 1 ? <View className="min-w-0 flex-1" /> : null}
+      </View>
+    );
+  }, []);
+
+  const keyExtractor = useCallback((row: { key: string }) => row.key, []);
 
   // Track if we ever received data — prevents showing full skeleton on re-fetches
   const hadDataRef = useRef(extras.length > 0);
@@ -132,8 +247,12 @@ export default function ExtrasListingScreen() {
     <FlatList
       className="flex-1 bg-bg"
       data={pairs}
-      keyExtractor={(row) => row.map((p) => p.id).join('-')}
+      keyExtractor={keyExtractor}
       contentContainerClassName="px-4 pb-8 pt-4"
+      removeClippedSubviews={false}
+      windowSize={11}
+      initialNumToRender={8}
+      maxToRenderPerBatch={10}
       refreshControl={
         <RefreshControl
           refreshing={status === 'loading'}
@@ -141,77 +260,9 @@ export default function ExtrasListingScreen() {
           tintColor={colors.primary}
         />
       }
-      ListHeaderComponent={
-        <View className="mb-4 gap-5">
-          <View>
-            <Text className="font-display text-2xl font-bold text-fg">Campus extras</Text>
-            <Text className="mt-1 font-sans text-sm text-muted">
-              {query ? `Results for “${query}”` : 'Stationery, snacks, and essentials'}
-            </Text>
-          </View>
-          <CatalogModeTabs navigateOnChange />
-          <ExtrasServiceCards />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4">
-            <View className="flex-row gap-2 px-4">
-              {categories.map((cat) => (
-                <Pressable
-                  key={cat}
-                  onPress={() => setCategory(cat)}
-                  className={cn(
-                    'rounded-full px-3.5 py-2',
-                    category === cat ? 'bg-primary' : 'border border-border bg-surface'
-                  )}
-                >
-                  <Text
-                    className={cn(
-                      'font-sans text-sm font-medium',
-                      category === cat ? 'text-on-primary' : 'text-muted'
-                    )}
-                  >
-                    {cat}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </ScrollView>
-          {stores.length > 0 ? (
-            <View>
-              <Text className="mb-3 font-display text-base font-semibold text-fg">Stores</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4">
-                <View className="flex-row gap-2 px-4">
-                  {stores.map((s) => {
-                    const active = store === s;
-                    return (
-                      <Pressable
-                        key={s}
-                        onPress={() => setStore(active ? null : s)}
-                        className={cn(
-                          'rounded-2xl border px-3.5 py-2.5',
-                          active ? 'border-primary bg-primary/10' : 'border-border bg-surface'
-                        )}
-                      >
-                        <Text className="font-sans text-sm font-semibold text-fg">{s}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </View>
-          ) : null}
-          <Text className="font-display text-base font-semibold text-fg">Products · {products.length}</Text>
-        </View>
-      }
+      ListHeaderComponent={listHeader}
       ListEmptyComponent={<EmptyState title="No extras match your filters." />}
-      renderItem={({ item: row }) => (
-        <View className="mb-3 flex-row gap-3">
-          {row.map((p) => (
-            <View key={p.id} className="flex-1">
-              <ExtraCard product={p} />
-            </View>
-          ))}
-          {row.length === 1 ? <View className="flex-1" /> : null}
-        </View>
-      )}
+      renderItem={renderItem}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.4}
       ListFooterComponent={

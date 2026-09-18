@@ -5,15 +5,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: 'var(--color-primary)',
-        'on-primary': 'var(--color-on-primary)',
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        'on-primary': 'rgb(var(--color-on-primary) / <alpha-value>)',
         'primary-extras': '#c8f542',
-        bg: 'var(--color-bg)',
-        surface: 'var(--color-surface)',
-        'surface-2': 'var(--color-surface-2)',
-        fg: 'var(--color-fg)',
-        muted: 'var(--color-muted)',
-        border: 'var(--color-border)',
+        bg: 'rgb(var(--color-bg) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        'surface-2': 'rgb(var(--color-surface-2) / <alpha-value>)',
+        fg: 'rgb(var(--color-fg) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
       },
       fontFamily: {
         display: ['PlusJakartaSans_700Bold'],

@@ -34,10 +34,17 @@ export default function RestaurantScreenSkeleton() {
           ))}
         </View>
 
-        {/* Food Items List Skeleton */}
+        {/* Food Items — 2-col to match live RestaurantScreen layout */}
         <View className="gap-3 pb-8">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <FoodCardSkeleton key={i} />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <View key={i} className="flex-row items-start gap-3">
+              <View className="min-w-0 flex-1">
+                <FoodCardSkeleton />
+              </View>
+              <View className="min-w-0 flex-1">
+                <FoodCardSkeleton />
+              </View>
+            </View>
           ))}
         </View>
       </View>

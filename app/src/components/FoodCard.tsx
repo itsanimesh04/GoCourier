@@ -57,7 +57,7 @@ function FoodCard({ menuItem }: { menuItem: MenuItem }) {
   };
 
   return (
-    <View className="relative min-w-0 flex-1 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm flex-col">
+    <View className="relative w-full min-w-0 overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm">
       <Pressable
         onPress={() => {
           haptic.selection();
@@ -140,7 +140,7 @@ function FoodCard({ menuItem }: { menuItem: MenuItem }) {
             </Text>
           </View>
         ) : cartQty > 0 ? (
-          <View className="flex-row items-center overflow-hidden rounded-2xl border border-primary bg-primary shadow-sm shadow-primary/25">
+          <View className="flex-row items-center overflow-hidden rounded-2xl border border-primary bg-primary shadow-sm">
             <Pressable
               onPress={handleDecrement}
               className="flex-1 items-center py-2 active:bg-black/10"
@@ -162,7 +162,7 @@ function FoodCard({ menuItem }: { menuItem: MenuItem }) {
         ) : (
           <Pressable
             onPress={handleAdd}
-            className="rounded-2xl border border-primary bg-primary/10 py-2 active:bg-primary"
+            className="rounded-2xl border border-primary bg-primary/10 py-2 shadow-none active:bg-primary"
           >
             <Text className="text-center font-display text-xs font-bold uppercase tracking-wider text-primary">
               + Add

@@ -63,6 +63,42 @@ export const loadCatalog = createAsyncThunk(
   }
 );
 
+function sameIdOrder<T extends { id: string }>(a: T[], b: T[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].id !== b[i].id) return false;
+  }
+  return true;
+}
+
+/** Keep array/item refs stable when ids/order match; swap only changed items. */
+function mergeByIdOrder<T extends { id: string }>(prev: T[], next: T[]): T[] {
+  if (sameIdOrder(prev, next)) {
+    let changed = false;
+    const merged = prev.map((item, i) => {
+      const candidate = next[i];
+      if (item === candidate) return item;
+      // Shallow field compare — new ref only when something actually changed
+      const prevKeys = Object.keys(item) as (keyof T)[];
+      const nextKeys = Object.keys(candidate) as (keyof T)[];
+      if (prevKeys.length !== nextKeys.length) {
+        changed = true;
+        return candidate;
+      }
+      for (const key of prevKeys) {
+        if (item[key] !== candidate[key]) {
+          changed = true;
+          return candidate;
+        }
+      }
+      return item;
+    });
+    return changed ? merged : prev;
+  }
+  return next;
+}
+
 const catalogSlice = createSlice({
   name: 'catalog',
   initialState,
@@ -74,13 +110,23 @@ const catalogSlice = createSlice({
       })
       .addCase(loadCatalog.fulfilled, (state, action) => {
         state.status = 'ready';
-        state.campuses = action.payload.campuses;
-        state.banners = action.payload.banners;
-        state.categories = action.payload.categories;
-        state.config = action.payload.config;
-        state.restaurants = action.payload.restaurants;
-        state.extras = action.payload.extras;
-        state.menuItems = action.payload.menuItems;
+        const {
+          campuses,
+          banners,
+          categories,
+          config,
+          restaurants,
+          extras,
+          menuItems,
+        } = action.payload;
+
+        state.campuses = mergeByIdOrder(state.campuses, campuses);
+        state.banners = mergeByIdOrder(state.banners, banners);
+        state.categories = mergeByIdOrder(state.categories, categories);
+        state.config = config;
+        state.restaurants = mergeByIdOrder(state.restaurants, restaurants);
+        state.extras = mergeByIdOrder(state.extras, extras);
+        state.menuItems = mergeByIdOrder(state.menuItems, menuItems);
       })
       .addCase(loadCatalog.rejected, (state) => {
         state.status = 'ready';

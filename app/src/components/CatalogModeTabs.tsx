@@ -14,7 +14,7 @@ export default function CatalogModeTabs({ navigateOnChange = false }: { navigate
       haptic.selection();
     }
     if (navigateOnChange) {
-      router.push(next === 'extras' ? '/extras' : '/food');
+      router.navigate(next === 'extras' ? '/extras' : '/food');
     } else {
       dispatch(setCatalogMode(next));
     }
@@ -30,7 +30,9 @@ export default function CatalogModeTabs({ navigateOnChange = false }: { navigate
             onPress={() => select(item)}
             className={cn(
               'flex-1 items-center justify-center rounded-xl py-2',
-              active ? 'bg-primary shadow-sm' : 'bg-transparent'
+              // Keep shadow-* on both branches so NativeWind never upgrades CSS vars mid-lifecycle
+              // (avoids false "Couldn't find a navigation context" crashes).
+              active ? 'bg-primary shadow-sm' : 'bg-transparent shadow-none'
             )}
           >
             <Text

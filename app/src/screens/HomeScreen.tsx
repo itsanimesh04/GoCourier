@@ -1,5 +1,15 @@
-import { useMemo, useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Search } from 'lucide-react-native';
 import { router } from 'expo-router';
 import CampusBatchCard from '../components/CampusBatchCard';
@@ -21,6 +31,7 @@ import {
   selectExtras,
   selectFoodCategories,
   selectMenuItems,
+  selectRestaurants,
 } from '../store/slices/catalogSlice';
 import { selectCatalogMode, selectSelectedCampusId } from '../store/slices/uiSlice';
 import { usePalette } from '../theme/ThemeProvider';
@@ -37,6 +48,10 @@ const extrasBannerItems = [
   'Campus stores, one checkout',
 ];
 
+const PAGE_SIZE = 8;
+const LOAD_MORE = 10;
+const SCROLL_LOAD_THRESHOLD = 200;
+
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const colors = usePalette();
@@ -45,10 +60,14 @@ export default function HomeScreen() {
   const status = useAppSelector(selectCatalogStatus);
   const campusId = useAppSelector(selectSelectedCampusId);
   const menuItems = useAppSelector(selectMenuItems);
+  const restaurants = useAppSelector(selectRestaurants);
   const extras = useAppSelector(selectExtras);
   const apiCategories = useAppSelector(selectFoodCategories);
   const isExtras = catalogMode === 'extras';
   const [query, setQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const loadingMoreRef = useRef(false);
+
   const marquee =
     config?.marqueeStrings && config.marqueeStrings.length > 0
       ? config.marqueeStrings
@@ -68,19 +87,63 @@ export default function HomeScreen() {
       }))
     : apiCategories;
 
-  const featuredExtras = extras.filter((p) => p.featured && p.available);
+  const featuredExtras = useMemo(
+    () => extras.filter((p) => p.featured && p.available),
+    [extras]
+  );
   const stores = [...new Set(extras.map((p) => p.storeName))];
+  const nearbyRestaurants = useMemo(() => {
+    const campusFiltered = campusId
+      ? restaurants.filter((r) => !r.campusId || r.campusId === campusId)
+      : restaurants;
+    return campusFiltered.slice(0, 6);
+  }, [restaurants, campusId]);
+
   const showInitialLoader = status === 'loading' && menuItems.length === 0 && extras.length === 0;
   // Track if we ever received data — prevents showing full skeleton on re-fetches
   const hadDataRef = useRef(menuItems.length > 0 || extras.length > 0);
   if (menuItems.length > 0 || extras.length > 0) hadDataRef.current = true;
 
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+    loadingMoreRef.current = false;
+  }, [catalogMode, campusId, menuItems.length, featuredExtras.length]);
+
+  const listLength = isExtras ? featuredExtras.length : menuItems.length;
+  const visibleFood = useMemo(
+    () => (!isExtras ? menuItems.slice(0, visibleCount) : []),
+    [isExtras, menuItems, visibleCount]
+  );
+  const visibleExtras = useMemo(
+    () => (isExtras ? featuredExtras.slice(0, visibleCount) : []),
+    [isExtras, featuredExtras, visibleCount]
+  );
+  const hasMore = visibleCount < listLength;
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setVisibleCount((prev) => Math.min(prev + LOAD_MORE, listLength));
+    requestAnimationFrame(() => {
+      loadingMoreRef.current = false;
+    });
+  }, [hasMore, listLength]);
+
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+      const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      if (distanceFromBottom < SCROLL_LOAD_THRESHOLD) {
+        loadMore();
+      }
+    },
+    [loadMore]
+  );
+
   const submit = () => {
     const q = query.trim();
     router.push({ pathname: isExtras ? '/extras' : '/food', params: q ? { q } : {} });
   };
-
-  const featuredFood = useMemo(() => menuItems.slice(0, 8), [menuItems]);
 
   if (showInitialLoader && !hadDataRef.current) {
     return (
@@ -97,6 +160,17 @@ export default function HomeScreen() {
                 <SkeletonBlock className="h-3 w-12 rounded" />
               </View>
             ))}
+          </View>
+          <View className="mb-5">
+            <SkeletonBlock className="mb-2 h-4 w-24 rounded" />
+            <View className="flex-row gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <View key={i} className="items-center gap-1.5">
+                  <SkeletonBlock className="h-[74px] w-[74px] rounded-3xl" />
+                  <SkeletonBlock className="h-3 w-12 rounded" />
+                </View>
+              ))}
+            </View>
           </View>
           <View className="gap-3">
             <SkeletonBlock className="h-[120px] w-full rounded-3xl" />
@@ -119,6 +193,9 @@ export default function HomeScreen() {
     <ScrollView
       className="flex-1 bg-bg"
       keyboardShouldPersistTaps="handled"
+      scrollEventThrottle={16}
+      onScroll={onScroll}
+      onMomentumScrollEnd={onScroll}
       refreshControl={
         <RefreshControl
           refreshing={status === 'loading'}
@@ -188,6 +265,55 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
+        {!isExtras ? (
+          nearbyRestaurants.length > 0 ? (
+            <View className="mb-5">
+              <Text className="mb-2 font-display text-sm font-bold text-fg">Restaurants</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4">
+                <View className="flex-row gap-3 px-4">
+                  {nearbyRestaurants.map((r) => (
+                    <Pressable
+                      key={r.id}
+                      onPress={() => {
+                        haptic.selection();
+                        router.push(`/food/restaurants/${r.id}`);
+                      }}
+                      className="w-[76px] items-center active:scale-95"
+                    >
+                      <View className="h-[74px] w-[74px] overflow-hidden rounded-3xl border border-border/80 bg-surface-2 shadow-sm">
+                        {r.imageUrl ? (
+                          <RemoteImage uri={r.imageUrl} className="h-full w-full" recyclingKey={r.id} />
+                        ) : (
+                          <View className="h-full w-full items-center justify-center bg-surface-2">
+                            <Text className="font-display text-xs font-bold text-muted">
+                              {r.name.slice(0, 2).toUpperCase()}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text numberOfLines={1} className="mt-1.5 text-center font-display text-[11px] font-bold text-fg">
+                        {r.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          ) : status === 'loading' ? (
+            <View className="mb-5">
+              <SkeletonBlock className="mb-2 h-4 w-24 rounded" />
+              <View className="flex-row gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <View key={i} className="items-center gap-1.5">
+                    <SkeletonBlock className="h-[74px] w-[74px] rounded-3xl" />
+                    <SkeletonBlock className="h-3 w-12 rounded" />
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null
+        ) : null}
+
         <View className="gap-3">
           <CampusBatchCard />
           <HeroBannerRotator />
@@ -224,10 +350,15 @@ export default function HomeScreen() {
               <View>
                 <Text className="mb-3 font-display text-lg font-bold text-fg">Featured extras</Text>
                 <TwoColGrid>
-                  {featuredExtras.map((p) => (
+                  {visibleExtras.map((p) => (
                     <ExtraCard key={p.id} product={p} />
                   ))}
                 </TwoColGrid>
+                {hasMore ? (
+                  <View className="mt-4 items-center py-2">
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                ) : null}
               </View>
             ) : status === 'loading' ? (
               <View>
@@ -242,7 +373,7 @@ export default function HomeScreen() {
               <EmptyState title="No extras yet" subtitle="Pull to refresh or check back later." />
             )}
           </View>
-        ) : featuredFood.length === 0 ? (
+        ) : menuItems.length === 0 ? (
           status === 'loading' ? (
             <View>
               <SkeletonBlock className="mb-3 h-6 w-32 rounded-lg" />
@@ -259,13 +390,19 @@ export default function HomeScreen() {
           <View>
             <Text className="mb-3 font-display text-lg font-bold text-fg">Popular now</Text>
             <TwoColGrid>
-              {featuredFood.map((item) => (
+              {visibleFood.map((item) => (
                 <FoodCard key={item.id} menuItem={item} />
               ))}
             </TwoColGrid>
-            <Pressable onPress={() => router.push('/food')} className="mt-4 items-center py-2">
-              <Text className="font-sans text-sm font-semibold text-primary">See all food →</Text>
-            </Pressable>
+            {hasMore ? (
+              <View className="mt-4 items-center py-2">
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : (
+              <Pressable onPress={() => router.push('/food')} className="mt-4 items-center py-2">
+                <Text className="font-sans text-sm font-semibold text-primary">See all food →</Text>
+              </Pressable>
+            )}
           </View>
         )}
       </View>
